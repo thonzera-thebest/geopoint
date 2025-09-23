@@ -60,6 +60,9 @@
             <button id="capture-button" class="w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50" disabled>
                 Capturar Coordenada
             </button>
+            <button id="delete-button" class="w-full bg-orange-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50" disabled>
+                Deletar Última Marcação
+            </button>
             <button id="download-button" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" disabled>
                 Parar e Baixar
             </button>
@@ -68,8 +71,9 @@
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        // Array para armazenar as coordenadas
+        // Array para armazenar as coordenadas e os marcadores
         let coordinates = [];
+        let markers = [];
         let watchId = null;
         let map;
         let lastKnownPosition = null;
@@ -83,6 +87,7 @@
         const startButton = document.getElementById('start-button');
         const manualCaptureButton = document.getElementById('manual-capture-button');
         const captureButton = document.getElementById('capture-button');
+        const deleteButton = document.getElementById('delete-button');
         const downloadButton = document.getElementById('download-button');
         const pointNameInput = document.getElementById('point-name-input');
 
@@ -91,7 +96,8 @@
             startButton.disabled = isCollecting;
             manualCaptureButton.disabled = isCollecting;
             captureButton.disabled = !isCollecting && !manualMarker;
-            downloadButton.disabled = !isCollecting && !manualMarker;
+            deleteButton.disabled = coordinates.length === 0;
+            downloadButton.disabled = coordinates.length === 0;
             pointNameInput.disabled = !isCollecting && !manualMarker;
         }
 
@@ -202,18 +208,40 @@
                 return;
             }
 
-            const timestamp = new Date().toISOString();
+            // Formata o timestamp para o fuso horário de São Paulo e o formato DD/MM/AAAA, HH:mm:ss
+            const now = new Date();
+            const formattedTimestamp = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
             const pointName = pointNameInput.value.trim() || `Ponto ${coordinates.length + 1}`;
             
-            coordinates.push({ name: pointName, latitude: lastKnownPosition.latitude, longitude: lastKnownPosition.longitude, timestamp: timestamp });
+            coordinates.push({ name: pointName, latitude: lastKnownPosition.latitude, longitude: lastKnownPosition.longitude, timestamp: formattedTimestamp });
             
-            // Adiciona um marcador no mapa
-            L.marker([lastKnownPosition.latitude, lastKnownPosition.longitude]).addTo(map)
+            // Adiciona um marcador no mapa e o salva no array de marcadores
+            const newMarker = L.marker([lastKnownPosition.latitude, lastKnownPosition.longitude]).addTo(map)
                 .bindPopup(`<b>${pointName}</b><br>Lat: ${lastKnownPosition.latitude.toFixed(6)}<br>Lon: ${lastKnownPosition.longitude.toFixed(6)}`).openPopup();
+            markers.push(newMarker);
                 
             showMessage(`Ponto capturado! (${coordinates.length} no total)`, 'success');
             pointNameInput.value = ''; // Limpa o campo para o próximo ponto
+            setUIState(true); // Atualiza o estado dos botões para habilitar o "Deletar"
+        }
 
+        function deleteLastPoint() {
+            if (coordinates.length > 0) {
+                // Remove o último ponto da lista de coordenadas
+                coordinates.pop();
+                
+                // Remove o último marcador do mapa e da lista de marcadores
+                const lastMarker = markers.pop();
+                if (lastMarker) {
+                    map.removeLayer(lastMarker);
+                }
+                
+                showMessage(`Último ponto deletado. (${coordinates.length} no total)`, 'info');
+                setUIState(true);
+            } else {
+                showMessage("Não há pontos para deletar.", 'error');
+            }
         }
 
         function stopAndDownload() {
@@ -250,6 +278,7 @@
             
             // Limpa o estado da aplicação e o mapa
             coordinates = [];
+            markers = [];
             lastKnownPosition = null;
             if (manualMarker) {
                 map.removeLayer(manualMarker);
@@ -273,13 +302,17 @@
              coordinatesDisplay.classList.remove('hidden');
         });
         captureButton.addEventListener('click', captureCoordinate);
+        deleteButton.addEventListener('click', deleteLastPoint);
         downloadButton.addEventListener('click', stopAndDownload);
 
         // Inicializa o mapa ao carregar a página
         window.onload = () => {
              initMap();
              showMessage('Aguardando sua permissão para acessar a localização...');
+             setUIState(false);
         }
     </script>
 </body>
 </html>
+
+
