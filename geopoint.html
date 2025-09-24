@@ -148,8 +148,8 @@
         const confirmYesButton = document.getElementById('confirm-yes');
         const confirmNoButton = document.getElementById('confirm-no');
 
-        // SUBSTITUA ESTA CHAVE PELA SUA CHAVE DE API DO GOOGLE MAPS
-        const GOOGLE_MAPS_API_KEY = 'AIzaSyBymO_-MSVTUBK1CoNfxRDmVzpgk9hpDFo';
+        // A CHAVE DA API SERÁ SOLICITADA AO USUÁRIO AO TENTAR USAR A PESQUISA
+        let GOOGLE_MAPS_API_KEY = null;
 
         // Funções de controle dos botões
         function setUIState(isCollecting) {
@@ -209,6 +209,9 @@
         }
 
         async function reverseGeocode(lat, lon) {
+            if (!GOOGLE_MAPS_API_KEY) {
+                return 'Localização não encontrada';
+            }
             try {
                 const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${GOOGLE_MAPS_API_KEY}`);
                 const data = await response.json();
@@ -224,21 +227,18 @@
         async function onMapClick(e) {
             isManualCapture = true;
             lastKnownPosition = { latitude: e.latlng.lat, longitude: e.latlng.lng };
-
-            // Remove o marcador manual anterior, se houver
+            
             if (manualMarker) {
                 map.removeLayer(manualMarker);
             }
             
             showMessage('Buscando endereço do ponto...');
             
-            // Busca o endereço do ponto clicado e atualiza o marcador
             lastKnownAddress = await reverseGeocode(e.latlng.lat, e.latlng.lng);
             
             manualMarker = L.marker(e.latlng).addTo(map)
                 .bindPopup(`<b>${lastKnownAddress}</b><br>Lat: ${lastKnownPosition.latitude.toFixed(6)}<br>Lon: ${lastKnownPosition.longitude.toFixed(6)}`).openPopup();
 
-            // Atualiza as coordenadas na interface
             latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
             longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
 
@@ -252,7 +252,6 @@
             setUIState(true);
             coordinatesDisplay.classList.remove('hidden');
             
-            // Centraliza o mapa na localização do usuário
             map.locate({setView: true, maxZoom: 16, watch: true, enableHighAccuracy: true});
             
             const options = {
@@ -295,20 +294,23 @@
             }
         }
 
-        // Nova função para pesquisar um local usando Google Geocoding API
         async function searchLocation() {
+            if (!GOOGLE_MAPS_API_KEY) {
+                const key = prompt("Por favor, cole sua chave de API do Google Maps aqui para habilitar a pesquisa de endereços:");
+                if (key) {
+                    GOOGLE_MAPS_API_KEY = key;
+                } else {
+                    showMessage('Chave de API não fornecida. A pesquisa por endereço não pode ser realizada.', 'error');
+                    return;
+                }
+            }
+
             const query = searchInput.value.trim();
             if (!query) {
                 showMessage('Por favor, digite um endereço ou coordenadas para pesquisar.', 'error');
                 return;
             }
 
-            if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === 'SUA_CHAVE_API_AQUI') {
-                showMessage('Erro: Chave de API do Google Maps não configurada. Por favor, insira sua chave no código.', 'error');
-                return;
-            }
-
-            // Expressão regular para verificar se o input são coordenadas
             const isCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query);
 
             if (isCoordinates) {
@@ -331,7 +333,6 @@
                     showMessage('Formato de coordenadas inválido. Tente "latitude,longitude".', 'error');
                 }
             } else {
-                // Pesquisa de endereço usando a API de Geocodificação do Google
                 showMessage('Pesquisando endereço...', 'info');
                 try {
                     const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_MAPS_API_KEY}`);
@@ -370,7 +371,6 @@
 
             let addressToSave = lastKnownAddress;
 
-            // Se a captura for por GPS (automática), pede confirmação
             if (!isManualCapture) {
                 const shouldIncludeAddress = await showConfirmationModal();
                 if (shouldIncludeAddress) {
@@ -381,7 +381,6 @@
                 }
             }
 
-            // Formata o timestamp para o fuso horário de São Paulo e o formato DD/MM/AAAA, HH:mm:ss
             const now = new Date();
             const formattedTimestamp = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
             
@@ -389,22 +388,19 @@
             
             coordinates.push({ name: pointName, latitude: lastKnownPosition.latitude, longitude: lastKnownPosition.longitude, address: addressToSave, timestamp: formattedTimestamp });
             
-            // Adiciona um marcador no mapa e o salva no array de marcadores
             const newMarker = L.marker([lastKnownPosition.latitude, lastKnownPosition.longitude]).addTo(map)
                 .bindPopup(`<b>${pointName}</b><br>Lat: ${lastKnownPosition.latitude.toFixed(6)}<br>Lon: ${lastKnownPosition.longitude.toFixed(6)}`).openPopup();
             markers.push(newMarker);
                 
             showMessage(`Ponto capturado! (${coordinates.length} no total)`, 'success');
-            pointNameInput.value = ''; // Limpa o campo para o próximo ponto
-            setUIState(true); // Atualiza o estado dos botões para habilitar o "Deletar"
+            pointNameInput.value = '';
+            setUIState(true);
         }
 
         function deleteLastPoint() {
             if (coordinates.length > 0) {
-                // Remove o último ponto da lista de coordenadas
                 coordinates.pop();
                 
-                // Remove o último marcador do mapa e da lista de marcadores
                 const lastMarker = markers.pop();
                 if (lastMarker) {
                     map.removeLayer(lastMarker);
@@ -429,18 +425,14 @@
                 return;
             }
 
-            // Cria o conteúdo do arquivo CSV com ponto e vírgula como separador
-            let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Timestamp\n"; // Cabeçalho do CSV
+            let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Timestamp\n";
             coordinates.forEach(point => {
-                // Formata as coordenadas para 6 casas decimais e substitui o ponto pela vírgula
                 const formattedLat = point.latitude.toFixed(6).replace('.', ',');
                 const formattedLon = point.longitude.toFixed(6).replace('.', ',');
-                // Garante que o endereço não contenha ponto e vírgula
                 const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
                 csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${point.timestamp}\n`;
             });
 
-            // Cria um link para download do arquivo
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8-sig;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -451,7 +443,6 @@
             link.click();
             document.body.removeChild(link);
             
-            // Limpa o estado da aplicação e o mapa
             coordinates = [];
             markers = [];
             lastKnownPosition = null;
