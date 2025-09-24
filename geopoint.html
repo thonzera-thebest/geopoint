@@ -100,6 +100,9 @@
             <button id="delete-button" class="w-full bg-orange-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50" disabled>
                 Deletar Última Marcação
             </button>
+            <button id="stop-button" class="w-full bg-gray-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 hidden">
+                Parar Coleta
+            </button>
             <button id="download-button" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" disabled>
                 Parar e Baixar
             </button>
@@ -139,6 +142,7 @@
         const captureButton = document.getElementById('capture-button');
         const deleteButton = document.getElementById('delete-button');
         const downloadButton = document.getElementById('download-button');
+        const stopButton = document.getElementById('stop-button');
         const pointNameInput = document.getElementById('point-name-input');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
@@ -159,6 +163,11 @@
             deleteButton.disabled = coordinates.length === 0;
             downloadButton.disabled = coordinates.length === 0;
             pointNameInput.disabled = !isCollecting && !manualMarker;
+            if (isCollecting) {
+                stopButton.classList.remove('hidden');
+            } else {
+                stopButton.classList.add('hidden');
+            }
         }
 
         function showMessage(message, type = 'info') {
@@ -413,26 +422,43 @@
             }
         }
 
-        function stopAndDownload() {
+        function stopCollecting() {
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
             }
+            if (manualMarker) {
+                map.removeLayer(manualMarker);
+                manualMarker = null;
+            }
+            lastKnownPosition = null;
+            lastKnownAddress = null;
+            isManualCapture = false;
+            setUIState(false);
+            coordinatesDisplay.classList.add('hidden');
+            showMessage("Coleta interrompida.", "info");
+        }
 
+        function stopAndDownload() {
             if (coordinates.length === 0) {
                 showMessage("Nenhum ponto capturado para baixar.", 'error');
-                setUIState(false);
                 return;
             }
 
+            stopCollecting();
+
+            // Cria o conteúdo do arquivo CSV com ponto e vírgula como separador
             let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Timestamp\n";
             coordinates.forEach(point => {
+                // Formata as coordenadas para 6 casas decimais e substitui o ponto pela vírgula
                 const formattedLat = point.latitude.toFixed(6).replace('.', ',');
                 const formattedLon = point.longitude.toFixed(6).replace('.', ',');
+                // Garante que o endereço não contenha ponto e vírgula
                 const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
                 csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${point.timestamp}\n`;
             });
 
+            // Cria um link para download do arquivo
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8-sig;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -443,6 +469,7 @@
             link.click();
             document.body.removeChild(link);
             
+            // Limpa o estado da aplicação e o mapa
             coordinates = [];
             markers = [];
             lastKnownPosition = null;
@@ -472,6 +499,7 @@
         captureButton.addEventListener('click', captureCoordinate);
         deleteButton.addEventListener('click', deleteLastPoint);
         downloadButton.addEventListener('click', stopAndDownload);
+        stopButton.addEventListener('click', stopCollecting);
         searchButton.addEventListener('click', searchLocation);
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
