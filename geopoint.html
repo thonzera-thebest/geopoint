@@ -19,6 +19,35 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             margin-bottom: 1.5rem;
         }
+        .modal {
+            display: none; /* Esconde o modal por padrão */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 1rem;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -77,6 +106,17 @@
         </div>
     </div>
 
+    <!-- Modal de Confirmação -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <p>Gostaria de incluir a localização aproximada desse ponto?</p>
+            <div class="modal-buttons">
+                <button id="confirm-yes" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Sim</button>
+                <button id="confirm-no" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-600">Não</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         // Array para armazenar as coordenadas e os marcadores
@@ -85,6 +125,8 @@
         let watchId = null;
         let map;
         let lastKnownPosition = null;
+        let lastKnownAddress = null;
+        let isManualCapture = false;
         let manualMarker = null;
 
         // Elementos da UI
@@ -100,6 +142,11 @@
         const pointNameInput = document.getElementById('point-name-input');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
+
+        // Modal
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const confirmYesButton = document.getElementById('confirm-yes');
+        const confirmNoButton = document.getElementById('confirm-no');
 
         // SUBSTITUA ESTA CHAVE PELA SUA CHAVE DE API DO GOOGLE MAPS
         const GOOGLE_MAPS_API_KEY = 'AIzaSyBymO_-MSVTUBK1CoNfxRDmVzpgk9hpDFo';
@@ -126,6 +173,20 @@
             }
             statusMessage.classList.remove('hidden');
         }
+
+        function showConfirmationModal() {
+            return new Promise(resolve => {
+                confirmationModal.style.display = 'block';
+                confirmYesButton.onclick = () => {
+                    confirmationModal.style.display = 'none';
+                    resolve(true);
+                };
+                confirmNoButton.onclick = () => {
+                    confirmationModal.style.display = 'none';
+                    resolve(false);
+                };
+            });
+        }
         
         // Funções do GPS e Mapa
         function initMap() {
@@ -147,17 +208,35 @@
             map.on('click', onMapClick);
         }
 
-        function onMapClick(e) {
+        async function reverseGeocode(lat, lon) {
+            try {
+                const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${GOOGLE_MAPS_API_KEY}`);
+                const data = await response.json();
+                if (data.status === 'OK' && data.results.length > 0) {
+                    return data.results[0].formatted_address;
+                }
+            } catch (error) {
+                console.error('Erro na geocodificação reversa:', error);
+            }
+            return 'Localização não encontrada';
+        }
+
+        async function onMapClick(e) {
+            isManualCapture = true;
             lastKnownPosition = { latitude: e.latlng.lat, longitude: e.latlng.lng };
 
             // Remove o marcador manual anterior, se houver
             if (manualMarker) {
                 map.removeLayer(manualMarker);
             }
-
-            // Adiciona um novo marcador manual
+            
+            showMessage('Buscando endereço do ponto...');
+            
+            // Busca o endereço do ponto clicado e atualiza o marcador
+            lastKnownAddress = await reverseGeocode(e.latlng.lat, e.latlng.lng);
+            
             manualMarker = L.marker(e.latlng).addTo(map)
-                .bindPopup("Ponto selecionado manualmente").openPopup();
+                .bindPopup(`<b>${lastKnownAddress}</b><br>Lat: ${lastKnownPosition.latitude.toFixed(6)}<br>Lon: ${lastKnownPosition.longitude.toFixed(6)}`).openPopup();
 
             // Atualiza as coordenadas na interface
             latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
@@ -168,6 +247,7 @@
         }
 
         function startCollecting() {
+            isManualCapture = false;
             showMessage('Acessando localização...');
             setUIState(true);
             coordinatesDisplay.classList.remove('hidden');
@@ -237,7 +317,9 @@
                 const lon = parseFloat(parts[1]);
 
                 if (!isNaN(lat) && !isNaN(lon)) {
+                    isManualCapture = true;
                     lastKnownPosition = { latitude: lat, longitude: lon };
+                    lastKnownAddress = `Coordenadas: ${query}`;
                     map.setView([lat, lon], 16);
                     if (manualMarker) map.removeLayer(manualMarker);
                     manualMarker = L.marker([lat, lon]).addTo(map).bindPopup('Ponto pesquisado').openPopup();
@@ -256,12 +338,14 @@
                     const data = await response.json();
 
                     if (data.status === 'OK' && data.results.length > 0) {
+                        isManualCapture = true;
                         const location = data.results[0].geometry.location;
                         const lat = location.lat;
                         const lon = location.lng;
                         const address = data.results[0].formatted_address;
                         
                         lastKnownPosition = { latitude: lat, longitude: lon };
+                        lastKnownAddress = address;
                         map.setView([lat, lon], 16);
                         if (manualMarker) map.removeLayer(manualMarker);
                         manualMarker = L.marker([lat, lon]).addTo(map).bindPopup(address).openPopup();
@@ -278,10 +362,23 @@
             }
         }
 
-        function captureCoordinate() {
+        async function captureCoordinate() {
             if (!lastKnownPosition) {
                 showMessage("Nenhuma coordenada para capturar. Inicie a coleta ou selecione um ponto no mapa.", 'error');
                 return;
+            }
+
+            let addressToSave = lastKnownAddress;
+
+            // Se a captura for por GPS (automática), pede confirmação
+            if (!isManualCapture) {
+                const shouldIncludeAddress = await showConfirmationModal();
+                if (shouldIncludeAddress) {
+                    showMessage('Buscando endereço aproximado...');
+                    addressToSave = await reverseGeocode(lastKnownPosition.latitude, lastKnownPosition.longitude);
+                } else {
+                    addressToSave = 'Localização não inclusa';
+                }
             }
 
             // Formata o timestamp para o fuso horário de São Paulo e o formato DD/MM/AAAA, HH:mm:ss
@@ -290,7 +387,7 @@
             
             const pointName = pointNameInput.value.trim() || `Ponto ${coordinates.length + 1}`;
             
-            coordinates.push({ name: pointName, latitude: lastKnownPosition.latitude, longitude: lastKnownPosition.longitude, timestamp: formattedTimestamp });
+            coordinates.push({ name: pointName, latitude: lastKnownPosition.latitude, longitude: lastKnownPosition.longitude, address: addressToSave, timestamp: formattedTimestamp });
             
             // Adiciona um marcador no mapa e o salva no array de marcadores
             const newMarker = L.marker([lastKnownPosition.latitude, lastKnownPosition.longitude]).addTo(map)
@@ -333,12 +430,14 @@
             }
 
             // Cria o conteúdo do arquivo CSV com ponto e vírgula como separador
-            let csvContent = "Nome do Ponto;Latitude;Longitude;Timestamp\n"; // Cabeçalho do CSV
+            let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Timestamp\n"; // Cabeçalho do CSV
             coordinates.forEach(point => {
                 // Formata as coordenadas para 6 casas decimais e substitui o ponto pela vírgula
                 const formattedLat = point.latitude.toFixed(6).replace('.', ',');
                 const formattedLon = point.longitude.toFixed(6).replace('.', ',');
-                csvContent += `${point.name};${formattedLat};${formattedLon};${point.timestamp}\n`;
+                // Garante que o endereço não contenha ponto e vírgula
+                const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
+                csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${point.timestamp}\n`;
             });
 
             // Cria um link para download do arquivo
@@ -356,6 +455,7 @@
             coordinates = [];
             markers = [];
             lastKnownPosition = null;
+            lastKnownAddress = null;
             if (manualMarker) {
                 map.removeLayer(manualMarker);
                 manualMarker = null;
@@ -373,6 +473,7 @@
         // Event Listeners
         startButton.addEventListener('click', startCollecting);
         manualCaptureButton.addEventListener('click', () => {
+             isManualCapture = true;
              showMessage('Clique no mapa para selecionar um ponto.', 'info');
              setUIState(true);
              coordinatesDisplay.classList.remove('hidden');
