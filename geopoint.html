@@ -62,6 +62,17 @@
         <h1 class="text-3xl font-bold mb-2 text-gray-800">GeoPoint</h1>
         <p class="text-gray-500 text-sm mb-4">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
         <p class="text-gray-600 mb-6">Capture coordenadas, adicione um nome e visualize os pontos em tempo real.</p>
+        
+        <!-- UI para Firebase -->
+        <div class="mb-4">
+            <div id="auth-status" class="bg-blue-100 text-blue-800 p-3 rounded-xl text-sm font-medium">
+                Carregando...
+            </div>
+            <div id="user-info" class="text-xs text-gray-500 mt-2 hidden">
+                <p>Usuário ID: <span id="user-id"></span></p>
+                <p>App ID: <span id="app-id"></span></p>
+            </div>
+        </div>
 
         <div id="map"></div>
 
@@ -141,19 +152,38 @@
     </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
+    <script type="module">
         // =================================================================
-        // Seção 1: Variáveis e Elementos da UI
+        // Seção 1: Configuração do Firebase
         // =================================================================
-        let coordinates = [];
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Variáveis globais do Firebase, fornecidas pelo ambiente.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        let userId;
+        let coordinatesRef;
+        let unsubscribe;
+        let localCoordinates = [];
         let markers = [];
-        let watchId = null;
         let map;
+        let watchId = null;
         let lastKnownPosition = null;
         let lastKnownAddress = null;
         let isManualCapture = false;
         let manualMarker = null;
+        let baseLayers;
 
+        const authStatus = document.getElementById('auth-status');
+        const userIdDisplay = document.getElementById('user-id');
+        const appIdDisplay = document.getElementById('app-id');
+        const userInfo = document.getElementById('user-info');
         const statusMessage = document.getElementById('status-message');
         const coordinatesDisplay = document.getElementById('coordinates-display');
         const latitudeText = document.getElementById('latitude-text');
@@ -174,18 +204,17 @@
         const confirmYesButton = document.getElementById('confirm-yes');
         const confirmNoButton = document.getElementById('confirm-no');
 
-        // A CHAVE DA API SERÁ SOLICITADA AO USUÁRIO AO TENTAR USAR A PESQUISA
         let GOOGLE_MAPS_API_KEY = null;
 
         // =================================================================
-        // Seção 2: Funções de Controle da UI
+        // Seção 2: Funções de Controle da UI e Firebase
         // =================================================================
         function setUIState(isCollecting) {
             startButton.disabled = isCollecting;
             manualCaptureButton.disabled = isCollecting;
             captureButton.disabled = !isCollecting && !manualMarker;
-            deleteButton.disabled = coordinates.length === 0;
-            downloadButton.disabled = coordinates.length === 0;
+            deleteButton.disabled = localCoordinates.length === 0;
+            downloadButton.disabled = localCoordinates.length === 0;
             pointNameInput.disabled = !isCollecting && !manualMarker;
             
             if (isCollecting || isManualCapture) {
@@ -193,7 +222,7 @@
             } else {
                 stopButton.classList.add('hidden');
             }
-            if (coordinates.length > 0) {
+            if (localCoordinates.length > 0) {
                 pointsPreview.classList.remove('hidden');
             } else {
                 pointsPreview.classList.add('hidden');
@@ -228,8 +257,19 @@
         
         function updatePreviewTable() {
             pointsTableBody.innerHTML = '';
-            pointsCount.textContent = coordinates.length;
-            coordinates.forEach((point, index) => {
+            pointsCount.textContent = localCoordinates.length;
+            
+            // Remove todos os marcadores do mapa para evitar duplicação
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            localCoordinates.forEach((point, index) => {
+                // Adiciona um novo marcador para o ponto no mapa
+                const newMarker = L.marker([point.latitude, point.longitude]).addTo(map)
+                    .bindPopup(`<b>${point.name}</b><br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)}`).openPopup();
+                markers.push(newMarker);
+                
+                // Adiciona a linha na tabela de pré-visualização
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors duration-150';
                 row.innerHTML = `
@@ -240,24 +280,124 @@
                 `;
                 pointsTableBody.appendChild(row);
             });
+
+            // Reajusta o mapa para mostrar todos os pontos
+            if (markers.length > 0) {
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds());
+            }
+
             setUIState(false);
         }
 
         // =================================================================
-        // Seção 3: Lógica do Mapa e API
+        // Seção 3: Lógica de Coleta (Sincronizada com Firestore)
+        // =================================================================
+        async function captureCoordinate() {
+            if (!lastKnownPosition) {
+                showMessage("Nenhuma coordenada para capturar. Inicie a coleta ou selecione um ponto no mapa.", 'error');
+                return;
+            }
+
+            let addressToSave = lastKnownAddress;
+
+            if (!isManualCapture) {
+                const shouldIncludeAddress = await showConfirmationModal();
+                if (shouldIncludeAddress) {
+                    showMessage('Buscando endereço aproximado...');
+                    addressToSave = await reverseGeocode(lastKnownPosition.latitude, lastKnownPosition.longitude);
+                } else {
+                    addressToSave = 'Localização não inclusa';
+                }
+            }
+
+            const now = new Date();
+            const formattedTimestamp = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            const pointName = pointNameInput.value.trim() || `Ponto ${localCoordinates.length + 1}`;
+            
+            showMessage('Salvando ponto no banco de dados...');
+            try {
+                // Salva o ponto no Firestore
+                await addDoc(coordinatesRef, {
+                    name: pointName,
+                    latitude: lastKnownPosition.latitude,
+                    longitude: lastKnownPosition.longitude,
+                    address: addressToSave,
+                    timestamp: formattedTimestamp,
+                    createdAt: new Date()
+                });
+                showMessage('Ponto capturado e salvo!', 'success');
+                pointNameInput.value = '';
+            } catch (error) {
+                showMessage('Erro ao salvar ponto. Tente novamente.', 'error');
+                console.error("Erro ao adicionar documento:", error);
+            }
+        }
+
+        async function deleteLastPoint() {
+            if (localCoordinates.length > 0) {
+                const lastPoint = localCoordinates[localCoordinates.length - 1];
+                try {
+                    showMessage('Deletando último ponto...');
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/coords`, lastPoint.id));
+                    showMessage('Último ponto deletado.', 'info');
+                } catch (error) {
+                    showMessage('Erro ao deletar o ponto.', 'error');
+                    console.error("Erro ao deletar documento:", error);
+                }
+            } else {
+                showMessage("Não há pontos para deletar.", 'error');
+            }
+        }
+
+        function stopAndDownload() {
+            if (localCoordinates.length === 0) {
+                showMessage("Nenhum ponto capturado para baixar.", 'error');
+                return;
+            }
+
+            stopCollecting();
+
+            let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Timestamp\n";
+            localCoordinates.forEach(point => {
+                const formattedLat = point.latitude.toFixed(6).replace('.', ',');
+                const formattedLon = point.longitude.toFixed(6).replace('.', ',');
+                const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
+                csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${point.timestamp}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "COORD.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showMessage("Coleta finalizada. Download iniciado. Ao abrir no Excel, use a ferramenta 'Obter Dados de Texto' e selecione 'UTF-8' como origem do arquivo para evitar caracteres estranhos.", 'success');
+        }
+
+        // =================================================================
+        // Seção 4: Lógica do Mapa e API
         // =================================================================
         function initMap() {
             map = L.map('map').setView([-25.4284, -49.2733], 13);
             
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-            }).addTo(map);
+            const esriHybrid = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+            const esriStreet = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+            const esriTopographic = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+            const esriReference = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane', attribution: 'Esri, HERE, Garmin' });
             
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI, Esri China (Hong Kong), Esri Korea, Esri (Thailand), NGCC, OSM',
-                pane: 'markerPane'
-            }).addTo(map);
-
+            baseLayers = {
+                "Híbrido": L.layerGroup([esriHybrid, esriReference]).addTo(map),
+                "Ruas": esriStreet,
+                "Topográfico": esriTopographic
+            };
+            
+            L.control.layers(baseLayers).addTo(map);
             map.on('click', onMapClick);
         }
 
@@ -286,7 +426,6 @@
             }
             
             showMessage('Buscando endereço do ponto...');
-            
             lastKnownAddress = await reverseGeocode(e.latlng.lat, e.latlng.lng);
             
             manualMarker = L.marker(e.latlng).addTo(map)
@@ -294,7 +433,6 @@
 
             latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
             longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
-
             showMessage('Ponto selecionado no mapa. Clique em "Capturar Coordenada" para salvar.', 'success');
             setUIState(true);
         }
@@ -304,19 +442,11 @@
                 map.removeLayer(manualMarker);
                 manualMarker = null;
             }
-
             isManualCapture = false;
             showMessage('Acessando localização...');
             coordinatesDisplay.classList.remove('hidden');
-            
             map.locate({setView: true, maxZoom: 16, watch: true, enableHighAccuracy: true});
-            
-            const options = {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 0
-            };
-
+            const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(
                     position => {
@@ -329,18 +459,10 @@
                     error => {
                         setUIState(false);
                         switch(error.code) {
-                            case error.PERMISSION_DENIED:
-                                showMessage("Erro: Acesso à localização negado. Por favor, ative nas configurações do navegador.", 'error');
-                                break;
-                            case error.POSITION_UNAVAILABLE:
-                                showMessage("Erro: Localização não disponível. Tente o modo manual.", 'error');
-                                break;
-                            case error.TIMEOUT:
-                                showMessage("Erro: A requisição de localização expirou. Tente o modo manual.", 'error');
-                                break;
-                            default:
-                                showMessage(`Erro desconhecido: ${error.message}`, 'error');
-                                break;
+                            case error.PERMISSION_DENIED: showMessage("Erro: Acesso à localização negado. Ative nas configurações do navegador.", 'error'); break;
+                            case error.POSITION_UNAVAILABLE: showMessage("Erro: Localização não disponível. Tente o modo manual.", 'error'); break;
+                            case error.TIMEOUT: showMessage("Erro: A requisição de localização expirou. Tente o modo manual.", 'error'); break;
+                            default: showMessage(`Erro desconhecido: ${error.message}`, 'error'); break;
                         }
                     },
                     options
@@ -367,14 +489,11 @@
                 showMessage('Por favor, digite um endereço ou coordenadas para pesquisar.', 'error');
                 return;
             }
-
             const isCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query);
-
             if (isCoordinates) {
                 const parts = query.split(',');
                 const lat = parseFloat(parts[0]);
                 const lon = parseFloat(parts[1]);
-
                 if (!isNaN(lat) && !isNaN(lon)) {
                     isManualCapture = true;
                     lastKnownPosition = { latitude: lat, longitude: lon };
@@ -394,14 +513,12 @@
                 try {
                     const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_MAPS_API_KEY}`);
                     const data = await response.json();
-
                     if (data.status === 'OK' && data.results.length > 0) {
                         isManualCapture = true;
                         const location = data.results[0].geometry.location;
                         const lat = location.lat;
                         const lon = location.lng;
                         const address = data.results[0].formatted_address;
-                        
                         lastKnownPosition = { latitude: lat, longitude: lon };
                         lastKnownAddress = address;
                         map.setView([lat, lon], 16);
@@ -417,58 +534,6 @@
                 } catch (error) {
                     showMessage('Erro ao pesquisar endereço. Verifique sua conexão.', 'error');
                 }
-            }
-        }
-
-        async function captureCoordinate() {
-            if (!lastKnownPosition) {
-                showMessage("Nenhuma coordenada para capturar. Inicie a coleta ou selecione um ponto no mapa.", 'error');
-                return;
-            }
-
-            let addressToSave = lastKnownAddress;
-
-            if (!isManualCapture) {
-                const shouldIncludeAddress = await showConfirmationModal();
-                if (shouldIncludeAddress) {
-                    showMessage('Buscando endereço aproximado...');
-                    addressToSave = await reverseGeocode(lastKnownPosition.latitude, lastKnownPosition.longitude);
-                } else {
-                    addressToSave = 'Localização não inclusa';
-                }
-            }
-
-            const now = new Date();
-            const formattedTimestamp = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            
-            const pointName = pointNameInput.value.trim() || `Ponto ${coordinates.length + 1}`;
-            
-            coordinates.push({ name: pointName, latitude: lastKnownPosition.latitude, longitude: lastKnownPosition.longitude, address: addressToSave, timestamp: formattedTimestamp });
-            
-            const newMarker = L.marker([lastKnownPosition.latitude, lastKnownPosition.longitude]).addTo(map)
-                .bindPopup(`<b>${pointName}</b><br>Lat: ${lastKnownPosition.latitude.toFixed(6)}<br>Lon: ${lastKnownPosition.longitude.toFixed(6)}`).openPopup();
-            markers.push(newMarker);
-                
-            showMessage(`Ponto capturado! (${coordinates.length} no total)`, 'success');
-            pointNameInput.value = '';
-            setUIState(true);
-            updatePreviewTable();
-        }
-
-        function deleteLastPoint() {
-            if (coordinates.length > 0) {
-                coordinates.pop();
-                
-                const lastMarker = markers.pop();
-                if (lastMarker) {
-                    map.removeLayer(lastMarker);
-                }
-                
-                showMessage(`Último ponto deletado. (${coordinates.length} no total)`, 'info');
-                setUIState(true);
-                updatePreviewTable();
-            } else {
-                showMessage("Não há pontos para deletar.", 'error');
             }
         }
 
@@ -489,58 +554,66 @@
             showMessage("Coleta interrompida.", "info");
         }
 
-        function stopAndDownload() {
-            if (coordinates.length === 0) {
-                showMessage("Nenhum ponto capturado para baixar.", 'error');
+        // =================================================================
+        // Seção 5: Inicialização e Eventos
+        // =================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            initMap();
+            showMessage('Carregando...', 'info');
+        });
+
+        async function initFirebase() {
+            if (Object.keys(firebaseConfig).length === 0) {
+                authStatus.textContent = "Erro: Configuração do Firebase não encontrada.";
                 return;
             }
 
-            stopCollecting();
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
 
-            // Cria o conteúdo do arquivo CSV com ponto e vírgula como separador
-            let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Timestamp\n";
-            coordinates.forEach(point => {
-                const formattedLat = point.latitude.toFixed(6).replace('.', ',');
-                const formattedLon = point.longitude.toFixed(6).replace('.', ',');
-                const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
-                csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${point.timestamp}\n`;
-            });
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    authStatus.textContent = "Conectado à nuvem!";
+                    userIdDisplay.textContent = userId;
+                    appIdDisplay.textContent = appId;
+                    userInfo.classList.remove('hidden');
 
-            // Cria um link para download do arquivo com a codificação Windows-1252
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8-sig;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "COORD.csv");
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            coordinates = [];
-            markers = [];
-            lastKnownPosition = null;
-            lastKnownAddress = null;
-            if (manualMarker) {
-                map.removeLayer(manualMarker);
-                manualMarker = null;
-            }
-            setUIState(false);
-            coordinatesDisplay.classList.add('hidden');
-            map.eachLayer(layer => {
-                if (layer instanceof L.Marker) {
-                    map.removeLayer(layer);
+                    coordinatesRef = collection(db, `artifacts/${appId}/users/${userId}/coords`);
+                    
+                    // Listener em tempo real para o banco de dados
+                    unsubscribe = onSnapshot(coordinatesRef, (snapshot) => {
+                        localCoordinates = [];
+                        snapshot.forEach((doc) => {
+                            localCoordinates.push({ id: doc.id, ...doc.data() });
+                        });
+                        updatePreviewTable();
+                        showMessage(`Total de pontos sincronizados: ${localCoordinates.length}`, 'success');
+                    }, (error) => {
+                        console.error("Erro ao sincronizar dados:", error);
+                        showMessage("Erro ao sincronizar pontos com a nuvem.", "error");
+                    });
+                } else {
+                    // Tenta autenticação anônima se não houver token
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        authStatus.textContent = "Erro de autenticação. Tente novamente.";
+                        console.error("Erro de autenticação:", error);
+                    }
                 }
             });
-            showMessage("Coleta finalizada. Download iniciado.", 'success');
-            updatePreviewTable();
         }
-
-        // =================================================================
-        // Seção 4: Listeners de Eventos
-        // =================================================================
+        
         startButton.addEventListener('click', startCollecting);
         manualCaptureButton.addEventListener('click', () => {
+             stopCollecting();
              isManualCapture = true;
              showMessage('Clique no mapa para selecionar um ponto.', 'info');
              setUIState(true);
@@ -556,13 +629,6 @@
                 searchLocation();
             }
         });
-
-        // Inicializa o mapa ao carregar a página
-        window.onload = () => {
-             initMap();
-             showMessage('Aguardando sua permissão para acessar a localização...');
-             setUIState(false);
-        }
     </script>
 </body>
 </html>
