@@ -150,6 +150,18 @@
             </div>
         </div>
     </div>
+    
+    <!-- Novo Modal para Configuração do Firebase -->
+    <div id="config-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold mb-4">Configuração do Firebase</h3>
+            <p class="text-gray-600 mb-4">Para usar a funcionalidade de banco de dados, cole a configuração do seu projeto no Firebase.</p>
+            <textarea id="firebase-config-input" class="w-full h-32 p-2 mb-4 rounded-lg border border-gray-300" placeholder="Cole a configuração JSON aqui..."></textarea>
+            <button id="save-config-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">
+                Salvar Configuração
+            </button>
+        </div>
+    </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script type="module">
@@ -159,11 +171,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Variáveis globais do Firebase, fornecidas pelo ambiente.
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let db;
         let auth;
@@ -203,9 +210,15 @@
         const confirmationModal = document.getElementById('confirmation-modal');
         const confirmYesButton = document.getElementById('confirm-yes');
         const confirmNoButton = document.getElementById('confirm-no');
+        
+        const configModal = document.getElementById('config-modal');
+        const firebaseConfigInput = document.getElementById('firebase-config-input');
+        const saveConfigButton = document.getElementById('save-config-button');
 
         let GOOGLE_MAPS_API_KEY = null;
-
+        let FIREBASE_CONFIG = null;
+        const APP_ID = 'geopoint-app'; // ID fixo para o app, para garantir que os dados sejam armazenados em um local consistente
+        
         // =================================================================
         // Seção 2: Funções de Controle da UI e Firebase
         // =================================================================
@@ -259,17 +272,14 @@
             pointsTableBody.innerHTML = '';
             pointsCount.textContent = localCoordinates.length;
             
-            // Remove todos os marcadores do mapa para evitar duplicação
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
 
             localCoordinates.forEach((point, index) => {
-                // Adiciona um novo marcador para o ponto no mapa
                 const newMarker = L.marker([point.latitude, point.longitude]).addTo(map)
                     .bindPopup(`<b>${point.name}</b><br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)}`).openPopup();
                 markers.push(newMarker);
                 
-                // Adiciona a linha na tabela de pré-visualização
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors duration-150';
                 row.innerHTML = `
@@ -281,7 +291,6 @@
                 pointsTableBody.appendChild(row);
             });
 
-            // Reajusta o mapa para mostrar todos os pontos
             if (markers.length > 0) {
                 const group = new L.featureGroup(markers);
                 map.fitBounds(group.getBounds());
@@ -318,7 +327,6 @@
             
             showMessage('Salvando ponto no banco de dados...');
             try {
-                // Salva o ponto no Firestore
                 await addDoc(coordinatesRef, {
                     name: pointName,
                     latitude: lastKnownPosition.latitude,
@@ -340,7 +348,7 @@
                 const lastPoint = localCoordinates[localCoordinates.length - 1];
                 try {
                     showMessage('Deletando último ponto...');
-                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/coords`, lastPoint.id));
+                    await deleteDoc(doc(db, `artifacts/${APP_ID}/users/${userId}/coords`, lastPoint.id));
                     showMessage('Último ponto deletado.', 'info');
                 } catch (error) {
                     showMessage('Erro ao deletar o ponto.', 'error');
@@ -389,7 +397,9 @@
             const esriHybrid = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
             const esriStreet = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
             const esriTopographic = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
-            const esriReference = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane', attribution: 'Esri, HERE, Garmin' });
+            const esriReference = L.layerGroup([
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane', attribution: 'Esri, HERE, Garmin' })
+            ]);
             
             baseLayers = {
                 "Híbrido": L.layerGroup([esriHybrid, esriReference]).addTo(map),
@@ -558,18 +568,38 @@
         // Seção 5: Inicialização e Eventos
         // =================================================================
         document.addEventListener('DOMContentLoaded', () => {
-            initFirebase();
+            initApp();
             initMap();
-            showMessage('Carregando...', 'info');
         });
 
+        async function initApp() {
+             const storedConfig = localStorage.getItem('firebaseConfig');
+             if (storedConfig) {
+                 FIREBASE_CONFIG = JSON.parse(storedConfig);
+                 initFirebase();
+             } else {
+                 configModal.style.display = 'block';
+                 saveConfigButton.addEventListener('click', () => {
+                     try {
+                         FIREBASE_CONFIG = JSON.parse(firebaseConfigInput.value);
+                         localStorage.setItem('firebaseConfig', JSON.stringify(FIREBASE_CONFIG));
+                         configModal.style.display = 'none';
+                         initFirebase();
+                     } catch (e) {
+                         // Alterado para showMessage para evitar o problema com alert()
+                         showMessage("Formato JSON inválido. Por favor, tente novamente.", 'error');
+                     }
+                 });
+             }
+        }
+
         async function initFirebase() {
-            if (Object.keys(firebaseConfig).length === 0) {
+            if (!FIREBASE_CONFIG || Object.keys(FIREBASE_CONFIG).length === 0) {
                 authStatus.textContent = "Erro: Configuração do Firebase não encontrada.";
                 return;
             }
 
-            const app = initializeApp(firebaseConfig);
+            const app = initializeApp(FIREBASE_CONFIG);
             db = getFirestore(app);
             auth = getAuth(app);
 
@@ -578,12 +608,11 @@
                     userId = user.uid;
                     authStatus.textContent = "Conectado à nuvem!";
                     userIdDisplay.textContent = userId;
-                    appIdDisplay.textContent = appId;
+                    appIdDisplay.textContent = APP_ID;
                     userInfo.classList.remove('hidden');
 
-                    coordinatesRef = collection(db, `artifacts/${appId}/users/${userId}/coords`);
+                    coordinatesRef = collection(db, `artifacts/${APP_ID}/users/${userId}/coords`);
                     
-                    // Listener em tempo real para o banco de dados
                     unsubscribe = onSnapshot(coordinatesRef, (snapshot) => {
                         localCoordinates = [];
                         snapshot.forEach((doc) => {
@@ -596,13 +625,8 @@
                         showMessage("Erro ao sincronizar pontos com a nuvem.", "error");
                     });
                 } else {
-                    // Tenta autenticação anônima se não houver token
                     try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
+                        await signInAnonymously(auth);
                     } catch (error) {
                         authStatus.textContent = "Erro de autenticação. Tente novamente.";
                         console.error("Erro de autenticação:", error);
