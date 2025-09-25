@@ -63,20 +63,6 @@
         <p class="text-gray-500 text-sm mb-4">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
         <p class="text-gray-600 mb-6">Capture coordenadas, adicione um nome e visualize os pontos em tempo real.</p>
         
-        <!-- UI para Firebase -->
-        <div class="mb-4">
-            <div id="auth-status" class="bg-blue-100 text-blue-800 p-3 rounded-xl text-sm font-medium">
-                Carregando...
-            </div>
-            <div id="user-info" class="text-xs text-gray-500 mt-2 hidden">
-                <p>Usuário ID: <span id="user-id"></span></p>
-                <p>App ID: <span id="app-id"></span></p>
-            </div>
-            <button id="clear-config-button" class="mt-2 bg-gray-200 text-gray-700 py-1 px-3 rounded-full text-xs hover:bg-gray-300 transition-colors duration-200">
-                Limpar Configuração Salva
-            </button>
-        </div>
-
         <div id="map"></div>
 
         <!-- Barra de pesquisa -->
@@ -154,32 +140,11 @@
         </div>
     </div>
     
-    <!-- Novo Modal para Configuração do Firebase -->
-    <div id="config-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-2xl font-bold mb-4">Configuração do Firebase</h3>
-            <p class="text-gray-600 mb-4">Para usar a funcionalidade de banco de dados, cole a configuração do seu projeto no Firebase.</p>
-            <textarea id="firebase-config-input" class="w-full h-32 p-2 mb-4 rounded-lg border border-gray-300" placeholder="Cole a configuração JSON aqui..."></textarea>
-            <button id="save-config-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">
-                Salvar Configuração
-            </button>
-        </div>
-    </div>
-
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script type="module">
+    <script>
         // =================================================================
-        // Seção 1: Configuração do Firebase
+        // Seção 1: Variáveis de Estado da Aplicação
         // =================================================================
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        let db;
-        let auth;
-        let userId;
-        let coordinatesRef;
-        let unsubscribe;
         let localCoordinates = [];
         let markers = [];
         let map;
@@ -188,12 +153,7 @@
         let lastKnownAddress = null;
         let isManualCapture = false;
         let manualMarker = null;
-        let baseLayers;
 
-        const authStatus = document.getElementById('auth-status');
-        const userIdDisplay = document.getElementById('user-id');
-        const appIdDisplay = document.getElementById('app-id');
-        const userInfo = document.getElementById('user-info');
         const statusMessage = document.getElementById('status-message');
         const coordinatesDisplay = document.getElementById('coordinates-display');
         const latitudeText = document.getElementById('latitude-text');
@@ -207,7 +167,6 @@
         const pointNameInput = document.getElementById('point-name-input');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
-        const clearConfigButton = document.getElementById('clear-config-button');
         const pointsPreview = document.getElementById('points-preview');
         const pointsCount = document.getElementById('points-count');
         const pointsTableBody = document.getElementById('points-table-body');
@@ -215,16 +174,10 @@
         const confirmYesButton = document.getElementById('confirm-yes');
         const confirmNoButton = document.getElementById('confirm-no');
         
-        const configModal = document.getElementById('config-modal');
-        const firebaseConfigInput = document.getElementById('firebase-config-input');
-        const saveConfigButton = document.getElementById('save-config-button');
-
         let GOOGLE_MAPS_API_KEY = null;
-        let FIREBASE_CONFIG = null;
-        const APP_ID = 'geopoint-app'; // ID fixo para o app, para garantir que os dados sejam armazenados em um local consistente
         
         // =================================================================
-        // Seção 2: Funções de Controle da UI e Firebase
+        // Seção 2: Funções de Controle da UI
         // =================================================================
         function setUIState(isCollecting) {
             startButton.disabled = isCollecting;
@@ -302,9 +255,9 @@
 
             setUIState(false);
         }
-
+        
         // =================================================================
-        // Seção 3: Lógica de Coleta (Sincronizada com Firestore)
+        // Seção 3: Lógica de Coleta (Local)
         // =================================================================
         async function captureCoordinate() {
             if (!lastKnownPosition) {
@@ -329,35 +282,27 @@
             
             const pointName = pointNameInput.value.trim() || `Ponto ${localCoordinates.length + 1}`;
             
-            showMessage('Salvando ponto no banco de dados...');
-            try {
-                await addDoc(coordinatesRef, {
-                    name: pointName,
-                    latitude: lastKnownPosition.latitude,
-                    longitude: lastKnownPosition.longitude,
-                    address: addressToSave,
-                    timestamp: formattedTimestamp,
-                    createdAt: new Date()
-                });
-                showMessage('Ponto capturado e salvo!', 'success');
-                pointNameInput.value = '';
-            } catch (error) {
-                showMessage('Erro ao salvar ponto. Tente novamente.', 'error');
-                console.error("Erro ao adicionar documento:", error);
-            }
+            const newPoint = {
+                name: pointName,
+                latitude: lastKnownPosition.latitude,
+                longitude: lastKnownPosition.longitude,
+                address: addressToSave,
+                timestamp: formattedTimestamp,
+                id: Date.now()
+            };
+
+            localCoordinates.push(newPoint);
+            updatePreviewTable();
+            showMessage(`Ponto capturado e salvo localmente!`, 'success');
+            pointNameInput.value = '';
+            setUIState(false);
         }
 
-        async function deleteLastPoint() {
+        function deleteLastPoint() {
             if (localCoordinates.length > 0) {
-                const lastPoint = localCoordinates[localCoordinates.length - 1];
-                try {
-                    showMessage('Deletando último ponto...');
-                    await deleteDoc(doc(db, `artifacts/${APP_ID}/users/${userId}/coords`, lastPoint.id));
-                    showMessage('Último ponto deletado.', 'info');
-                } catch (error) {
-                    showMessage('Erro ao deletar o ponto.', 'error');
-                    console.error("Erro ao deletar documento:", error);
-                }
+                localCoordinates.pop();
+                updatePreviewTable();
+                showMessage('Última marcação deletada.', 'info');
             } else {
                 showMessage("Não há pontos para deletar.", 'error');
             }
@@ -405,7 +350,7 @@
                 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane', attribution: 'Esri, HERE, Garmin' })
             ]);
             
-            baseLayers = {
+            const baseLayers = {
                 "Híbrido": L.layerGroup([esriHybrid, esriReference]).addTo(map),
                 "Ruas": esriStreet,
                 "Topográfico": esriTopographic
@@ -567,104 +512,15 @@
             coordinatesDisplay.classList.add('hidden');
             showMessage("Coleta interrompida.", "info");
         }
-
+        
         // =================================================================
         // Seção 5: Inicialização e Eventos
         // =================================================================
         document.addEventListener('DOMContentLoaded', () => {
-            initApp();
             initMap();
         });
-
-        async function initApp() {
-            let configIsValid = false;
-            let storedConfig = localStorage.getItem('firebaseConfig');
-            
-            if (storedConfig) {
-                try {
-                    const parsedConfig = JSON.parse(storedConfig);
-                    if (parsedConfig && parsedConfig.apiKey && parsedConfig.projectId && parsedConfig.authDomain) {
-                        FIREBASE_CONFIG = parsedConfig;
-                        configIsValid = true;
-                    }
-                } catch (e) {
-                    console.error("Configuração do Firebase no localStorage é inválida, removendo-a.");
-                    localStorage.removeItem('firebaseConfig');
-                }
-            }
-
-            if (configIsValid) {
-                initFirebase();
-            } else {
-                configModal.style.display = 'block';
-                saveConfigButton.addEventListener('click', () => {
-                    try {
-                        const parsedConfig = JSON.parse(firebaseConfigInput.value);
-                        if (parsedConfig && parsedConfig.apiKey && parsedConfig.projectId && parsedConfig.authDomain) {
-                            FIREBASE_CONFIG = parsedConfig;
-                            localStorage.setItem('firebaseConfig', JSON.stringify(FIREBASE_CONFIG));
-                            configModal.style.display = 'none';
-                            initFirebase();
-                        } else {
-                            showMessage("Configuração do Firebase incompleta. Por favor, cole o JSON completo.", 'error');
-                            localStorage.removeItem('firebaseConfig');
-                        }
-                    } catch (e) {
-                        showMessage("Formato JSON inválido. Por favor, tente novamente.", 'error');
-                        localStorage.removeItem('firebaseConfig');
-                    }
-                });
-            }
-        }
-
-        async function initFirebase() {
-            if (!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.projectId || !FIREBASE_CONFIG.authDomain) {
-                authStatus.textContent = "Erro: Configuração do Firebase inválida. Recarregue a página para inserir a configuração correta.";
-                console.error("FIREBASE_CONFIG é inválido ou incompleto:", FIREBASE_CONFIG);
-                return;
-            }
-
-            try {
-                const app = initializeApp(FIREBASE_CONFIG);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        authStatus.textContent = "Conectado à nuvem!";
-                        userIdDisplay.textContent = userId;
-                        appIdDisplay.textContent = APP_ID;
-                        userInfo.classList.remove('hidden');
-
-                        coordinatesRef = collection(db, `artifacts/${APP_ID}/users/${userId}/coords`);
-                        
-                        unsubscribe = onSnapshot(coordinatesRef, (snapshot) => {
-                            localCoordinates = [];
-                            snapshot.forEach((doc) => {
-                                localCoordinates.push({ id: doc.id, ...doc.data() });
-                            });
-                            updatePreviewTable();
-                            showMessage(`Total de pontos sincronizados: ${localCoordinates.length}`, 'success');
-                        }, (error) => {
-                            console.error("Erro ao sincronizar dados:", error);
-                            showMessage("Erro ao sincronizar pontos com a nuvem.", "error");
-                        });
-                    } else {
-                        try {
-                            await signInAnonymously(auth);
-                        } catch (error) {
-                            authStatus.textContent = "Erro de autenticação. Tente novamente.";
-                            console.error("Erro de autenticação:", error);
-                        }
-                    }
-                });
-            } catch (error) {
-                authStatus.textContent = "Erro na inicialização do Firebase. Verifique sua configuração.";
-                console.error("Erro ao inicializar o Firebase:", error);
-            }
-        }
         
+        // Listeners de Eventos
         startButton.addEventListener('click', startCollecting);
         manualCaptureButton.addEventListener('click', () => {
              stopCollecting();
@@ -682,13 +538,6 @@
             if (e.key === 'Enter') {
                 searchLocation();
             }
-        });
-        clearConfigButton.addEventListener('click', () => {
-            localStorage.removeItem('firebaseConfig');
-            showMessage('Configuração salva limpa. Recarregue a página para redefinir.', 'success');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
         });
     </script>
 </body>
