@@ -72,6 +72,9 @@
                 <p>Usuário ID: <span id="user-id"></span></p>
                 <p>App ID: <span id="app-id"></span></p>
             </div>
+            <button id="clear-config-button" class="mt-2 bg-gray-200 text-gray-700 py-1 px-3 rounded-full text-xs hover:bg-gray-300 transition-colors duration-200">
+                Limpar Configuração Salva
+            </button>
         </div>
 
         <div id="map"></div>
@@ -204,6 +207,7 @@
         const pointNameInput = document.getElementById('point-name-input');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
+        const clearConfigButton = document.getElementById('clear-config-button');
         const pointsPreview = document.getElementById('points-preview');
         const pointsCount = document.getElementById('points-count');
         const pointsTableBody = document.getElementById('points-table-body');
@@ -573,66 +577,92 @@
         });
 
         async function initApp() {
-             const storedConfig = localStorage.getItem('firebaseConfig');
-             if (storedConfig) {
-                 FIREBASE_CONFIG = JSON.parse(storedConfig);
-                 initFirebase();
-             } else {
-                 configModal.style.display = 'block';
-                 saveConfigButton.addEventListener('click', () => {
-                     try {
-                         FIREBASE_CONFIG = JSON.parse(firebaseConfigInput.value);
-                         localStorage.setItem('firebaseConfig', JSON.stringify(FIREBASE_CONFIG));
-                         configModal.style.display = 'none';
-                         initFirebase();
-                     } catch (e) {
-                         // Alterado para showMessage para evitar o problema com alert()
-                         showMessage("Formato JSON inválido. Por favor, tente novamente.", 'error');
-                     }
-                 });
-             }
+            let configIsValid = false;
+            let storedConfig = localStorage.getItem('firebaseConfig');
+            
+            if (storedConfig) {
+                try {
+                    const parsedConfig = JSON.parse(storedConfig);
+                    if (parsedConfig && parsedConfig.apiKey && parsedConfig.projectId && parsedConfig.authDomain) {
+                        FIREBASE_CONFIG = parsedConfig;
+                        configIsValid = true;
+                    }
+                } catch (e) {
+                    console.error("Configuração do Firebase no localStorage é inválida, removendo-a.");
+                    localStorage.removeItem('firebaseConfig');
+                }
+            }
+
+            if (configIsValid) {
+                initFirebase();
+            } else {
+                configModal.style.display = 'block';
+                saveConfigButton.addEventListener('click', () => {
+                    try {
+                        const parsedConfig = JSON.parse(firebaseConfigInput.value);
+                        if (parsedConfig && parsedConfig.apiKey && parsedConfig.projectId && parsedConfig.authDomain) {
+                            FIREBASE_CONFIG = parsedConfig;
+                            localStorage.setItem('firebaseConfig', JSON.stringify(FIREBASE_CONFIG));
+                            configModal.style.display = 'none';
+                            initFirebase();
+                        } else {
+                            showMessage("Configuração do Firebase incompleta. Por favor, cole o JSON completo.", 'error');
+                            localStorage.removeItem('firebaseConfig');
+                        }
+                    } catch (e) {
+                        showMessage("Formato JSON inválido. Por favor, tente novamente.", 'error');
+                        localStorage.removeItem('firebaseConfig');
+                    }
+                });
+            }
         }
 
         async function initFirebase() {
-            if (!FIREBASE_CONFIG || Object.keys(FIREBASE_CONFIG).length === 0) {
-                authStatus.textContent = "Erro: Configuração do Firebase não encontrada.";
+            if (!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.projectId || !FIREBASE_CONFIG.authDomain) {
+                authStatus.textContent = "Erro: Configuração do Firebase inválida. Recarregue a página para inserir a configuração correta.";
+                console.error("FIREBASE_CONFIG é inválido ou incompleto:", FIREBASE_CONFIG);
                 return;
             }
 
-            const app = initializeApp(FIREBASE_CONFIG);
-            db = getFirestore(app);
-            auth = getAuth(app);
+            try {
+                const app = initializeApp(FIREBASE_CONFIG);
+                db = getFirestore(app);
+                auth = getAuth(app);
 
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    authStatus.textContent = "Conectado à nuvem!";
-                    userIdDisplay.textContent = userId;
-                    appIdDisplay.textContent = APP_ID;
-                    userInfo.classList.remove('hidden');
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        authStatus.textContent = "Conectado à nuvem!";
+                        userIdDisplay.textContent = userId;
+                        appIdDisplay.textContent = APP_ID;
+                        userInfo.classList.remove('hidden');
 
-                    coordinatesRef = collection(db, `artifacts/${APP_ID}/users/${userId}/coords`);
-                    
-                    unsubscribe = onSnapshot(coordinatesRef, (snapshot) => {
-                        localCoordinates = [];
-                        snapshot.forEach((doc) => {
-                            localCoordinates.push({ id: doc.id, ...doc.data() });
+                        coordinatesRef = collection(db, `artifacts/${APP_ID}/users/${userId}/coords`);
+                        
+                        unsubscribe = onSnapshot(coordinatesRef, (snapshot) => {
+                            localCoordinates = [];
+                            snapshot.forEach((doc) => {
+                                localCoordinates.push({ id: doc.id, ...doc.data() });
+                            });
+                            updatePreviewTable();
+                            showMessage(`Total de pontos sincronizados: ${localCoordinates.length}`, 'success');
+                        }, (error) => {
+                            console.error("Erro ao sincronizar dados:", error);
+                            showMessage("Erro ao sincronizar pontos com a nuvem.", "error");
                         });
-                        updatePreviewTable();
-                        showMessage(`Total de pontos sincronizados: ${localCoordinates.length}`, 'success');
-                    }, (error) => {
-                        console.error("Erro ao sincronizar dados:", error);
-                        showMessage("Erro ao sincronizar pontos com a nuvem.", "error");
-                    });
-                } else {
-                    try {
-                        await signInAnonymously(auth);
-                    } catch (error) {
-                        authStatus.textContent = "Erro de autenticação. Tente novamente.";
-                        console.error("Erro de autenticação:", error);
+                    } else {
+                        try {
+                            await signInAnonymously(auth);
+                        } catch (error) {
+                            authStatus.textContent = "Erro de autenticação. Tente novamente.";
+                            console.error("Erro de autenticação:", error);
+                        }
                     }
-                }
-            });
+                });
+            } catch (error) {
+                authStatus.textContent = "Erro na inicialização do Firebase. Verifique sua configuração.";
+                console.error("Erro ao inicializar o Firebase:", error);
+            }
         }
         
         startButton.addEventListener('click', startCollecting);
@@ -652,6 +682,13 @@
             if (e.key === 'Enter') {
                 searchLocation();
             }
+        });
+        clearConfigButton.addEventListener('click', () => {
+            localStorage.removeItem('firebaseConfig');
+            showMessage('Configuração salva limpa. Recarregue a página para redefinir.', 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         });
     </script>
 </body>
