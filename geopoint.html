@@ -20,7 +20,7 @@
             margin-bottom: 1.5rem;
         }
         .modal {
-            display: none; /* Esconde o modal por padrão */
+            display: none;
             position: fixed;
             z-index: 1000;
             left: 0;
@@ -60,7 +60,7 @@
             </svg>
         </div>
         <h1 class="text-3xl font-bold mb-2 text-gray-800">GeoPoint</h1>
-        <p class="text-gray-500 text-sm mb-4">Desenvolvido para fins de planejamento urbano e georreferenciamento.</p>
+        <p class="text-gray-500 text-sm mb-4">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
         <p class="text-gray-600 mb-6">Capture coordenadas, adicione um nome e visualize os pontos em tempo real.</p>
 
         <div id="map"></div>
@@ -107,6 +107,26 @@
                 Parar e Baixar
             </button>
         </div>
+        
+        <!-- Tabela de Prévia dos Pontos -->
+        <div id="points-preview" class="mt-8 hidden">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">Pontos Capturados: (<span id="points-count">0</span>)</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded-xl shadow-lg">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">#</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nome do Ponto</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Latitude</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Longitude</th>
+                        </tr>
+                    </thead>
+                    <tbody id="points-table-body" class="divide-y divide-gray-200">
+                        <!-- Pontos serão adicionados aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- Modal de Confirmação -->
@@ -122,7 +142,9 @@
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        // Array para armazenar as coordenadas e os marcadores
+        // =================================================================
+        // Seção 1: Variáveis e Elementos da UI
+        // =================================================================
         let coordinates = [];
         let markers = [];
         let watchId = null;
@@ -132,7 +154,6 @@
         let isManualCapture = false;
         let manualMarker = null;
 
-        // Elementos da UI
         const statusMessage = document.getElementById('status-message');
         const coordinatesDisplay = document.getElementById('coordinates-display');
         const latitudeText = document.getElementById('latitude-text');
@@ -146,8 +167,9 @@
         const pointNameInput = document.getElementById('point-name-input');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
-
-        // Modal
+        const pointsPreview = document.getElementById('points-preview');
+        const pointsCount = document.getElementById('points-count');
+        const pointsTableBody = document.getElementById('points-table-body');
         const confirmationModal = document.getElementById('confirmation-modal');
         const confirmYesButton = document.getElementById('confirm-yes');
         const confirmNoButton = document.getElementById('confirm-no');
@@ -155,7 +177,9 @@
         // A CHAVE DA API SERÁ SOLICITADA AO USUÁRIO AO TENTAR USAR A PESQUISA
         let GOOGLE_MAPS_API_KEY = null;
 
-        // Funções de controle dos botões
+        // =================================================================
+        // Seção 2: Funções de Controle da UI
+        // =================================================================
         function setUIState(isCollecting) {
             startButton.disabled = isCollecting;
             manualCaptureButton.disabled = isCollecting;
@@ -163,16 +187,22 @@
             deleteButton.disabled = coordinates.length === 0;
             downloadButton.disabled = coordinates.length === 0;
             pointNameInput.disabled = !isCollecting && !manualMarker;
-            if (isCollecting) {
+            
+            if (isCollecting || isManualCapture) {
                 stopButton.classList.remove('hidden');
             } else {
                 stopButton.classList.add('hidden');
+            }
+            if (coordinates.length > 0) {
+                pointsPreview.classList.remove('hidden');
+            } else {
+                pointsPreview.classList.add('hidden');
             }
         }
 
         function showMessage(message, type = 'info') {
             statusMessage.textContent = message;
-            statusMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800');
+            statusMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800', 'bg-yellow-100', 'text-yellow-800');
             if (type === 'error') {
                 statusMessage.classList.add('bg-red-100', 'text-red-800');
             } else if (type === 'success') {
@@ -180,7 +210,6 @@
             } else {
                 statusMessage.classList.add('bg-yellow-100', 'text-yellow-800');
             }
-            statusMessage.classList.remove('hidden');
         }
 
         function showConfirmationModal() {
@@ -197,23 +226,38 @@
             });
         }
         
-        // Funções do GPS e Mapa
+        function updatePreviewTable() {
+            pointsTableBody.innerHTML = '';
+            pointsCount.textContent = coordinates.length;
+            coordinates.forEach((point, index) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition-colors duration-150';
+                row.innerHTML = `
+                    <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-500">${index + 1}</td>
+                    <td class="py-2 px-4 whitespace-nowrap text-sm font-medium text-gray-900">${point.name}</td>
+                    <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-500">${point.latitude.toFixed(6).replace('.', ',')}</td>
+                    <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-500">${point.longitude.toFixed(6).replace('.', ',')}</td>
+                `;
+                pointsTableBody.appendChild(row);
+            });
+            setUIState(false);
+        }
+
+        // =================================================================
+        // Seção 3: Lógica do Mapa e API
+        // =================================================================
         function initMap() {
-            // Inicializa o mapa com um ponto de vista padrão em Curitiba
             map = L.map('map').setView([-25.4284, -49.2733], 13);
             
-            // Adiciona a camada de mapa de satélite
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
             }).addTo(map);
             
-            // Adiciona a camada de rótulos (híbrida)
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
                 attribution: 'Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI, Esri China (Hong Kong), Esri Korea, Esri (Thailand), NGCC, OSM',
-                pane: 'markerPane' // Garante que fique sobre a camada de satélite
+                pane: 'markerPane'
             }).addTo(map);
 
-            // Adiciona um listener de clique ao mapa para o modo manual
             map.on('click', onMapClick);
         }
 
@@ -256,9 +300,13 @@
         }
 
         function startCollecting() {
+            if (manualMarker) {
+                map.removeLayer(manualMarker);
+                manualMarker = null;
+            }
+
             isManualCapture = false;
             showMessage('Acessando localização...');
-            setUIState(true);
             coordinatesDisplay.classList.remove('hidden');
             
             map.locate({setView: true, maxZoom: 16, watch: true, enableHighAccuracy: true});
@@ -404,6 +452,7 @@
             showMessage(`Ponto capturado! (${coordinates.length} no total)`, 'success');
             pointNameInput.value = '';
             setUIState(true);
+            updatePreviewTable();
         }
 
         function deleteLastPoint() {
@@ -417,6 +466,7 @@
                 
                 showMessage(`Último ponto deletado. (${coordinates.length} no total)`, 'info');
                 setUIState(true);
+                updatePreviewTable();
             } else {
                 showMessage("Não há pontos para deletar.", 'error');
             }
@@ -450,15 +500,13 @@
             // Cria o conteúdo do arquivo CSV com ponto e vírgula como separador
             let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Timestamp\n";
             coordinates.forEach(point => {
-                // Formata as coordenadas para 6 casas decimais e substitui o ponto pela vírgula
                 const formattedLat = point.latitude.toFixed(6).replace('.', ',');
                 const formattedLon = point.longitude.toFixed(6).replace('.', ',');
-                // Garante que o endereço não contenha ponto e vírgula
                 const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
                 csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${point.timestamp}\n`;
             });
 
-            // Cria um link para download do arquivo
+            // Cria um link para download do arquivo com a codificação Windows-1252
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8-sig;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -469,7 +517,6 @@
             link.click();
             document.body.removeChild(link);
             
-            // Limpa o estado da aplicação e o mapa
             coordinates = [];
             markers = [];
             lastKnownPosition = null;
@@ -486,9 +533,12 @@
                 }
             });
             showMessage("Coleta finalizada. Download iniciado.", 'success');
+            updatePreviewTable();
         }
 
-        // Event Listeners
+        // =================================================================
+        // Seção 4: Listeners de Eventos
+        // =================================================================
         startButton.addEventListener('click', startCollecting);
         manualCaptureButton.addEventListener('click', () => {
              isManualCapture = true;
