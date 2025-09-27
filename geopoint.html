@@ -10,7 +10,11 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f3f4f6; /* Light Mode Background */
+            transition: background-color 0.3s;
+        }
+        .dark body {
+            background-color: #1f2937; /* Dark Mode Background */
         }
         #map {
             height: 400px;
@@ -19,6 +23,19 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             margin-bottom: 1.5rem;
         }
+        /* Base styles for dark mode elements */
+        .dark .bg-white { background-color: #374151; }
+        .dark .text-gray-800 { color: #f3f4f6; }
+        .dark .text-gray-600 { color: #d1d5db; }
+        .dark .text-gray-500 { color: #9ca3af; }
+        .dark .bg-gray-100 { background-color: #4b5563; }
+        .dark .text-gray-700 { color: #f3f4f6; }
+        .dark input { background-color: #4b5563; border-color: #6b7280; color: #f3f4f6; }
+        .dark .bg-gray-200 { background-color: #4b5563; }
+        .dark .divide-gray-200 > * { border-color: #6b7280; }
+        .dark .hover\:bg-gray-50:hover { background-color: #4b5563; }
+
+        /* Modal styling */
         .modal {
             display: none;
             position: fixed;
@@ -42,6 +59,10 @@
             max-width: 400px;
             text-align: center;
         }
+        .dark .modal-content {
+            background-color: #374151;
+            color: #f3f4f6;
+        }
         .modal-buttons {
             display: flex;
             justify-content: center;
@@ -50,42 +71,53 @@
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
 
-    <div id="main-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center">
+    <div id="main-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center relative transition-colors duration-300">
+        <!-- Botão de Toggle Dark Mode -->
+        <button id="theme-toggle" class="absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none">
+            <!-- Ícone de Sol (Light Mode) / Lua (Dark Mode) -->
+            <svg id="sun-icon" class="h-6 w-6 text-yellow-500 transition-opacity duration-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zm0 18a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0v-2.25a.75.75 0 01.75-.75zM5.968 5.969a.75.75 0 011.06-.01L8.53 7.377a.75.75 0 01-1.06 1.06l-1.482-1.481a.75.75 0 01.01-1.06zM15.47 15.47a.75.75 0 011.06-1.06l1.482 1.48a.75.75 0 01-1.06 1.06l-1.482-1.48zm-9.332-.01a.75.75 0 01-.01-1.06l1.482-1.482a.75.75 0 011.06 1.06l-1.48 1.482a.75.75 0 01-1.062.009zM18.377 8.53a.75.75 0 01-1.06-1.06l1.48-1.482a.75.75 0 011.06 1.06l-1.48 1.482zM4.5 12a.75.75 0 01-.75-.75v-2.25a.75.75 0 011.5 0v2.25a.75.75 0 01-.75.75zM21 12a.75.75 0 01-.75-.75v-2.25a.75.75 0 011.5 0v2.25a.75.75 0 01-.75.75z"/>
+            </svg>
+            <svg id="moon-icon" class="h-6 w-6 text-gray-400 transition-opacity duration-300" fill="currentColor" viewBox="0 0 24 24" style="display: none;">
+                <path d="M9.5 2C13.52 2 17 5.48 17 9.5c0 3.01-1.78 5.66-4.44 6.89.87.52 1.44 1.48 1.44 2.56 0 1.94-1.56 3.5-3.5 3.5s-3.5-1.56-3.5-3.5c0-1.08.57-2.04 1.44-2.56C6.78 15.16 5 12.51 5 9.5 5 5.48 8.48 2 9.5 2z"/>
+            </svg>
+        </button>
         <!-- Logo -->
         <div class="mb-4">
             <svg class="h-16 w-16 mx-auto text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
         </div>
-        <h1 class="text-3xl font-bold mb-2 text-gray-800">ToThePoint</h1>
-        <p class="text-gray-500 text-sm mb-4">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
-        <p class="text-gray-600 mb-6">Capture coordenadas, adicione um nome e visualize os pontos em tempo real.</p>
+        <h1 class="text-3xl font-bold mb-2 text-gray-900 dark:text-gray-100">ToThePoint</h1>
+        <p class="text-gray-700 dark:text-gray-400 text-sm mb-4">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
+        <p class="text-gray-800 dark:text-gray-300 mb-6">Capture coordenadas, adicione um nome e visualize os pontos em tempo real.</p>
         
         <div id="map"></div>
 
         <!-- Barra de pesquisa -->
         <div class="mb-4 flex gap-2">
-            <input type="text" id="search-input" placeholder="Pesquisar endereço ou coordenadas..." class="flex-1 p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <input type="text" id="search-input" placeholder="Pesquisar endereço ou coordenadas..." class="flex-1 p-3 rounded-xl border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <button id="search-button" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                 Pesquisar
             </button>
         </div>
 
-        <div id="status-message" class="bg-yellow-100 text-yellow-800 p-3 rounded-xl mb-4 text-sm font-medium hidden">
+        <div id="status-message" class="p-3 rounded-xl mb-4 text-sm font-medium hidden">
             Aguardando sua permissão para acessar a localização...
         </div>
 
-        <div id="coordinates-display" class="bg-gray-100 p-4 rounded-xl mb-6 hidden">
-            <p class="text-gray-500 text-sm">Coordenadas Atuais:</p>
-            <p id="latitude-text" class="text-xl font-bold text-gray-700">Latitude: --</p>
-            <p id="longitude-text" class="text-xl font-bold text-gray-700">Longitude: --</p>
+        <div id="coordinates-display" class="bg-gray-100 dark:bg-gray-700 p-4 rounded-xl mb-6 hidden">
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Coordenadas Atuais:</p>
+            <p id="latitude-text" class="text-xl font-bold text-gray-700 dark:text-white">Latitude: --</p>
+            <p id="longitude-text" class="text-xl font-bold text-gray-700 dark:text-white">Longitude: --</p>
+            <p id="accuracy-text" class="text-sm font-medium text-gray-500 dark:text-gray-400">Precisão: --</p>
         </div>
 
         <!-- Campo de nome do ponto (Inicialmente Oculto) -->
         <div class="mb-4 hidden" id="point-name-container">
-            <input type="text" id="point-name-input" placeholder="Digite o nome da sua marcação aqui" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <input type="text" id="point-name-input" placeholder="Digite o nome da sua marcação aqui" class="w-full p-3 rounded-xl border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
         </div>
 
         <div class="flex flex-col gap-4">
@@ -108,19 +140,19 @@
         
         <!-- Tabela de Prévia dos Pontos -->
         <div id="points-preview" class="mt-8 hidden">
-            <h3 class="text-xl font-bold mb-4 text-gray-800">Pontos Capturados: (<span id="points-count">0</span>)</h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Pontos Capturados: (<span id="points-count">0</span>)</h3>
             <div class="overflow-x-auto">
-                <table class="min-w-full bg-white rounded-xl shadow-lg">
-                    <thead class="bg-gray-200">
+                <table class="min-w-full bg-white dark:bg-gray-700 rounded-xl shadow-lg">
+                    <thead class="bg-gray-200 dark:bg-gray-600">
                         <tr>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">#</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nome do Ponto</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Latitude</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Longitude</th>
-                            <th class="py-2 px-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Ação</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">#</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Nome do Ponto</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Latitude</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Longitude</th>
+                            <th class="py-2 px-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Ação</th>
                         </tr>
                     </thead>
-                    <tbody id="points-table-body" class="divide-y divide-gray-200">
+                    <tbody id="points-table-body" class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-800 dark:text-gray-200">
                         <!-- Pontos serão adicionados aqui via JavaScript -->
                     </tbody>
                 </table>
@@ -149,14 +181,17 @@
         let map;
         let watchId = null;
         let lastKnownPosition = null;
+        let lastKnownAccuracy = null; // Nova variável para precisão
         let lastKnownAddress = null;
         let isManualCapture = false;
         let manualMarker = null;
+        let isCollecting = false;
 
         const statusMessage = document.getElementById('status-message');
         const coordinatesDisplay = document.getElementById('coordinates-display');
         const latitudeText = document.getElementById('latitude-text');
         const longitudeText = document.getElementById('longitude-text');
+        const accuracyText = document.getElementById('accuracy-text'); // Novo elemento
         const startButton = document.getElementById('start-button');
         const manualCaptureButton = document.getElementById('manual-capture-button');
         const captureButton = document.getElementById('capture-button');
@@ -172,16 +207,31 @@
         const confirmationModal = document.getElementById('confirmation-modal');
         const confirmYesButton = document.getElementById('confirm-yes');
         const confirmNoButton = document.getElementById('confirm-no');
+        const themeToggle = document.getElementById('theme-toggle');
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
         
-        // A chave API do Google Maps é solicitada via prompt na primeira busca.
         let GOOGLE_MAPS_API_KEY = null;
         
         // =================================================================
         // Seção 2: Funções de Controle da UI
         // =================================================================
-        function setUIState(isCollecting) {
-            // Verifica se há uma coordenada pronta para ser capturada
+        function setButtonText(id, text) {
+            document.getElementById(id).textContent = text;
+        }
+
+        function setUIState(collectingStatus) {
+            // collectingStatus: true/false se o GPS estiver ativo
+            isCollecting = collectingStatus;
+
             const isPointReady = lastKnownPosition !== null; 
+
+            // Gerencia o texto dos botões se não estiverem em estado de carregamento
+            if (!isCollecting) {
+                setButtonText('start-button', 'Iniciar GPS');
+                setButtonText('manual-capture-button', 'Marcar Manualmente');
+                setButtonText('search-button', 'Pesquisar');
+            }
 
             startButton.disabled = isCollecting;
             manualCaptureButton.disabled = isCollecting;
@@ -189,11 +239,14 @@
             downloadButton.disabled = localCoordinates.length === 0;
             pointNameInput.disabled = !isPointReady;
             
-            // Controle de visibilidade do campo de nome
+            // Controle de visibilidade
             if (isPointReady) {
                  pointNameContainer.classList.remove('hidden');
+                 coordinatesDisplay.classList.remove('hidden');
             } else {
                  pointNameContainer.classList.add('hidden');
+                 coordinatesDisplay.classList.add('hidden');
+                 accuracyText.textContent = 'Precisão: --'; // Limpa a precisão
             }
 
             if (isCollecting || isManualCapture) {
@@ -210,13 +263,14 @@
 
         function showMessage(message, type = 'info') {
             statusMessage.textContent = message;
-            statusMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800', 'bg-yellow-100', 'text-yellow-800');
+            statusMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800', 'bg-yellow-100', 'text-yellow-800', 'dark:bg-red-900', 'dark:text-red-300', 'dark:bg-green-900', 'dark:text-green-300', 'dark:bg-yellow-900', 'dark:text-yellow-300');
+            
             if (type === 'error') {
-                statusMessage.classList.add('bg-red-100', 'text-red-800');
+                statusMessage.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-300');
             } else if (type === 'success') {
-                statusMessage.classList.add('bg-green-100', 'text-green-800');
+                statusMessage.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-300');
             } else {
-                statusMessage.classList.add('bg-yellow-100', 'text-yellow-800');
+                statusMessage.classList.add('bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:text-yellow-300');
             }
         }
 
@@ -251,12 +305,12 @@
                 
                 // Cria linha da tabela
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50 transition-colors duration-150';
+                row.className = 'hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150';
                 row.innerHTML = `
-                    <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-500">${index + 1}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm font-medium text-gray-900">${point.name}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-500">${point.latitude.toFixed(6).replace('.', ',')}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-500">${point.longitude.toFixed(6).replace('.', ',')}</td>
+                    <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${index + 1}</td>
+                    <td class="py-2 px-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">${point.name}</td>
+                    <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${point.latitude.toFixed(6).replace('.', ',')}</td>
+                    <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${point.longitude.toFixed(6).replace('.', ',')}</td>
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-center">
                         <button onclick="deletePoint(${point.id})" class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500">
                             <!-- Ícone de Lixeira (Trash Icon SVG) -->
@@ -322,6 +376,7 @@
                 name: pointName,
                 latitude: lastKnownPosition.latitude,
                 longitude: lastKnownPosition.longitude,
+                accuracy: lastKnownAccuracy, // Salva a precisão
                 address: addressToSave,
                 timestamp: formattedTimestamp,
                 // Usa Date.now() para garantir um ID único para a função deletePoint(id)
@@ -336,6 +391,7 @@
             
             // Limpa o ponto atual após a captura
             lastKnownPosition = null;
+            lastKnownAccuracy = null;
             lastKnownAddress = null;
             if (manualMarker) map.removeLayer(manualMarker);
             manualMarker = null;
@@ -350,13 +406,14 @@
             stopCollecting();
 
             // Usa UTF-8 com BOM (\uFEFF) para forçar o Excel a reconhecer caracteres especiais
-            let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Timestamp\n";
+            let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Precisao (m);Timestamp\n";
             localCoordinates.forEach(point => {
                 const formattedLat = point.latitude.toFixed(6).replace('.', ',');
                 const formattedLon = point.longitude.toFixed(6).replace('.', ',');
+                const formattedAccuracy = point.accuracy !== null ? point.accuracy.toFixed(1).replace('.', ',') : '';
                 // Garante que o endereço com vírgulas internas não quebre o CSV, encapsulando-o em aspas
                 const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
-                csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${point.timestamp}\n`;
+                csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${formattedAccuracy};${point.timestamp}\n`;
             });
 
             const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
@@ -425,7 +482,11 @@
             // Lógica para modo manual (clique no mapa)
             stopCollecting(); // Limpa qualquer coleta automática
             isManualCapture = true;
+            
+            setButtonText('manual-capture-button', 'Buscando...');
+
             lastKnownPosition = { latitude: e.latlng.lat, longitude: e.latlng.lng };
+            lastKnownAccuracy = 0; // Precisão zero para ponto manual
             
             if (manualMarker) {
                 map.removeLayer(manualMarker);
@@ -440,15 +501,21 @@
 
             latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
             longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
+            accuracyText.textContent = `Precisão: $\\pm 0m$ (Manual)`;
+
             showMessage('Ponto selecionado no mapa. Clique em "Registrar Ponto" para salvar.', 'success');
             setUIState(true);
+            setButtonText('manual-capture-button', 'Marcar Manualmente');
         }
 
         function startCollecting() {
             // Inicia o modo de coleta automática (GPS)
             stopCollecting();
             isCollecting = true;
+            
+            setButtonText('start-button', 'Localizando...');
             showMessage('Acessando localização...', 'info');
+            
             coordinatesDisplay.classList.remove('hidden');
             
             // Configura o Leaflet para acompanhar o GPS
@@ -459,8 +526,11 @@
                 watchId = navigator.geolocation.watchPosition(
                     position => {
                         lastKnownPosition = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+                        lastKnownAccuracy = position.coords.accuracy;
+                        
                         latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
                         longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
+                        accuracyText.textContent = `Precisão: $\\pm ${lastKnownAccuracy.toFixed(1)}m$`;
                         
                         // Move o mapa para a posição atual
                         map.setView([lastKnownPosition.latitude, lastKnownPosition.longitude], 16);
@@ -473,10 +543,12 @@
 
                         showMessage('Localização encontrada. Pronta para capturar!', 'success');
                         setUIState(true);
+                        setButtonText('start-button', 'Localizado');
                     },
                     error => {
                         // Tratamento de erros de GPS
                         setUIState(false);
+                        setButtonText('start-button', 'Iniciar GPS');
                         switch(error.code) {
                             case error.PERMISSION_DENIED: showMessage("Erro: Acesso à localização negado. Ative nas configurações do navegador.", 'error'); break;
                             case error.POSITION_UNAVAILABLE: showMessage("Erro: Localização não disponível. Tente o modo manual.", 'error'); break;
@@ -512,6 +584,8 @@
             
             stopCollecting(); // Limpa qualquer coleta ativa
 
+            setButtonText('search-button', 'Buscando...');
+
             const isCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query);
             
             if (isCoordinates) {
@@ -522,17 +596,21 @@
                 if (!isNaN(lat) && !isNaN(lon)) {
                     isManualCapture = true;
                     lastKnownPosition = { latitude: lat, longitude: lon };
+                    lastKnownAccuracy = 0;
                     lastKnownAddress = `Coordenadas: ${query}`;
                     map.setView([lat, lon], 16);
                     if (manualMarker) map.removeLayer(manualMarker);
                     manualMarker = L.marker([lat, lon]).addTo(map).bindPopup('Ponto pesquisado').openPopup();
                     latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
                     longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
+                    accuracyText.textContent = `Precisão: $\\pm 0m$ (Manual)`;
+
                     showMessage('Coordenadas localizadas no mapa.', 'success');
                     setUIState(true);
                 } else {
                     showMessage('Formato de coordenadas inválido. Tente "latitude,longitude".', 'error');
                 }
+                setButtonText('search-button', 'Pesquisar');
             } else {
                 // Busca por endereço (Geocodificação)
                 showMessage('Pesquisando endereço...', 'info');
@@ -546,12 +624,15 @@
                         const lon = location.lng;
                         const address = data.results[0].formatted_address;
                         lastKnownPosition = { latitude: lat, longitude: lon };
+                        lastKnownAccuracy = 0;
                         lastKnownAddress = address;
                         map.setView([lat, lon], 16);
                         if (manualMarker) map.removeLayer(manualMarker);
                         manualMarker = L.marker([lat, lon]).addTo(map).bindPopup(address).openPopup();
                         latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
                         longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
+                        accuracyText.textContent = `Precisão: $\\pm 0m$ (Manual)`;
+
                         showMessage('Endereço localizado no mapa.', 'success');
                         setUIState(true);
                     } else {
@@ -560,6 +641,7 @@
                 } catch (error) {
                     showMessage('Erro ao pesquisar endereço. Verifique sua conexão.', 'error');
                 }
+                setButtonText('search-button', 'Pesquisar');
             }
         }
 
@@ -574,6 +656,7 @@
                 manualMarker = null;
             }
             lastKnownPosition = null;
+            lastKnownAccuracy = null;
             lastKnownAddress = null;
             isCollecting = false;
             isManualCapture = false;
@@ -583,9 +666,41 @@
         }
         
         // =================================================================
-        // Seção 5: Inicialização e Eventos
+        // Seção 5: Lógica de Dark Mode
+        // =================================================================
+        function applyTheme(isDark) {
+            const body = document.body;
+            if (isDark) {
+                body.classList.add('dark');
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark');
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.body.classList.contains('dark');
+            applyTheme(!isDark);
+        }
+
+        // =================================================================
+        // Seção 6: Inicialização e Eventos
         // =================================================================
         document.addEventListener('DOMContentLoaded', () => {
+            // Aplica tema salvo ou padrão do sistema
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                applyTheme(true);
+            } else {
+                applyTheme(false);
+            }
+
             initMap();
         });
         
@@ -602,6 +717,8 @@
         downloadButton.addEventListener('click', stopAndDownload);
         stopButton.addEventListener('click', stopCollecting);
         searchButton.addEventListener('click', searchLocation);
+        themeToggle.addEventListener('click', toggleDarkMode); // Listener do Dark Mode
+
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 searchLocation();
