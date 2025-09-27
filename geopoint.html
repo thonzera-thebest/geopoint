@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeoPoint</title>
+    <title>ToThePoint</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
@@ -59,7 +59,7 @@
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
         </div>
-        <h1 class="text-3xl font-bold mb-2 text-gray-800">GeoPoint</h1>
+        <h1 class="text-3xl font-bold mb-2 text-gray-800">ToThePoint</h1>
         <p class="text-gray-500 text-sm mb-4">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
         <p class="text-gray-600 mb-6">Capture coordenadas, adicione um nome e visualize os pontos em tempo real.</p>
         
@@ -83,28 +83,26 @@
             <p id="longitude-text" class="text-xl font-bold text-gray-700">Longitude: --</p>
         </div>
 
-        <div class="mb-4">
-            <input type="text" id="point-name-input" placeholder="Nome do ponto (ex: Araucária 1)" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <!-- Campo de nome do ponto (Inicialmente Oculto) -->
+        <div class="mb-4 hidden" id="point-name-container">
+            <input type="text" id="point-name-input" placeholder="Digite o nome da sua marcação aqui" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
         </div>
 
         <div class="flex flex-col gap-4">
             <button id="start-button" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                Iniciar Coleta (Automático)
+                Iniciar GPS
             </button>
             <button id="manual-capture-button" class="w-full bg-blue-400 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                Selecionar Ponto no Mapa
+                Marcar Manualmente
             </button>
             <button id="capture-button" class="w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50" disabled>
-                Capturar Coordenada
-            </button>
-            <button id="delete-button" class="w-full bg-orange-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-orange-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50" disabled>
-                Deletar Última Marcação
+                Registrar Ponto
             </button>
             <button id="stop-button" class="w-full bg-gray-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 hidden">
-                Parar Coleta
+                Parar/Resetar
             </button>
             <button id="download-button" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" disabled>
-                Parar e Baixar
+                Exportar CSV
             </button>
         </div>
         
@@ -119,6 +117,7 @@
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nome do Ponto</th>
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Latitude</th>
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Longitude</th>
+                            <th class="py-2 px-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Ação</th>
                         </tr>
                     </thead>
                     <tbody id="points-table-body" class="divide-y divide-gray-200">
@@ -161,10 +160,10 @@
         const startButton = document.getElementById('start-button');
         const manualCaptureButton = document.getElementById('manual-capture-button');
         const captureButton = document.getElementById('capture-button');
-        const deleteButton = document.getElementById('delete-button');
         const downloadButton = document.getElementById('download-button');
         const stopButton = document.getElementById('stop-button');
         const pointNameInput = document.getElementById('point-name-input');
+        const pointNameContainer = document.getElementById('point-name-container');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
         const pointsPreview = document.getElementById('points-preview');
@@ -174,19 +173,29 @@
         const confirmYesButton = document.getElementById('confirm-yes');
         const confirmNoButton = document.getElementById('confirm-no');
         
+        // A chave API do Google Maps é solicitada via prompt na primeira busca.
         let GOOGLE_MAPS_API_KEY = null;
         
         // =================================================================
         // Seção 2: Funções de Controle da UI
         // =================================================================
         function setUIState(isCollecting) {
+            // Verifica se há uma coordenada pronta para ser capturada
+            const isPointReady = lastKnownPosition !== null; 
+
             startButton.disabled = isCollecting;
             manualCaptureButton.disabled = isCollecting;
-            captureButton.disabled = !isCollecting && !manualMarker;
-            deleteButton.disabled = localCoordinates.length === 0;
+            captureButton.disabled = !isPointReady;
             downloadButton.disabled = localCoordinates.length === 0;
-            pointNameInput.disabled = !isCollecting && !manualMarker;
+            pointNameInput.disabled = !isPointReady;
             
+            // Controle de visibilidade do campo de nome
+            if (isPointReady) {
+                 pointNameContainer.classList.remove('hidden');
+            } else {
+                 pointNameContainer.classList.add('hidden');
+            }
+
             if (isCollecting || isManualCapture) {
                 stopButton.classList.remove('hidden');
             } else {
@@ -229,14 +238,18 @@
             pointsTableBody.innerHTML = '';
             pointsCount.textContent = localCoordinates.length;
             
+            // 1. Limpa marcadores existentes
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
 
+            // 2. Itera sobre os pontos e cria marcadores e linhas da tabela
             localCoordinates.forEach((point, index) => {
+                // Cria novo marcador no mapa
                 const newMarker = L.marker([point.latitude, point.longitude]).addTo(map)
                     .bindPopup(`<b>${point.name}</b><br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)}`).openPopup();
                 markers.push(newMarker);
                 
+                // Cria linha da tabela
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 transition-colors duration-150';
                 row.innerHTML = `
@@ -244,10 +257,19 @@
                     <td class="py-2 px-4 whitespace-nowrap text-sm font-medium text-gray-900">${point.name}</td>
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-500">${point.latitude.toFixed(6).replace('.', ',')}</td>
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-500">${point.longitude.toFixed(6).replace('.', ',')}</td>
+                    <td class="py-2 px-4 whitespace-nowrap text-sm text-center">
+                        <button onclick="deletePoint(${point.id})" class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <!-- Ícone de Lixeira (Trash Icon SVG) -->
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </td>
                 `;
                 pointsTableBody.appendChild(row);
             });
 
+            // 3. Centraliza o mapa nos pontos
             if (markers.length > 0) {
                 const group = new L.featureGroup(markers);
                 map.fitBounds(group.getBounds());
@@ -256,6 +278,19 @@
             setUIState(false);
         }
         
+        function deletePoint(idToDelete) {
+            const initialLength = localCoordinates.length;
+            // Filtra e mantém apenas os pontos que NÃO têm o ID fornecido
+            localCoordinates = localCoordinates.filter(point => point.id !== idToDelete);
+
+            if (localCoordinates.length < initialLength) {
+                updatePreviewTable();
+                showMessage('Marcação deletada com sucesso.', 'success');
+            } else {
+                showMessage("Ponto não encontrado.", 'error');
+            }
+        }
+
         // =================================================================
         // Seção 3: Lógica de Coleta (Local)
         // =================================================================
@@ -278,6 +313,7 @@
             }
 
             const now = new Date();
+            // Formatação do timestamp para o fuso horário de São Paulo (DD/MM/AAAA, HH:mm:ss)
             const formattedTimestamp = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
             
             const pointName = pointNameInput.value.trim() || `Ponto ${localCoordinates.length + 1}`;
@@ -288,7 +324,8 @@
                 longitude: lastKnownPosition.longitude,
                 address: addressToSave,
                 timestamp: formattedTimestamp,
-                id: Date.now()
+                // Usa Date.now() para garantir um ID único para a função deletePoint(id)
+                id: Date.now() 
             };
 
             localCoordinates.push(newPoint);
@@ -296,16 +333,12 @@
             showMessage(`Ponto capturado e salvo localmente!`, 'success');
             pointNameInput.value = '';
             setUIState(false);
-        }
-
-        function deleteLastPoint() {
-            if (localCoordinates.length > 0) {
-                localCoordinates.pop();
-                updatePreviewTable();
-                showMessage('Última marcação deletada.', 'info');
-            } else {
-                showMessage("Não há pontos para deletar.", 'error');
-            }
+            
+            // Limpa o ponto atual após a captura
+            lastKnownPosition = null;
+            lastKnownAddress = null;
+            if (manualMarker) map.removeLayer(manualMarker);
+            manualMarker = null;
         }
 
         function stopAndDownload() {
@@ -316,15 +349,17 @@
 
             stopCollecting();
 
+            // Usa UTF-8 com BOM (\uFEFF) para forçar o Excel a reconhecer caracteres especiais
             let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Timestamp\n";
             localCoordinates.forEach(point => {
                 const formattedLat = point.latitude.toFixed(6).replace('.', ',');
                 const formattedLon = point.longitude.toFixed(6).replace('.', ',');
+                // Garante que o endereço com vírgulas internas não quebre o CSV, encapsulando-o em aspas
                 const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
                 csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${point.timestamp}\n`;
             });
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
@@ -341,8 +376,10 @@
         // Seção 4: Lógica do Mapa e API
         // =================================================================
         function initMap() {
+            // Inicialização do mapa em Curitiba (PR)
             map = L.map('map').setView([-25.4284, -49.2733], 13);
             
+            // Camadas do mapa (ESRI)
             const esriHybrid = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
             const esriStreet = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
             const esriTopographic = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
@@ -350,8 +387,9 @@
                 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane', attribution: 'Esri, HERE, Garmin' })
             ]);
             
+            // Controle de camadas
             const baseLayers = {
-                "Híbrido": L.layerGroup([esriHybrid, esriReference]).addTo(map),
+                "Híbrido": L.layerGroup([esriHybrid, esriReference]).addTo(map), // Padrão
                 "Ruas": esriStreet,
                 "Topográfico": esriTopographic
             };
@@ -361,10 +399,17 @@
         }
 
         async function reverseGeocode(lat, lon) {
+            // Se a chave API não estiver definida, solicita ao usuário
             if (!GOOGLE_MAPS_API_KEY) {
-                return 'Localização não encontrada';
+                const key = prompt("Por favor, cole sua chave de API do Google Maps aqui para habilitar a busca de endereço.");
+                if (key) {
+                    GOOGLE_MAPS_API_KEY = key;
+                } else {
+                    return 'Localização não encontrada (API key ausente)';
+                }
             }
             try {
+                // Requisição de Geocodificação Reversa do Google Maps
                 const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${GOOGLE_MAPS_API_KEY}`);
                 const data = await response.json();
                 if (data.status === 'OK' && data.results.length > 0) {
@@ -377,6 +422,8 @@
         }
 
         async function onMapClick(e) {
+            // Lógica para modo manual (clique no mapa)
+            stopCollecting(); // Limpa qualquer coleta automática
             isManualCapture = true;
             lastKnownPosition = { latitude: e.latlng.lat, longitude: e.latlng.lng };
             
@@ -385,6 +432,7 @@
             }
             
             showMessage('Buscando endereço do ponto...');
+            // Geocodificação reversa para obter o endereço do ponto clicado
             lastKnownAddress = await reverseGeocode(e.latlng.lat, e.latlng.lng);
             
             manualMarker = L.marker(e.latlng).addTo(map)
@@ -392,30 +440,42 @@
 
             latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
             longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
-            showMessage('Ponto selecionado no mapa. Clique em "Capturar Coordenada" para salvar.', 'success');
+            showMessage('Ponto selecionado no mapa. Clique em "Registrar Ponto" para salvar.', 'success');
             setUIState(true);
         }
 
         function startCollecting() {
-            if (manualMarker) {
-                map.removeLayer(manualMarker);
-                manualMarker = null;
-            }
-            isManualCapture = false;
-            showMessage('Acessando localização...');
+            // Inicia o modo de coleta automática (GPS)
+            stopCollecting();
+            isCollecting = true;
+            showMessage('Acessando localização...', 'info');
             coordinatesDisplay.classList.remove('hidden');
+            
+            // Configura o Leaflet para acompanhar o GPS
             map.locate({setView: true, maxZoom: 16, watch: true, enableHighAccuracy: true});
             const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+            
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(
                     position => {
                         lastKnownPosition = { latitude: position.coords.latitude, longitude: position.coords.longitude };
                         latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
                         longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
+                        
+                        // Move o mapa para a posição atual
+                        map.setView([lastKnownPosition.latitude, lastKnownPosition.longitude], 16);
+                        
+                        // Remove marcador manual caso exista
+                        if (manualMarker) {
+                            map.removeLayer(manualMarker);
+                            manualMarker = null;
+                        }
+
                         showMessage('Localização encontrada. Pronta para capturar!', 'success');
                         setUIState(true);
                     },
                     error => {
+                        // Tratamento de erros de GPS
                         setUIState(false);
                         switch(error.code) {
                             case error.PERMISSION_DENIED: showMessage("Erro: Acesso à localização negado. Ative nas configurações do navegador.", 'error'); break;
@@ -433,6 +493,7 @@
         }
 
         async function searchLocation() {
+            // Solicita a chave API se não estiver definida
             if (!GOOGLE_MAPS_API_KEY) {
                 const key = prompt("Por favor, cole sua chave de API do Google Maps aqui para habilitar a pesquisa de endereços:");
                 if (key) {
@@ -448,8 +509,13 @@
                 showMessage('Por favor, digite um endereço ou coordenadas para pesquisar.', 'error');
                 return;
             }
+            
+            stopCollecting(); // Limpa qualquer coleta ativa
+
             const isCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query);
+            
             if (isCoordinates) {
+                // Busca por coordenadas
                 const parts = query.split(',');
                 const lat = parseFloat(parts[0]);
                 const lon = parseFloat(parts[1]);
@@ -468,6 +534,7 @@
                     showMessage('Formato de coordenadas inválido. Tente "latitude,longitude".', 'error');
                 }
             } else {
+                // Busca por endereço (Geocodificação)
                 showMessage('Pesquisando endereço...', 'info');
                 try {
                     const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_MAPS_API_KEY}`);
@@ -497,6 +564,7 @@
         }
 
         function stopCollecting() {
+            // Encerra qualquer atividade de coleta ou marcação
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
@@ -507,6 +575,7 @@
             }
             lastKnownPosition = null;
             lastKnownAddress = null;
+            isCollecting = false;
             isManualCapture = false;
             setUIState(false);
             coordinatesDisplay.classList.add('hidden');
@@ -530,7 +599,6 @@
              coordinatesDisplay.classList.remove('hidden');
         });
         captureButton.addEventListener('click', captureCoordinate);
-        deleteButton.addEventListener('click', deleteLastPoint);
         downloadButton.addEventListener('click', stopAndDownload);
         stopButton.addEventListener('click', stopCollecting);
         searchButton.addEventListener('click', searchLocation);
@@ -539,6 +607,8 @@
                 searchLocation();
             }
         });
+        // Deletar Ponto agora é tratado pelos botões dinâmicos na tabela
+        window.deletePoint = deletePoint; 
     </script>
 </body>
 </html>
