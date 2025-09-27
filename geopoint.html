@@ -186,6 +186,8 @@
         let isManualCapture = false;
         let manualMarker = null;
         let isCollecting = false;
+        let currentLocationMarker = null; // Marcador da posição atual do GPS
+        let accuracyCircle = null; // Círculo de precisão do GPS
 
         const statusMessage = document.getElementById('status-message');
         const coordinatesDisplay = document.getElementById('coordinates-display');
@@ -292,7 +294,8 @@
             pointsTableBody.innerHTML = '';
             pointsCount.textContent = localCoordinates.length;
             
-            // 1. Limpa marcadores existentes
+            // 1. Limpa marcadores existentes (apenas os pontos de coleta)
+            // O marcador de localização atual (currentLocationMarker) é mantido se o GPS estiver ativo.
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
 
@@ -508,6 +511,34 @@
             setButtonText('manual-capture-button', 'Marcar Manualmente');
         }
 
+        // Função para atualizar o marcador de localização atual
+        function updateCurrentLocationMarker(latlng, accuracy) {
+            const lat = latlng.lat;
+            const lon = latlng.lng;
+
+            if (currentLocationMarker) {
+                currentLocationMarker.setLatLng(latlng);
+                accuracyCircle.setLatLng(latlng).setRadius(accuracy);
+            } else {
+                // Cria o marcador da posição atual
+                currentLocationMarker = L.circleMarker([lat, lon], {
+                    radius: 8,
+                    color: '#03A9F4',
+                    fillColor: '#2196F3',
+                    fillOpacity: 0.8
+                }).addTo(map).bindPopup("Sua Posição Atual").openPopup();
+
+                // Cria o círculo de precisão
+                accuracyCircle = L.circle([lat, lon], {
+                    radius: accuracy,
+                    color: '#03A9F4',
+                    fillColor: '#2196F3',
+                    fillOpacity: 0.1,
+                    weight: 1
+                }).addTo(map);
+            }
+        }
+
         function startCollecting() {
             // Inicia o modo de coleta automática (GPS)
             stopCollecting();
@@ -519,21 +550,24 @@
             coordinatesDisplay.classList.remove('hidden');
             
             // Configura o Leaflet para acompanhar o GPS
-            map.locate({setView: true, maxZoom: 16, watch: true, enableHighAccuracy: true});
             const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
             
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(
                     position => {
-                        lastKnownPosition = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+                        const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
+                        lastKnownPosition = { latitude: latlng.lat, longitude: latlng.lng };
                         lastKnownAccuracy = position.coords.accuracy;
                         
                         latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
                         longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
                         accuracyText.textContent = `Precisão: \u00B1 ${lastKnownAccuracy.toFixed(1)}m`;
                         
-                        // Move o mapa para a posição atual
-                        map.setView([lastKnownPosition.latitude, lastKnownPosition.longitude], 16);
+                        // ATUALIZAÇÃO DO MARCADOR NO MAPA
+                        updateCurrentLocationMarker(latlng, lastKnownAccuracy);
+                        
+                        // Move o mapa para a posição atual (follow mode)
+                        map.setView(latlng, map.getZoom() > 16 ? map.getZoom() : 16); 
                         
                         // Remove marcador manual caso exista
                         if (manualMarker) {
@@ -651,6 +685,16 @@
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
             }
+            // Remove o marcador de localização atual e o círculo de precisão
+            if (currentLocationMarker) {
+                map.removeLayer(currentLocationMarker);
+                currentLocationMarker = null;
+            }
+            if (accuracyCircle) {
+                map.removeLayer(accuracyCircle);
+                accuracyCircle = null;
+            }
+            
             if (manualMarker) {
                 map.removeLayer(manualMarker);
                 manualMarker = null;
