@@ -23,6 +23,15 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             margin-bottom: 1.5rem;
         }
+        /* Corrigido: Aplicando preto absoluto ao título no modo claro */
+        h1.text-black {
+            color: #000000;
+        }
+        /* NOVO: Força o título a ser branco no modo escuro */
+        .dark h1.text-black {
+            color: #FFFFFF !important; 
+        }
+
         /* Base styles for dark mode elements */
         .dark .bg-white { background-color: #374151; }
         .dark .text-gray-800 { color: #f3f4f6; }
@@ -69,13 +78,26 @@
             gap: 1rem;
             margin-top: 1rem;
         }
-        /* NOVO: Estilo de flash para confirmação de edição */
+        /* Confirmação visual de edição (pisca verde) */
         .edited-flash {
             background-color: #d1fae5 !important; /* Tailwind green-100 */
             transition: background-color 0.5s ease-out;
         }
         .dark .edited-flash {
             background-color: #10b981 !important; /* Tailwind emerald-500 dark mode flash */
+        }
+        /* NOVO: Destaque visual para linhas corrigidas (fundo azul) */
+        .corrected-row {
+            background-color: #eff6ff; /* blue-50 */
+        }
+        .dark .corrected-row {
+            background-color: #1e3a8a; /* dark blue-900 */
+        }
+        .corrected-row:hover {
+            background-color: #dbeafe !important; /* blue-100 */
+        }
+        .dark .corrected-row:hover {
+            background-color: #1e40af !important; /* dark blue-800 */
         }
     </style>
 </head>
@@ -84,12 +106,14 @@
     <div id="main-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center relative transition-colors duration-300">
         <!-- Botão de Toggle Dark Mode -->
         <button id="theme-toggle" class="absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none">
-            <!-- Ícone de Sol (Light Mode) / Lua (Dark Mode) -->
-            <svg id="sun-icon" class="h-6 w-6 text-yellow-500 transition-opacity duration-300" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zm0 18a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0v-2.25a.75.75 0 01.75-.75zM5.968 5.969a.75.75 0 011.06-.01L8.53 7.377a.75.75 0 01-1.06 1.06l-1.482-1.481a.75.75 0 01.01-1.06zM15.47 15.47a.75.75 0 011.06-1.06l1.482 1.48a.75.75 0 01-1.06 1.06l-1.482-1.48zm-9.332-.01a.75.75 0 01-.01-1.06l1.482-1.482a.75.75 0 011.06 1.06l-1.48 1.482a.75.75 0 01-1.062.009zM18.377 8.53a.75.75 0 01-1.06-1.06l1.48-1.482a.75.75 0 011.06 1.06l-1.48 1.482zM4.5 12a.75.75 0 01-.75-.75v-2.25a.75.75 0 011.5 0v2.25a.75.75 0 01-.75.75zM21 12a.75.75 0 01-.75-.75v-2.25a.75.75 0 011.5 0v2.25a.75.75 0 01-.75.75z"/>
+            <!-- Ícone de Sol (Light Mode) / Lua (Dark Mode) - CORRIGIDOS -->
+            <!-- NOVO Ícone do Sol com raios visíveis -->
+            <svg id="sun-icon" class="h-6 w-6 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M4.22 18.36l1.42-1.42M18.36 4.22l1.42-1.42M2 12h2M20 12h2"/>
             </svg>
-            <svg id="moon-icon" class="h-6 w-6 text-gray-400 transition-opacity duration-300" fill="currentColor" viewBox="0 0 24 24" style="display: none;">
-                <path d="M9.5 2C13.52 2 17 5.48 17 9.5c0 3.01-1.78 5.66-4.44 6.89.87.52 1.44 1.48 1.44 2.56 0 1.94-1.56 3.5-3.5 3.5s-3.5-1.56-3.5-3.5c0-1.08.57-2.04 1.44-2.56C6.78 15.16 5 12.51 5 9.5 5 5.48 8.48 2 9.5 2z"/>
+            <svg id="moon-icon" class="h-6 w-6 text-indigo-200" fill="currentColor" viewBox="0 0 24 24" style="display: none;">
+                <path d="M21 12.79a9 9 0 1 1-9.92-9.92 7 7 0 0 0 9.92 9.92z"/>
             </svg>
         </button>
         <!-- Logo -->
@@ -98,7 +122,7 @@
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
         </div>
-        <h1 class="text-3xl font-bold mb-2 text-gray-900 dark:text-gray-100">ToThePoint</h1>
+        <h1 class="text-3xl font-bold mb-2 text-black dark:text-white">ToThePoint</h1>
         <p class="text-gray-700 dark:text-gray-400 text-sm mb-4">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
         <p class="text-gray-800 dark:text-gray-300 mb-6">Capture coordenadas, adicione um nome e visualize os pontos em tempo real.</p>
         
@@ -144,7 +168,7 @@
             <button id="download-button" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" disabled>
                 Exportar CSV
             </button>
-            <!-- NOVO BOTÃO: Limpar Todos os Dados Locais -->
+            <!-- BOTÃO: Limpar Todos os Dados Locais -->
             <button id="clear-local-data-button" class="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-yellow-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50" disabled>
                 Limpar Todos os Dados Locais
             </button>
@@ -161,6 +185,8 @@
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Nome do Ponto</th>
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Latitude (Final)</th>
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Longitude (Final)</th>
+                            <!-- Coluna de Status -->
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Status</th>
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Precisão Orig.</th>
                             <th class="py-2 px-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Ação</th>
                         </tr>
@@ -194,7 +220,7 @@
         let map;
         let watchId = null;
         let lastKnownPosition = null;
-        let lastKnownAccuracy = null; // Nova variável para precisão
+        let lastKnownAccuracy = null; // Variável para precisão
         let lastKnownAddress = null;
         let isManualCapture = false;
         let manualMarker = null;
@@ -206,7 +232,7 @@
         const coordinatesDisplay = document.getElementById('coordinates-display');
         const latitudeText = document.getElementById('latitude-text');
         const longitudeText = document.getElementById('longitude-text');
-        const accuracyText = document.getElementById('accuracy-text'); // Novo elemento
+        const accuracyText = document.getElementById('accuracy-text'); 
         const startButton = document.getElementById('start-button');
         const manualCaptureButton = document.getElementById('manual-capture-button');
         const captureButton = document.getElementById('capture-button');
@@ -225,7 +251,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const sunIcon = document.getElementById('sun-icon');
         const moonIcon = document.getElementById('moon-icon');
-        const clearLocalDataButton = document.getElementById('clear-local-data-button'); // NOVO ELEMENTO
+        const clearLocalDataButton = document.getElementById('clear-local-data-button');
         
         let GOOGLE_MAPS_API_KEY = null;
 
@@ -256,7 +282,7 @@
             manualCaptureButton.disabled = isCollecting;
             captureButton.disabled = !isPointReady;
             downloadButton.disabled = localCoordinates.length === 0;
-            clearLocalDataButton.disabled = localCoordinates.length === 0; // NOVO: Habilita/Desabilita botão de limpeza
+            clearLocalDataButton.disabled = localCoordinates.length === 0;
             pointNameInput.disabled = !isPointReady;
             
             // Controle de visibilidade
@@ -329,15 +355,15 @@
                 if (markerIndex !== -1) {
                     const point = localCoordinates[index];
                     const correctionStatus = point.accuracy === 0 ? '(Corrigido)' : '';
-                    const content = `<b>${point.name}</b><br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)} ${correctionStatus}`;
+                    const content = `<b>${point.name}</b><br>Status: ${getPointStatus(point)}<br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)} ${correctionStatus}`;
                     markers[markerIndex].setPopupContent(content);
                 }
 
-                // NOVO: Confirmação visual de edição (pisca verde)
+                // Confirmação visual de edição (pisca verde)
                 element.classList.add('edited-flash');
                 setTimeout(() => {
                     element.classList.remove('edited-flash');
-                }, 1000); // Pisca por 1 segundo
+                }, 1000); 
                 
                 saveToLocalStorage(); // Salva alteração do nome
             }
@@ -346,7 +372,26 @@
         // Torna a função globalmente acessível para o evento onblur na tabela
         window.editPointName = editPointName;
 
-        // Nova função para gerenciar o arraste do marcador
+        // NOVO: Função para determinar o status do ponto para exibição e CSV
+        function getPointStatus(point) {
+            if (point.accuracy === 0 && point.originalAccuracy !== 0) {
+                return 'Corrigido Manualmente';
+            } else if (point.originalAccuracy === 0) {
+                return 'Manual (Endereço)';
+            } else if (point.originalAccuracy !== null && point.originalAccuracy !== undefined) {
+                if (point.originalAccuracy <= 5) {
+                    return 'GPS (Alta Precisão)';
+                } else if (point.originalAccuracy <= 15) {
+                    return 'GPS (Média Precisão)';
+                } else {
+                    return 'GPS (Baixa Precisão)';
+                }
+            } else {
+                return 'Desconhecido';
+            }
+        }
+        
+        // Função para gerenciar o arraste do marcador
         function onMarkerDragEnd(e) {
             const marker = e.target;
             const newLatLng = marker.getLatLng();
@@ -364,13 +409,25 @@
                 localCoordinates[index].address = 'Endereço corrigido manualmente'; 
 
                 // 2. Atualiza o Popup
-                const content = `<b>${localCoordinates[index].name}</b><br>Lat: ${localCoordinates[index].latitude.toFixed(6)}<br>Lon: ${localCoordinates[index].longitude.toFixed(6)} (Corrigido)`;
+                const content = `<b>${localCoordinates[index].name}</b><br>Status: ${getPointStatus(localCoordinates[index])}<br>Lat: ${localCoordinates[index].latitude.toFixed(6)}<br>Lon: ${localCoordinates[index].longitude.toFixed(6)} (Corrigido)`;
                 marker.setPopupContent(content);
                 
                 // 3. Re-renderiza a tabela para refletir as mudanças
                 updatePreviewTable(); 
                 showMessage(`Ponto '${localCoordinates[index].name}' corrigido manualmente.`, 'info');
                 saveToLocalStorage(); // Salva alteração de arrastar
+
+                // NOVO: Confirmação visual ao arrastar (pisca azul)
+                const rowElement = document.querySelector(`[data-id="${pointId}"]`).closest('tr');
+                if (rowElement) {
+                    rowElement.classList.add('corrected-row');
+                    setTimeout(() => {
+                        // Faz piscar retirando a classe temporariamente, mas mantendo o highlight
+                        rowElement.classList.remove('corrected-row');
+                        void rowElement.offsetWidth; // Força reflow
+                        rowElement.classList.add('corrected-row');
+                    }, 50);
+                }
             }
         }
 
@@ -384,20 +441,30 @@
 
             // 2. Itera sobre os pontos e cria marcadores e linhas da tabela
             localCoordinates.forEach((point, index) => {
+                const pointId = point.id;
+                
+                // Determina Status e Row Class
+                const statusString = getPointStatus(point);
+                let rowClass = 'hover:bg-gray-50 dark:hover:bg-gray-600';
+                
+                if (point.accuracy === 0 && point.originalAccuracy !== 0) {
+                    // Ponto que tinha precisão GPS, mas foi corrigido (dragged)
+                    rowClass = 'corrected-row'; // Classe de destaque
+                } 
+                
                 // Cria novo marcador no mapa, AGORA DRAGGABLE (arrastável)
-                const newMarker = L.marker([point.latitude, point.longitude], { draggable: true, id: point.id }).addTo(map)
-                    .bindPopup(`<b>${point.name}</b><br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)}`)
-                    .on('dragend', onMarkerDragEnd) // Adiciona o listener de arrastar
-                    .openPopup();
+                const newMarker = L.marker([point.latitude, point.longitude], { draggable: true, id: pointId }).addTo(map)
+                    .bindPopup(`<b>${point.name}</b><br>Status: ${statusString}<br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)}`)
+                    .on('dragend', onMarkerDragEnd); // Adiciona o listener de arrastar
                 markers.push(newMarker);
                 
                 // Determina o texto de precisão original na tabela
                 let originalAccuracyText = '';
-                if (point.originalAccuracy !== undefined && point.originalAccuracy !== null) {
+                if (point.originalAccuracy !== undefined && point.originalAccuracy !== null && point.originalAccuracy !== 0) {
                      // Se for ponto GPS original
                     originalAccuracyText = `\u00B1 ${point.originalAccuracy.toFixed(1)}m`;
                 } else if (point.accuracy === 0) {
-                    // Se foi corrigido (o accuracy final é 0) ou se for um ponto manual
+                    // Se foi corrigido (o accuracy final é 0)
                     originalAccuracyText = `Ajustado`;
                 } else {
                     originalAccuracyText = `Manual`;
@@ -406,23 +473,29 @@
 
                 // Cria linha da tabela
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150';
+                // Aplica a classe de cor de fundo
+                row.className = rowClass + ' transition-colors duration-150';
+
                 row.innerHTML = `
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${index + 1}</td>
                     <!-- Coluna de Nome do Ponto AGORA EDITÁVEL -->
                     <td class="py-2 px-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white cursor-text"
                         contenteditable="true" 
-                        data-id="${point.id}" 
-                        onblur="editPointName(this, ${point.id})">
+                        data-id="${pointId}" 
+                        onblur="editPointName(this, ${pointId})">
                         ${point.name}
                     </td>
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${point.latitude.toFixed(6).replace('.', ',')}</td>
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${point.longitude.toFixed(6).replace('.', ',')}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold ${point.accuracy === 0 ? 'text-blue-500' : 'text-orange-500'} dark:text-orange-400">
+                    <!-- Coluna de Status (NOVA) -->
+                    <td class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">
+                        ${statusString}
+                    </td>
+                    <td class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold text-gray-700 dark:text-gray-400">
                         ${originalAccuracyText}
                     </td>
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-center">
-                        <button onclick="deletePoint(${point.id})" class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <button onclick="deletePoint(${pointId})" class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900">
                             <!-- Ícone de Lixeira (Trash Icon SVG) -->
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" />
@@ -462,7 +535,7 @@
                 showMessage("Não há dados locais para limpar.", 'info');
                 return;
             }
-            // Usa confirm() - NOTE: Em um ambiente real, você usaria um modal UI, mas para este projeto, usamos confirm()
+            // Usa confirm() para garantir que o usuário realmente quer limpar os dados
             if (!confirm("Tem certeza que deseja apagar TODOS os pontos salvos localmente? Esta ação é irreversível.")) {
                 return;
             }
@@ -521,7 +594,7 @@
                 address: addressToSave,
                 timestamp: formattedTimestamp,
                 // NOVOS CAMPOS PARA RASTREAR A POSIÇÃO ORIGINAL:
-                originalAccuracy: isManualCapture ? 0 : lastKnownAccuracy, // 0 para manual, valor do GPS para automático
+                originalAccuracy: isManualCapture ? 0 : lastKnownAccuracy, // 0 para manual/Endereço, valor do GPS para automático
                 originalLat: lastKnownPosition.latitude,
                 originalLon: lastKnownPosition.longitude,
                 // Usa Date.now() para garantir um ID único para a função deletePoint(id)
@@ -564,7 +637,7 @@
             stopCollecting();
 
             // Usa UTF-8 com BOM (\uFEFF) para forçar o Excel a reconhecer caracteres especiais
-            let csvContent = "Nome do Ponto;Latitude (Final);Longitude (Final);Endereco;Precisao (Final m);Timestamp;Latitude (Original);Longitude (Original);Precisao (Original m)\n";
+            let csvContent = "Nome do Ponto;Latitude (Final);Longitude (Final);Status;Endereco;Timestamp;Latitude (Original);Longitude (Original);Precisao (Original m)\n";
             localCoordinates.forEach(point => {
                 // FINAL: Usado para o geocoding no QGIS
                 const formattedLat = point.latitude.toFixed(6).replace('.', ',');
@@ -574,23 +647,22 @@
                 const originalLat = point.originalLat.toFixed(6).replace('.', ',');
                 const originalLon = point.originalLon.toFixed(6).replace('.', ',');
 
-                // Precisão Final (0m se arrastado, ou o valor GPS se não)
-                const finalAccuracyValue = point.accuracy === 0 ? "Corrigido" : point.accuracy.toFixed(1).replace('.', ',');
-                
                 // Precisão Original (Valor GPS ou "Manual" se for ponto inicial manual)
                 let originalAccuracyValue;
                 if (point.originalAccuracy === 0) {
-                    originalAccuracyValue = "Manual/Ajustado";
+                    originalAccuracyValue = "Manual/Endereço";
                 } else if (point.originalAccuracy !== null && point.originalAccuracy !== undefined) {
                     originalAccuracyValue = point.originalAccuracy.toFixed(1).replace('.', ',');
                 } else {
                     originalAccuracyValue = "N/A";
                 }
 
+                const statusString = getPointStatus(point);
+
                 // Garante que o endereço com vírgulas internas não quebre o CSV, encapsulando-o em aspas
                 const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
                 
-                csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${finalAccuracyValue};${point.timestamp};${originalLat};${originalLon};${originalAccuracyValue}\n`;
+                csvContent += `${point.name};${formattedLat};${formattedLon};${statusString};${formattedAddress};${point.timestamp};${originalLat};${originalLon};${originalAccuracyValue}\n`;
             });
 
             const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
@@ -613,19 +685,25 @@
             // Inicialização do mapa em Curitiba (PR)
             map = L.map('map').setView([-25.4284, -49.2733], 13);
             
-            // Camadas do mapa (ESRI)
-            const esriHybrid = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
-            const esriStreet = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
-            const esriTopographic = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
-            const esriReference = L.layerGroup([
-                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane', attribution: 'Esri, HERE, Garmin' })
-            ]);
-            
-            // Controle de camadas
+            // --- Definição das Camadas ---
             const baseLayers = {
-                "Híbrido": L.layerGroup([esriHybrid, esriReference]).addTo(map), // Padrão
-                "Ruas": esriStreet,
-                "Topográfico": esriTopographic
+                // Híbrido (Padrão)
+                "Híbrido": L.layerGroup([
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri, Maxar, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community' }),
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane', attribution: 'Esri, HERE, Garmin' })
+                ]).addTo(map), 
+                
+                // Ruas
+                "Ruas": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' }),
+                
+                // Topográfico
+                "Topográfico": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' }),
+
+                // OSM Padrão
+                "OSM Padrão": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }),
+                
+                // Transportes
+                "Transportes": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' }),
             };
             
             L.control.layers(baseLayers).addTo(map);
@@ -750,7 +828,7 @@
                         // Aplica a cor de feedback visual na precisão
                         const accuracyColorClass = getAccuracyColor(lastKnownAccuracy);
                         accuracyText.className = `text-sm font-medium ${accuracyColorClass}`;
-                        accuracyText.textContent = `Precisão: \u00B1 ${lastKnownAccuracy.toFixed(1)}m`;
+                        accuracyText.textContent = `Precisão: \u00B1 ${lastKnownAccuracy.toFixed(1)}m`; // Usa Unicode +/-
                         
                         // ATUALIZAÇÃO DO MARCADOR NO MAPA
                         updateCurrentLocationMarker(latlng, lastKnownAccuracy);
@@ -957,24 +1035,6 @@
             }
         }
         
-        // NOVO: Função para limpar todos os dados locais
-        function clearAllData() {
-            if (localCoordinates.length === 0) {
-                showMessage("Não há dados locais para limpar.", 'info');
-                return;
-            }
-            // Usa confirm() para garantir que o usuário realmente quer limpar os dados
-            if (!confirm("Tem certeza que deseja apagar TODOS os pontos salvos localmente? Esta ação é irreversível.")) {
-                return;
-            }
-            stopCollecting();
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-            localCoordinates = [];
-            updatePreviewTable();
-            showMessage("Todos os dados locais foram limpos. Pronto para um novo projeto.", 'success');
-        }
-
-
         // =================================================================
         // Seção 7: Inicialização e Eventos
         // =================================================================
@@ -1005,8 +1065,8 @@
         downloadButton.addEventListener('click', stopAndDownload);
         stopButton.addEventListener('click', stopCollecting);
         searchButton.addEventListener('click', searchLocation);
-        themeToggle.addEventListener('click', toggleDarkMode); // Listener do Dark Mode
-        clearLocalDataButton.addEventListener('click', clearAllData); // NOVO LISTENER
+        themeToggle.addEventListener('click', toggleDarkMode); 
+        clearLocalDataButton.addEventListener('click', clearAllData); 
 
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
