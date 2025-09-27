@@ -122,10 +122,14 @@
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
         </div>
-        <h1 class="text-3xl font-bold mb-2 text-black dark:text-white">ToThePoint</h1>
+        <h1 class="text-3xl font-bold mb-2 text-black dark:text-white flex items-center justify-center">
+            <span>ToTheP</span>
+            <svg class="h-8 w-8 text-blue-600 mx-[-4px]" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>
+            <span>int</span>
+        </h1>
         <p class="text-gray-700 dark:text-gray-400 text-sm mb-4">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
         <p class="text-gray-800 dark:text-gray-300 mb-6">Capture coordenadas, adicione um nome e visualize os pontos em tempo real.</p>
-        
+       
         <div id="map"></div>
 
         <!-- Barra de pesquisa -->
@@ -173,7 +177,7 @@
                 Limpar Todos os Dados Locais
             </button>
         </div>
-        
+       
         <!-- Tabela de Prévia dos Pontos -->
         <div id="points-preview" class="mt-8 hidden">
             <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Pontos Capturados: (<span id="points-count">0</span>)</h3>
@@ -199,7 +203,7 @@
         </div>
     </div>
 
-    <!-- Modal de Confirmação -->
+    <!-- Modal de Confirmação de Endereço -->
     <div id="confirmation-modal" class="modal">
         <div class="modal-content">
             <p>Gostaria de incluir a localização aproximada desse ponto?</p>
@@ -209,7 +213,18 @@
             </div>
         </div>
     </div>
-    
+   
+    <!-- NOVO: Modal de Confirmação para Limpar Dados -->
+    <div id="clear-data-modal" class="modal">
+        <div class="modal-content">
+            <p id="clear-data-modal-text">Tem certeza que deseja apagar TODOS os pontos salvos localmente? Esta ação é irreversível.</p>
+            <div class="modal-buttons">
+                <button id="confirm-clear-yes" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, Apagar Tudo</button>
+                <button id="confirm-clear-no" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         // =================================================================
@@ -252,12 +267,17 @@
         const sunIcon = document.getElementById('sun-icon');
         const moonIcon = document.getElementById('moon-icon');
         const clearLocalDataButton = document.getElementById('clear-local-data-button');
-        
+       
+        // NOVO: Variáveis do modal de limpeza de dados
+        const clearDataModal = document.getElementById('clear-data-modal');
+        const confirmClearYesButton = document.getElementById('confirm-clear-yes');
+        const confirmClearNoButton = document.getElementById('confirm-clear-no');
+
         let GOOGLE_MAPS_API_KEY = null;
 
         // Chave de armazenamento local para os pontos (garantindo que os dados não sejam perdidos)
         const LOCAL_STORAGE_KEY = 'to_the_point_coords';
-        
+       
         // =================================================================
         // Seção 2: Funções de Controle da UI
         // =================================================================
@@ -284,15 +304,15 @@
             downloadButton.disabled = localCoordinates.length === 0;
             clearLocalDataButton.disabled = localCoordinates.length === 0;
             pointNameInput.disabled = !isPointReady;
-            
+           
             // Controle de visibilidade
             if (isPointReady) {
-                 pointNameContainer.classList.remove('hidden');
-                 coordinatesDisplay.classList.remove('hidden');
+                pointNameContainer.classList.remove('hidden');
+                coordinatesDisplay.classList.remove('hidden');
             } else {
-                 pointNameContainer.classList.add('hidden');
-                 coordinatesDisplay.classList.add('hidden');
-                 accuracyText.textContent = 'Precisão: --'; // Limpa a precisão
+                pointNameContainer.classList.add('hidden');
+                coordinatesDisplay.classList.add('hidden');
+                accuracyText.textContent = 'Precisão: --'; // Limpa a precisão
             }
 
             if (isCollecting || isManualCapture) {
@@ -310,7 +330,7 @@
         function showMessage(message, type = 'info') {
             statusMessage.textContent = message;
             statusMessage.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800', 'bg-yellow-100', 'text-yellow-800', 'dark:bg-red-900', 'dark:text-red-300', 'dark:bg-green-900', 'dark:text-green-300', 'dark:bg-yellow-900', 'dark:text-yellow-300');
-            
+           
             if (type === 'error') {
                 statusMessage.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-300');
             } else if (type === 'success') {
@@ -333,23 +353,23 @@
                 };
             });
         }
-        
+       
         // Função para edição inline do nome do ponto na tabela
         function editPointName(element, pointId) {
             const newName = element.textContent.trim();
             const pointIdNum = parseInt(pointId);
             const index = localCoordinates.findIndex(p => p.id === pointIdNum);
-        
+       
             if (index !== -1) {
                 if (newName === "") {
                     showMessage("O nome do ponto não pode estar vazio. Revertendo para o nome anterior.", 'error');
                     element.textContent = localCoordinates[index].name; // Reverte o texto
                     return;
                 }
-        
+       
                 localCoordinates[index].name = newName;
                 showMessage(`Nome do ponto atualizado para '${newName}'.`, 'success');
-                
+               
                 // 1. Atualiza o balão do marcador no mapa
                 const markerIndex = markers.findIndex(m => m.options.id === pointIdNum);
                 if (markerIndex !== -1) {
@@ -364,11 +384,11 @@
                 setTimeout(() => {
                     element.classList.remove('edited-flash');
                 }, 1000); 
-                
+               
                 saveToLocalStorage(); // Salva alteração do nome
             }
         }
-        
+       
         // Torna a função globalmente acessível para o evento onblur na tabela
         window.editPointName = editPointName;
 
@@ -390,20 +410,20 @@
                 return 'Desconhecido';
             }
         }
-        
+       
         // Função para gerenciar o arraste do marcador
         function onMarkerDragEnd(e) {
             const marker = e.target;
             const newLatLng = marker.getLatLng();
             const pointId = marker.options.id; 
-            
+           
             const index = localCoordinates.findIndex(p => p.id === pointId);
 
             if (index !== -1) {
                 // Salva a nova coordenada
                 localCoordinates[index].latitude = newLatLng.lat;
                 localCoordinates[index].longitude = newLatLng.lng;
-                
+               
                 // Indica que a correção foi manual para o CSV
                 localCoordinates[index].accuracy = 0; 
                 localCoordinates[index].address = 'Endereço corrigido manualmente'; 
@@ -411,7 +431,7 @@
                 // 2. Atualiza o Popup
                 const content = `<b>${localCoordinates[index].name}</b><br>Status: ${getPointStatus(localCoordinates[index])}<br>Lat: ${localCoordinates[index].latitude.toFixed(6)}<br>Lon: ${localCoordinates[index].longitude.toFixed(6)} (Corrigido)`;
                 marker.setPopupContent(content);
-                
+               
                 // 3. Re-renderiza a tabela para refletir as mudanças
                 updatePreviewTable(); 
                 showMessage(`Ponto '${localCoordinates[index].name}' corrigido manualmente.`, 'info');
@@ -434,7 +454,7 @@
         function updatePreviewTable() {
             pointsTableBody.innerHTML = '';
             pointsCount.textContent = localCoordinates.length;
-            
+           
             // 1. Limpa marcadores existentes (apenas os pontos de coleta)
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
@@ -442,26 +462,26 @@
             // 2. Itera sobre os pontos e cria marcadores e linhas da tabela
             localCoordinates.forEach((point, index) => {
                 const pointId = point.id;
-                
+               
                 // Determina Status e Row Class
                 const statusString = getPointStatus(point);
                 let rowClass = 'hover:bg-gray-50 dark:hover:bg-gray-600';
-                
+               
                 if (point.accuracy === 0 && point.originalAccuracy !== 0) {
                     // Ponto que tinha precisão GPS, mas foi corrigido (dragged)
                     rowClass = 'corrected-row'; // Classe de destaque
                 } 
-                
+               
                 // Cria novo marcador no mapa, AGORA DRAGGABLE (arrastável)
                 const newMarker = L.marker([point.latitude, point.longitude], { draggable: true, id: pointId }).addTo(map)
                     .bindPopup(`<b>${point.name}</b><br>Status: ${statusString}<br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)}`)
                     .on('dragend', onMarkerDragEnd); // Adiciona o listener de arrastar
                 markers.push(newMarker);
-                
+               
                 // Determina o texto de precisão original na tabela
                 let originalAccuracyText = '';
                 if (point.originalAccuracy !== undefined && point.originalAccuracy !== null && point.originalAccuracy !== 0) {
-                     // Se for ponto GPS original
+                    // Se for ponto GPS original
                     originalAccuracyText = `\u00B1 ${point.originalAccuracy.toFixed(1)}m`;
                 } else if (point.accuracy === 0) {
                     // Se foi corrigido (o accuracy final é 0)
@@ -514,7 +534,7 @@
 
             setUIState(false);
         }
-        
+       
         function deletePoint(idToDelete) {
             const initialLength = localCoordinates.length;
             // Filtra e mantém apenas os pontos que NÃO têm o ID fornecido
@@ -529,21 +549,14 @@
             }
         }
 
-        // NOVO: Função para limpar todos os dados locais
+        // ATUALIZADO: Função para limpar todos os dados locais usando o modal
         function clearAllData() {
             if (localCoordinates.length === 0) {
                 showMessage("Não há dados locais para limpar.", 'info');
                 return;
             }
-            // Usa confirm() para garantir que o usuário realmente quer limpar os dados
-            if (!confirm("Tem certeza que deseja apagar TODOS os pontos salvos localmente? Esta ação é irreversível.")) {
-                return;
-            }
-            stopCollecting();
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-            localCoordinates = [];
-            updatePreviewTable();
-            showMessage("Todos os dados locais foram limpos. Pronto para um novo projeto.", 'success');
+            // Exibe o modal de confirmação em vez de window.confirm()
+            clearDataModal.style.display = 'block';
         }
 
         // =================================================================
@@ -570,7 +583,7 @@
             const now = new Date();
             // Formatação do timestamp para o fuso horário de São Paulo (DD/MM/AAAA, HH:mm:ss)
             const formattedTimestamp = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            
+           
             // Sugestão de Preenchimento Automático:
             let pointName = pointNameInput.value.trim();
             if (!pointName) {
@@ -604,7 +617,7 @@
             localCoordinates.push(newPoint);
             updatePreviewTable();
             showMessage(`Ponto capturado e salvo localmente!`, 'success');
-            
+           
             // Aplica a sugestão do próximo nome
             const lastPoint = localCoordinates[localCoordinates.length - 1];
             if (lastPoint.name.match(/(\D*)(\d+)$/)) {
@@ -615,9 +628,9 @@
             } else {
                 pointNameInput.value = ''; // Limpa se não conseguir preencher automaticamente
             }
-            
+           
             setUIState(false);
-            
+           
             // Limpa o ponto atual após a captura
             lastKnownPosition = null;
             lastKnownAccuracy = null;
@@ -642,7 +655,7 @@
                 // FINAL: Usado para o geocoding no QGIS
                 const formattedLat = point.latitude.toFixed(6).replace('.', ',');
                 const formattedLon = point.longitude.toFixed(6).replace('.', ',');
-                
+               
                 // ORIGINAL: Usado para controle de qualidade
                 const originalLat = point.originalLat.toFixed(6).replace('.', ',');
                 const originalLon = point.originalLon.toFixed(6).replace('.', ',');
@@ -661,7 +674,7 @@
 
                 // Garante que o endereço com vírgulas internas não quebre o CSV, encapsulando-o em aspas
                 const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
-                
+               
                 csvContent += `${point.name};${formattedLat};${formattedLon};${statusString};${formattedAddress};${point.timestamp};${originalLat};${originalLon};${originalAccuracyValue}\n`;
             });
 
@@ -674,7 +687,7 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+           
             showMessage("Coleta finalizada. Download iniciado. Ao abrir no Excel, use a ferramenta 'Obter Dados de Texto' e selecione 'UTF-8' como origem do arquivo para evitar caracteres estranhos.", 'success');
         }
 
@@ -684,7 +697,7 @@
         function initMap() {
             // Inicialização do mapa em Curitiba (PR)
             map = L.map('map').setView([-25.4284, -49.2733], 13);
-            
+           
             // --- Definição das Camadas ---
             const baseLayers = {
                 // Híbrido (Padrão)
@@ -692,20 +705,20 @@
                     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri, Maxar, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community' }),
                     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane', attribution: 'Esri, HERE, Garmin' })
                 ]).addTo(map), 
-                
+               
                 // Ruas
                 "Ruas": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' }),
-                
+               
                 // Topográfico
                 "Topográfico": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' }),
 
                 // OSM Padrão
                 "OSM Padrão": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }),
-                
+               
                 // Transportes
                 "Transportes": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' }),
             };
-            
+           
             L.control.layers(baseLayers).addTo(map);
             map.on('click', onMapClick);
         }
@@ -737,20 +750,20 @@
             // Lógica para modo manual (clique no mapa)
             stopCollecting(); // Limpa qualquer coleta automática
             isManualCapture = true;
-            
+           
             setButtonText('manual-capture-button', 'Buscando...');
 
             lastKnownPosition = { latitude: e.latlng.lat, longitude: e.latlng.lng };
             lastKnownAccuracy = 0; // Precisão zero para ponto manual
-            
+           
             if (manualMarker) {
                 map.removeLayer(manualMarker);
             }
-            
+           
             showMessage('Buscando endereço do ponto...');
             // Geocodificação reversa para obter o endereço do ponto clicado
             lastKnownAddress = await reverseGeocode(e.latlng.lat, e.latlng.lng);
-            
+           
             manualMarker = L.marker(e.latlng).addTo(map)
                 .bindPopup(`<b>${lastKnownAddress}</b><br>Lat: ${lastKnownPosition.latitude.toFixed(6)}<br>Lon: ${lastKnownPosition.longitude.toFixed(6)}`).openPopup();
 
@@ -806,36 +819,36 @@
             // Inicia o modo de coleta automática (GPS)
             stopCollecting();
             isCollecting = true;
-            
+           
             setButtonText('start-button', 'Localizando...');
             showMessage('Acessando localização...', 'info');
-            
+           
             coordinatesDisplay.classList.remove('hidden');
-            
+           
             // Configura o Leaflet para acompanhar o GPS
             const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
-            
+           
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(
                     position => {
                         const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
                         lastKnownPosition = { latitude: latlng.lat, longitude: latlng.lng };
                         lastKnownAccuracy = position.coords.accuracy;
-                        
+                       
                         latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
                         longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
-                        
+                       
                         // Aplica a cor de feedback visual na precisão
                         const accuracyColorClass = getAccuracyColor(lastKnownAccuracy);
                         accuracyText.className = `text-sm font-medium ${accuracyColorClass}`;
                         accuracyText.textContent = `Precisão: \u00B1 ${lastKnownAccuracy.toFixed(1)}m`; // Usa Unicode +/-
-                        
+                       
                         // ATUALIZAÇÃO DO MARCADOR NO MAPA
                         updateCurrentLocationMarker(latlng, lastKnownAccuracy);
-                        
+                       
                         // Move o mapa para a posição atual (follow mode)
                         map.setView(latlng, map.getZoom() > 16 ? map.getZoom() : 16); 
-                        
+                       
                         // Remove marcador manual caso exista
                         if (manualMarker) {
                             map.removeLayer(manualMarker);
@@ -882,13 +895,13 @@
                 showMessage('Por favor, digite um endereço ou coordenadas para pesquisar.', 'error');
                 return;
             }
-            
+           
             stopCollecting(); // Limpa qualquer coleta ativa
 
             setButtonText('search-button', 'Buscando...');
 
             const isCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query);
-            
+           
             if (isCoordinates) {
                 // Busca por coordenadas
                 const parts = query.split(',');
@@ -965,7 +978,7 @@
                 map.removeLayer(accuracyCircle);
                 accuracyCircle = null;
             }
-            
+           
             if (manualMarker) {
                 map.removeLayer(manualMarker);
                 manualMarker = null;
@@ -979,7 +992,7 @@
             coordinatesDisplay.classList.add('hidden');
             showMessage("Coleta interrompida.", "info");
         }
-        
+       
         // =================================================================
         // Seção 5: Lógica de Dark Mode
         // =================================================================
@@ -1034,7 +1047,7 @@
                 localStorage.removeItem(LOCAL_STORAGE_KEY); // Limpa dados corrompidos
             }
         }
-        
+       
         // =================================================================
         // Seção 7: Inicialização e Eventos
         // =================================================================
@@ -1051,8 +1064,8 @@
             initMap();
             loadFromLocalStorage(); // Carrega dados salvos ao iniciar
         });
-        
-        // Listeners de Eventos
+       
+        // Listeners de Eventos Principais
         startButton.addEventListener('click', startCollecting);
         manualCaptureButton.addEventListener('click', () => {
              stopCollecting();
@@ -1073,9 +1086,29 @@
                 searchLocation();
             }
         });
-        // Deletar Ponto e Editar Nome agora são tratados pelos botões dinâmicos na tabela
+
+        // NOVO: Listeners para o Modal de Limpeza de Dados
+        confirmClearYesButton.addEventListener('click', () => {
+            clearDataModal.style.display = 'none'; // Esconde o modal
+            
+            // Lógica original de limpeza
+            stopCollecting();
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            localCoordinates = [];
+            updatePreviewTable();
+            showMessage("Todos os dados locais foram limpos. Pronto para um novo projeto.", 'success');
+        });
+
+        confirmClearNoButton.addEventListener('click', () => {
+            clearDataModal.style.display = 'none'; // Apenas esconde o modal
+        });
+
+
+        // Funções globais para botões dinâmicos
         window.deletePoint = deletePoint;
         window.editPointName = editPointName; 
     </script>
 </body>
 </html>
+
+
