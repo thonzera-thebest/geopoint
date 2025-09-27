@@ -112,7 +112,7 @@
             <p class="text-gray-500 dark:text-gray-400 text-sm">Coordenadas Atuais:</p>
             <p id="latitude-text" class="text-xl font-bold text-gray-700 dark:text-white">Latitude: --</p>
             <p id="longitude-text" class="text-xl font-bold text-gray-700 dark:text-white">Longitude: --</p>
-            <p id="accuracy-text" class="text-sm font-medium text-gray-500 dark:text-gray-400">Precisão: --</p>
+            <p id="accuracy-text" class="text-sm font-medium text-gray-700 dark:text-gray-400">Precisão: --</p>
         </div>
 
         <!-- Campo de nome do ponto (Inicialmente Oculto) -->
@@ -501,7 +501,7 @@
 
             latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
             longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
-            accuracyText.textContent = `Precisão: $\\pm 0m$ (Manual)`;
+            accuracyText.textContent = `Precisão: \u00B1 0m (Manual)`;
 
             showMessage('Ponto selecionado no mapa. Clique em "Registrar Ponto" para salvar.', 'success');
             setUIState(true);
@@ -530,7 +530,7 @@
                         
                         latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
                         longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
-                        accuracyText.textContent = `Precisão: $\\pm ${lastKnownAccuracy.toFixed(1)}m$`;
+                        accuracyText.textContent = `Precisão: \u00B1 ${lastKnownAccuracy.toFixed(1)}m`;
                         
                         // Move o mapa para a posição atual
                         map.setView([lastKnownPosition.latitude, lastKnownPosition.longitude], 16);
@@ -603,7 +603,7 @@
                     manualMarker = L.marker([lat, lon]).addTo(map).bindPopup('Ponto pesquisado').openPopup();
                     latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
                     longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
-                    accuracyText.textContent = `Precisão: $\\pm 0m$ (Manual)`;
+                    accuracyText.textContent = `Precisão: \u00B1 0m (Manual)`;
 
                     showMessage('Coordenadas localizadas no mapa.', 'success');
                     setUIState(true);
@@ -631,7 +631,7 @@
                         manualMarker = L.marker([lat, lon]).addTo(map).bindPopup(address).openPopup();
                         latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
                         longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
-                        accuracyText.textContent = `Precisão: $\\pm 0m$ (Manual)`;
+                        accuracyText.textContent = `Precisão: \u00B1 0m (Manual)`;
 
                         showMessage('Endereço localizado no mapa.', 'success');
                         setUIState(true);
