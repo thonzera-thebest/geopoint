@@ -290,6 +290,32 @@
             });
         }
         
+        // Nova função para gerenciar o arraste do marcador
+        function onMarkerDragEnd(e) {
+            const marker = e.target;
+            const newLatLng = marker.getLatLng();
+            // Ponto ID foi salvo nas opções do marcador
+            const pointId = marker.options.id; 
+            
+            // 1. Encontra e atualiza o ponto no array localCoordinates
+            const index = localCoordinates.findIndex(p => p.id === pointId);
+
+            if (index !== -1) {
+                localCoordinates[index].latitude = newLatLng.lat;
+                localCoordinates[index].longitude = newLatLng.lng;
+                localCoordinates[index].accuracy = 0; // Marca como corrigido manualmente
+                localCoordinates[index].address = 'Endereço corrigido manualmente'; 
+
+                // 2. Atualiza o Popup
+                const content = `<b>${localCoordinates[index].name}</b><br>Lat: ${localCoordinates[index].latitude.toFixed(6)}<br>Lon: ${localCoordinates[index].longitude.toFixed(6)} (Corrigido)`;
+                marker.setPopupContent(content);
+                
+                // 3. Re-renderiza a tabela para refletir as mudanças
+                updatePreviewTable(); 
+                showMessage(`Ponto '${localCoordinates[index].name}' corrigido manualmente.`, 'info');
+            }
+        }
+
         function updatePreviewTable() {
             pointsTableBody.innerHTML = '';
             pointsCount.textContent = localCoordinates.length;
@@ -301,9 +327,11 @@
 
             // 2. Itera sobre os pontos e cria marcadores e linhas da tabela
             localCoordinates.forEach((point, index) => {
-                // Cria novo marcador no mapa
-                const newMarker = L.marker([point.latitude, point.longitude]).addTo(map)
-                    .bindPopup(`<b>${point.name}</b><br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)}`).openPopup();
+                // Cria novo marcador no mapa, AGORA DRAGGABLE (arrastável)
+                const newMarker = L.marker([point.latitude, point.longitude], { draggable: true, id: point.id }).addTo(map)
+                    .bindPopup(`<b>${point.name}</b><br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)}`)
+                    .on('dragend', onMarkerDragEnd) // Adiciona o listener de arrastar
+                    .openPopup();
                 markers.push(newMarker);
                 
                 // Cria linha da tabela
@@ -413,10 +441,11 @@
             localCoordinates.forEach(point => {
                 const formattedLat = point.latitude.toFixed(6).replace('.', ',');
                 const formattedLon = point.longitude.toFixed(6).replace('.', ',');
-                const formattedAccuracy = point.accuracy !== null ? point.accuracy.toFixed(1).replace('.', ',') : '';
+                // Se a precisão foi corrigida manualmente (0), escreve "Corrigido" no CSV
+                const accuracyValue = point.accuracy === 0 ? "Corrigido" : point.accuracy.toFixed(1).replace('.', ',');
                 // Garante que o endereço com vírgulas internas não quebre o CSV, encapsulando-o em aspas
                 const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
-                csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${formattedAccuracy};${point.timestamp}\n`;
+                csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${accuracyValue};${point.timestamp}\n`;
             });
 
             const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
@@ -584,10 +613,10 @@
                         setUIState(false);
                         setButtonText('start-button', 'Iniciar GPS');
                         switch(error.code) {
-                            case error.PERMISSION_DENIED: showMessage("Erro: Acesso à localização negado. Ative nas configurações do navegador.", 'error'); break;
-                            case error.POSITION_UNAVAILABLE: showMessage("Erro: Localização não disponível. Tente o modo manual.", 'error'); break;
-                            case error.TIMEOUT: showMessage("Erro: A requisição de localização expirou. Tente o modo manual.", 'error'); break;
-                            default: showMessage(`Erro desconhecido: ${error.message}`, 'error'); break;
+                            case error.PERMISSION_DENIED: stopCollecting(); showMessage("Erro: Acesso à localização negado. Ative nas configurações do navegador.", 'error'); break;
+                            case error.POSITION_UNAVAILABLE: stopCollecting(); showMessage("Erro: Localização não disponível. Tente o modo manual.", 'error'); break;
+                            case error.TIMEOUT: stopCollecting(); showMessage("Erro: A requisição de localização expirou. Tente o modo manual.", 'error'); break;
+                            default: stopCollecting(); showMessage(`Erro desconhecido: ${error.message}`, 'error'); break;
                         }
                     },
                     options
