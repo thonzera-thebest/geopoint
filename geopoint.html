@@ -23,11 +23,9 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             margin-bottom: 1.5rem;
         }
-        /* Corrigido: Aplicando preto absoluto ao título no modo claro */
         h1.text-black {
             color: #000000;
         }
-        /* NOVO: Força o título a ser branco no modo escuro */
         .dark h1.text-black {
             color: #FFFFFF !important; 
         }
@@ -78,26 +76,87 @@
             gap: 1rem;
             margin-top: 1rem;
         }
-        /* Confirmação visual de edição (pisca verde) */
         .edited-flash {
-            background-color: #d1fae5 !important; /* Tailwind green-100 */
+            background-color: #d1fae5 !important;
             transition: background-color 0.5s ease-out;
         }
         .dark .edited-flash {
-            background-color: #10b981 !important; /* Tailwind emerald-500 dark mode flash */
+            background-color: #10b981 !important;
         }
-        /* Destaque visual para linhas corrigidas (fundo azul) */
         .corrected-row {
-            background-color: #eff6ff; /* blue-50 */
+            background-color: #eff6ff;
         }
         .dark .corrected-row {
-            background-color: #1e3a8a; /* dark blue-900 */
+            background-color: #1e3a8a;
         }
         .corrected-row:hover {
-            background-color: #dbeafe !important; /* blue-100 */
+            background-color: #dbeafe !important;
         }
         .dark .corrected-row:hover {
-            background-color: #1e40af !important; /* dark blue-800 */
+            background-color: #1e40af !important;
+        }
+        
+        /* NOVO: Estilos para a visualização em cards em telas pequenas */
+        @media screen and (max-width: 768px) {
+            #points-preview table {
+                box-shadow: none;
+            }
+            #points-preview thead {
+                display: none; /* Esconde o cabeçalho da tabela */
+            }
+            #points-preview table, #points-preview tbody, #points-preview tr, #points-preview td {
+                display: block;
+            }
+             #points-preview tr {
+                margin-bottom: 1.5rem;
+                border-radius: 0.75rem;
+                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+                border: 1px solid #e5e7eb;
+            }
+            .dark #points-preview tr {
+                border-color: #374151;
+            }
+            #points-preview td {
+                padding-left: 50%;
+                position: relative;
+                text-align: right;
+                border: none;
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+                padding-right: 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+            }
+            #points-preview td:not(:last-child) {
+                 border-bottom: 1px solid #f3f4f6;
+            }
+            .dark #points-preview td:not(:last-child) {
+                 border-bottom: 1px solid #4b5563;
+            }
+
+            #points-preview td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 1rem;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                color: #4b5563;
+            }
+            .dark #points-preview td::before {
+                color: #d1d5db;
+            }
+             /* Centraliza o último item (botão) */
+            #points-preview td:last-child {
+                justify-content: center;
+                padding-left: 1rem;
+            }
+             #points-preview td:last-child::before {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -106,7 +165,7 @@
     <div id="main-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center relative transition-colors duration-300">
         <!-- Botões de Ação no Topo -->
         <div class="absolute top-4 right-4 flex gap-2">
-            <!-- Botão de Configurações (NOVO) -->
+            <!-- Botão de Configurações -->
             <button id="settings-button" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none">
                 <svg class="h-6 w-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             </button>
@@ -200,7 +259,6 @@
             </div>
         </div>
     </div>
-     <!-- Modal de Configurações (NOVO) -->
     <div id="settings-modal" class="modal">
         <div class="modal-content text-left">
             <h3 class="text-xl font-bold mb-4 text-center">Configurações</h3>
@@ -398,13 +456,13 @@
                 row.className = rowClass + ' transition-colors duration-150';
 
                 row.innerHTML = `
-                    <td class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm font-medium cursor-text" contenteditable="true" data-id="${point.id}" onblur="App.handleEditPointName(this, ${point.id})">${point.name}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${statusString}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm text-center">
+                    <td data-label="#" class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td>
+                    <td data-label="Nome" class="py-2 px-4 whitespace-nowrap text-sm font-medium cursor-text" contenteditable="true" data-id="${point.id}" onblur="App.handleEditPointName(this, ${point.id})">${point.name}</td>
+                    <td data-label="Latitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td>
+                    <td data-label="Longitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td>
+                    <td data-label="Status" class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${statusString}</td>
+                    <td data-label="Precisão Orig." class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td>
+                    <td data-label="Ação" class="py-2 px-4 whitespace-nowrap text-sm text-center">
                         <button onclick="App.handleDeletePoint(${point.id})" class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg>
                         </button>
@@ -711,14 +769,12 @@
                 
                 // Lógica de sugestão para o próximo ponto
                 const lastPointName = newPoint.name;
-                // Regex: captura (qualquer coisa terminando em não-dígito e talvez espaço) e (dígitos no final)
                 const match = lastPointName.match(/^(.*\D\s*)(\d+)$/);
                 if (match) {
-                    const prefix = match[1]; // Parte do texto
-                    const number = parseInt(match[2]) + 1; // Incrementa o número
+                    const prefix = match[1];
+                    const number = parseInt(match[2]) + 1;
                     UIManager.elements.pointNameInput.value = `${prefix}${number}`;
                 } else {
-                    // Se o nome anterior não terminar em número, limpa o campo.
                     UIManager.elements.pointNameInput.value = '';
                 }
 
@@ -935,5 +991,4 @@
     </script>
 </body>
 </html>
-
 
