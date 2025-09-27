@@ -69,6 +69,14 @@
             gap: 1rem;
             margin-top: 1rem;
         }
+        /* NOVO: Estilo de flash para confirmação de edição */
+        .edited-flash {
+            background-color: #d1fae5 !important; /* Tailwind green-100 */
+            transition: background-color 0.5s ease-out;
+        }
+        .dark .edited-flash {
+            background-color: #10b981 !important; /* Tailwind emerald-500 dark mode flash */
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
@@ -135,6 +143,10 @@
             </button>
             <button id="download-button" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" disabled>
                 Exportar CSV
+            </button>
+            <!-- NOVO BOTÃO: Limpar Todos os Dados Locais -->
+            <button id="clear-local-data-button" class="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-yellow-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50" disabled>
+                Limpar Todos os Dados Locais
             </button>
         </div>
         
@@ -213,6 +225,7 @@
         const themeToggle = document.getElementById('theme-toggle');
         const sunIcon = document.getElementById('sun-icon');
         const moonIcon = document.getElementById('moon-icon');
+        const clearLocalDataButton = document.getElementById('clear-local-data-button'); // NOVO ELEMENTO
         
         let GOOGLE_MAPS_API_KEY = null;
 
@@ -243,6 +256,7 @@
             manualCaptureButton.disabled = isCollecting;
             captureButton.disabled = !isPointReady;
             downloadButton.disabled = localCoordinates.length === 0;
+            clearLocalDataButton.disabled = localCoordinates.length === 0; // NOVO: Habilita/Desabilita botão de limpeza
             pointNameInput.disabled = !isPointReady;
             
             // Controle de visibilidade
@@ -318,6 +332,13 @@
                     const content = `<b>${point.name}</b><br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)} ${correctionStatus}`;
                     markers[markerIndex].setPopupContent(content);
                 }
+
+                // NOVO: Confirmação visual de edição (pisca verde)
+                element.classList.add('edited-flash');
+                setTimeout(() => {
+                    element.classList.remove('edited-flash');
+                }, 1000); // Pisca por 1 segundo
+                
                 saveToLocalStorage(); // Salva alteração do nome
             }
         }
@@ -433,6 +454,23 @@
             } else {
                 showMessage("Ponto não encontrado.", 'error');
             }
+        }
+
+        // NOVO: Função para limpar todos os dados locais
+        function clearAllData() {
+            if (localCoordinates.length === 0) {
+                showMessage("Não há dados locais para limpar.", 'info');
+                return;
+            }
+            // Usa confirm() - NOTE: Em um ambiente real, você usaria um modal UI, mas para este projeto, usamos confirm()
+            if (!confirm("Tem certeza que deseja apagar TODOS os pontos salvos localmente? Esta ação é irreversível.")) {
+                return;
+            }
+            stopCollecting();
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            localCoordinates = [];
+            updatePreviewTable();
+            showMessage("Todos os dados locais foram limpos. Pronto para um novo projeto.", 'success');
         }
 
         // =================================================================
@@ -566,13 +604,6 @@
             document.body.removeChild(link);
             
             showMessage("Coleta finalizada. Download iniciado. Ao abrir no Excel, use a ferramenta 'Obter Dados de Texto' e selecione 'UTF-8' como origem do arquivo para evitar caracteres estranhos.", 'success');
-            
-            // Opcional: Limpar dados locais após o download bem-sucedido
-            // if (confirm("Deseja limpar os dados locais após o download?")) {
-            //     localStorage.removeItem(LOCAL_STORAGE_KEY);
-            //     localCoordinates = [];
-            //     updatePreviewTable();
-            // }
         }
 
         // =================================================================
@@ -794,7 +825,7 @@
                     if (manualMarker) map.removeLayer(manualMarker);
                     manualMarker = L.marker([lat, lon]).addTo(map).bindPopup('Ponto pesquisado').openPopup();
                     latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
-                    longitudeText.textContent = `Longitude: ${lon.longitude.toFixed(6)}`;
+                    longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
                     accuracyText.className = `text-sm font-medium ${getAccuracyColor(0)}`; // Cor verde para manual
                     accuracyText.textContent = `Precisão: \u00B1 0m (Manual)`;
 
@@ -925,6 +956,23 @@
                 localStorage.removeItem(LOCAL_STORAGE_KEY); // Limpa dados corrompidos
             }
         }
+        
+        // NOVO: Função para limpar todos os dados locais
+        function clearAllData() {
+            if (localCoordinates.length === 0) {
+                showMessage("Não há dados locais para limpar.", 'info');
+                return;
+            }
+            // Usa confirm() para garantir que o usuário realmente quer limpar os dados
+            if (!confirm("Tem certeza que deseja apagar TODOS os pontos salvos localmente? Esta ação é irreversível.")) {
+                return;
+            }
+            stopCollecting();
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            localCoordinates = [];
+            updatePreviewTable();
+            showMessage("Todos os dados locais foram limpos. Pronto para um novo projeto.", 'success');
+        }
 
 
         // =================================================================
@@ -958,6 +1006,7 @@
         stopButton.addEventListener('click', stopCollecting);
         searchButton.addEventListener('click', searchLocation);
         themeToggle.addEventListener('click', toggleDarkMode); // Listener do Dark Mode
+        clearLocalDataButton.addEventListener('click', clearAllData); // NOVO LISTENER
 
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
