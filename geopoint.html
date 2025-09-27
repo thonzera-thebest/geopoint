@@ -215,6 +215,9 @@
         const moonIcon = document.getElementById('moon-icon');
         
         let GOOGLE_MAPS_API_KEY = null;
+
+        // Chave de armazenamento local para os pontos (garantindo que os dados não sejam perdidos)
+        const LOCAL_STORAGE_KEY = 'to_the_point_coords';
         
         // =================================================================
         // Seção 2: Funções de Controle da UI
@@ -315,6 +318,7 @@
                     const content = `<b>${point.name}</b><br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)} ${correctionStatus}`;
                     markers[markerIndex].setPopupContent(content);
                 }
+                saveToLocalStorage(); // Salva alteração do nome
             }
         }
         
@@ -345,6 +349,7 @@
                 // 3. Re-renderiza a tabela para refletir as mudanças
                 updatePreviewTable(); 
                 showMessage(`Ponto '${localCoordinates[index].name}' corrigido manualmente.`, 'info');
+                saveToLocalStorage(); // Salva alteração de arrastar
             }
         }
 
@@ -424,6 +429,7 @@
             if (localCoordinates.length < initialLength) {
                 updatePreviewTable();
                 showMessage('Marcação deletada com sucesso.', 'success');
+                saveToLocalStorage(); // Salva alteração de deleção
             } else {
                 showMessage("Ponto não encontrado.", 'error');
             }
@@ -507,6 +513,8 @@
             lastKnownAddress = null;
             if (manualMarker) map.removeLayer(manualMarker);
             manualMarker = null;
+
+            saveToLocalStorage(); // Salva o novo ponto
         }
 
         function stopAndDownload() {
@@ -558,6 +566,13 @@
             document.body.removeChild(link);
             
             showMessage("Coleta finalizada. Download iniciado. Ao abrir no Excel, use a ferramenta 'Obter Dados de Texto' e selecione 'UTF-8' como origem do arquivo para evitar caracteres estranhos.", 'success');
+            
+            // Opcional: Limpar dados locais após o download bem-sucedido
+            // if (confirm("Deseja limpar os dados locais após o download?")) {
+            //     localStorage.removeItem(LOCAL_STORAGE_KEY);
+            //     localCoordinates = [];
+            //     updatePreviewTable();
+            // }
         }
 
         // =================================================================
@@ -779,7 +794,7 @@
                     if (manualMarker) map.removeLayer(manualMarker);
                     manualMarker = L.marker([lat, lon]).addTo(map).bindPopup('Ponto pesquisado').openPopup();
                     latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
-                    longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
+                    longitudeText.textContent = `Longitude: ${lon.longitude.toFixed(6)}`;
                     accuracyText.className = `text-sm font-medium ${getAccuracyColor(0)}`; // Cor verde para manual
                     accuracyText.textContent = `Precisão: \u00B1 0m (Manual)`;
 
@@ -880,7 +895,40 @@
         }
 
         // =================================================================
-        // Seção 6: Inicialização e Eventos
+        // Seção 6: Armazenamento Local (Backup)
+        // =================================================================
+
+        function saveToLocalStorage() {
+            try {
+                const dataToSave = JSON.stringify(localCoordinates);
+                localStorage.setItem(LOCAL_STORAGE_KEY, dataToSave);
+                // console.log("Dados salvos automaticamente.");
+            } catch (e) {
+                console.error("Erro ao salvar dados no localStorage:", e);
+                showMessage("Aviso: Falha ao salvar backup local.", 'error');
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (savedData) {
+                    const parsedData = JSON.parse(savedData);
+                    if (Array.isArray(parsedData) && parsedData.length > 0) {
+                        localCoordinates = parsedData;
+                        updatePreviewTable();
+                        showMessage(`Dados de ${localCoordinates.length} pontos carregados com sucesso.`, 'info');
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao carregar dados do localStorage:", e);
+                localStorage.removeItem(LOCAL_STORAGE_KEY); // Limpa dados corrompidos
+            }
+        }
+
+
+        // =================================================================
+        // Seção 7: Inicialização e Eventos
         // =================================================================
         document.addEventListener('DOMContentLoaded', () => {
             // Aplica tema salvo ou padrão do sistema
@@ -893,6 +941,7 @@
             }
 
             initMap();
+            loadFromLocalStorage(); // Carrega dados salvos ao iniciar
         });
         
         // Listeners de Eventos
