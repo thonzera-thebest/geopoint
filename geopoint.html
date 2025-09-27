@@ -147,8 +147,9 @@
                         <tr>
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">#</th>
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Nome do Ponto</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Latitude</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Longitude</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Latitude (Final)</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Longitude (Final)</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Precisão Orig.</th>
                             <th class="py-2 px-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Ação</th>
                         </tr>
                     </thead>
@@ -290,20 +291,51 @@
             });
         }
         
+        // Função para edição inline do nome do ponto na tabela
+        function editPointName(element, pointId) {
+            const newName = element.textContent.trim();
+            const pointIdNum = parseInt(pointId);
+            const index = localCoordinates.findIndex(p => p.id === pointIdNum);
+        
+            if (index !== -1) {
+                if (newName === "") {
+                    showMessage("O nome do ponto não pode estar vazio. Revertendo para o nome anterior.", 'error');
+                    element.textContent = localCoordinates[index].name; // Reverte o texto
+                    return;
+                }
+        
+                localCoordinates[index].name = newName;
+                showMessage(`Nome do ponto atualizado para '${newName}'.`, 'success');
+                
+                // 1. Atualiza o balão do marcador no mapa
+                const markerIndex = markers.findIndex(m => m.options.id === pointIdNum);
+                if (markerIndex !== -1) {
+                    const point = localCoordinates[index];
+                    const correctionStatus = point.accuracy === 0 ? '(Corrigido)' : '';
+                    const content = `<b>${point.name}</b><br>Lat: ${point.latitude.toFixed(6)}<br>Lon: ${point.longitude.toFixed(6)} ${correctionStatus}`;
+                    markers[markerIndex].setPopupContent(content);
+                }
+            }
+        }
+        
+        // Torna a função globalmente acessível para o evento onblur na tabela
+        window.editPointName = editPointName;
+
         // Nova função para gerenciar o arraste do marcador
         function onMarkerDragEnd(e) {
             const marker = e.target;
             const newLatLng = marker.getLatLng();
-            // Ponto ID foi salvo nas opções do marcador
             const pointId = marker.options.id; 
             
-            // 1. Encontra e atualiza o ponto no array localCoordinates
             const index = localCoordinates.findIndex(p => p.id === pointId);
 
             if (index !== -1) {
+                // Salva a nova coordenada
                 localCoordinates[index].latitude = newLatLng.lat;
                 localCoordinates[index].longitude = newLatLng.lng;
-                localCoordinates[index].accuracy = 0; // Marca como corrigido manualmente
+                
+                // Indica que a correção foi manual para o CSV
+                localCoordinates[index].accuracy = 0; 
                 localCoordinates[index].address = 'Endereço corrigido manualmente'; 
 
                 // 2. Atualiza o Popup
@@ -321,7 +353,6 @@
             pointsCount.textContent = localCoordinates.length;
             
             // 1. Limpa marcadores existentes (apenas os pontos de coleta)
-            // O marcador de localização atual (currentLocationMarker) é mantido se o GPS estiver ativo.
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
 
@@ -334,14 +365,36 @@
                     .openPopup();
                 markers.push(newMarker);
                 
+                // Determina o texto de precisão original na tabela
+                let originalAccuracyText = '';
+                if (point.originalAccuracy !== undefined && point.originalAccuracy !== null) {
+                     // Se for ponto GPS original
+                    originalAccuracyText = `\u00B1 ${point.originalAccuracy.toFixed(1)}m`;
+                } else if (point.accuracy === 0) {
+                    // Se foi corrigido (o accuracy final é 0) ou se for um ponto manual
+                    originalAccuracyText = `Ajustado`;
+                } else {
+                    originalAccuracyText = `Manual`;
+                }
+
+
                 // Cria linha da tabela
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150';
                 row.innerHTML = `
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${index + 1}</td>
-                    <td class="py-2 px-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">${point.name}</td>
+                    <!-- Coluna de Nome do Ponto AGORA EDITÁVEL -->
+                    <td class="py-2 px-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white cursor-text"
+                        contenteditable="true" 
+                        data-id="${point.id}" 
+                        onblur="editPointName(this, ${point.id})">
+                        ${point.name}
+                    </td>
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${point.latitude.toFixed(6).replace('.', ',')}</td>
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">${point.longitude.toFixed(6).replace('.', ',')}</td>
+                    <td class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold ${point.accuracy === 0 ? 'text-blue-500' : 'text-orange-500'} dark:text-orange-400">
+                        ${originalAccuracyText}
+                    </td>
                     <td class="py-2 px-4 whitespace-nowrap text-sm text-center">
                         <button onclick="deletePoint(${point.id})" class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500">
                             <!-- Ícone de Lixeira (Trash Icon SVG) -->
@@ -407,9 +460,13 @@
                 name: pointName,
                 latitude: lastKnownPosition.latitude,
                 longitude: lastKnownPosition.longitude,
-                accuracy: lastKnownAccuracy, // Salva a precisão
+                accuracy: lastKnownAccuracy, // Precisão do GPS no momento da captura
                 address: addressToSave,
                 timestamp: formattedTimestamp,
+                // NOVOS CAMPOS PARA RASTREAR A POSIÇÃO ORIGINAL:
+                originalAccuracy: isManualCapture ? 0 : lastKnownAccuracy, // 0 para manual, valor do GPS para automático
+                originalLat: lastKnownPosition.latitude,
+                originalLon: lastKnownPosition.longitude,
                 // Usa Date.now() para garantir um ID único para a função deletePoint(id)
                 id: Date.now() 
             };
@@ -437,15 +494,33 @@
             stopCollecting();
 
             // Usa UTF-8 com BOM (\uFEFF) para forçar o Excel a reconhecer caracteres especiais
-            let csvContent = "Nome do Ponto;Latitude;Longitude;Endereco;Precisao (m);Timestamp\n";
+            let csvContent = "Nome do Ponto;Latitude (Final);Longitude (Final);Endereco;Precisao (Final m);Timestamp;Latitude (Original);Longitude (Original);Precisao (Original m)\n";
             localCoordinates.forEach(point => {
+                // FINAL: Usado para o geocoding no QGIS
                 const formattedLat = point.latitude.toFixed(6).replace('.', ',');
                 const formattedLon = point.longitude.toFixed(6).replace('.', ',');
-                // Se a precisão foi corrigida manualmente (0), escreve "Corrigido" no CSV
-                const accuracyValue = point.accuracy === 0 ? "Corrigido" : point.accuracy.toFixed(1).replace('.', ',');
+                
+                // ORIGINAL: Usado para controle de qualidade
+                const originalLat = point.originalLat.toFixed(6).replace('.', ',');
+                const originalLon = point.originalLon.toFixed(6).replace('.', ',');
+
+                // Precisão Final (0m se arrastado, ou o valor GPS se não)
+                const finalAccuracyValue = point.accuracy === 0 ? "Corrigido" : point.accuracy.toFixed(1).replace('.', ',');
+                
+                // Precisão Original (Valor GPS ou "Manual" se for ponto inicial manual)
+                let originalAccuracyValue;
+                if (point.originalAccuracy === 0) {
+                    originalAccuracyValue = "Manual/Ajustado";
+                } else if (point.originalAccuracy !== null && point.originalAccuracy !== undefined) {
+                    originalAccuracyValue = point.originalAccuracy.toFixed(1).replace('.', ',');
+                } else {
+                    originalAccuracyValue = "N/A";
+                }
+
                 // Garante que o endereço com vírgulas internas não quebre o CSV, encapsulando-o em aspas
                 const formattedAddress = point.address ? `"${point.address.replace(/"/g, '""')}"` : 'Localização não inclusa';
-                csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${accuracyValue};${point.timestamp}\n`;
+                
+                csvContent += `${point.name};${formattedLat};${formattedLon};${formattedAddress};${finalAccuracyValue};${point.timestamp};${originalLat};${originalLon};${originalAccuracyValue}\n`;
             });
 
             const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
@@ -797,8 +872,9 @@
                 searchLocation();
             }
         });
-        // Deletar Ponto agora é tratado pelos botões dinâmicos na tabela
-        window.deletePoint = deletePoint; 
+        // Deletar Ponto e Editar Nome agora são tratados pelos botões dinâmicos na tabela
+        window.deletePoint = deletePoint;
+        window.editPointName = editPointName; 
     </script>
 </body>
 </html>
