@@ -454,8 +454,21 @@
             // Formatação do timestamp para o fuso horário de São Paulo (DD/MM/AAAA, HH:mm:ss)
             const formattedTimestamp = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
             
-            const pointName = pointNameInput.value.trim() || `Ponto ${localCoordinates.length + 1}`;
-            
+            // Sugestão de Preenchimento Automático:
+            let pointName = pointNameInput.value.trim();
+            if (!pointName) {
+                // Lógica de Sugestão
+                const lastPoint = localCoordinates.length > 0 ? localCoordinates[localCoordinates.length - 1] : null;
+                if (lastPoint && lastPoint.name.match(/(\D*)(\d+)$/)) {
+                    const match = lastPoint.name.match(/(\D*)(\d+)$/);
+                    const prefix = match[1];
+                    const number = parseInt(match[2]) + 1;
+                    pointName = `${prefix.trim()} ${number}`;
+                } else {
+                    pointName = `Ponto ${localCoordinates.length + 1}`;
+                }
+            }
+
             const newPoint = {
                 name: pointName,
                 latitude: lastKnownPosition.latitude,
@@ -474,7 +487,18 @@
             localCoordinates.push(newPoint);
             updatePreviewTable();
             showMessage(`Ponto capturado e salvo localmente!`, 'success');
-            pointNameInput.value = '';
+            
+            // Aplica a sugestão do próximo nome
+            const lastPoint = localCoordinates[localCoordinates.length - 1];
+            if (lastPoint.name.match(/(\D*)(\d+)$/)) {
+                const match = lastPoint.name.match(/(\D*)(\d+)$/);
+                const prefix = match[1];
+                const number = parseInt(match[2]) + 1;
+                pointNameInput.value = `${prefix.trim()} ${number}`;
+            } else {
+                pointNameInput.value = ''; // Limpa se não conseguir preencher automaticamente
+            }
+            
             setUIState(false);
             
             // Limpa o ponto atual após a captura
@@ -643,6 +667,17 @@
             }
         }
 
+        // Função que determina a cor da precisão
+        function getAccuracyColor(accuracy) {
+            if (accuracy <= 5) {
+                return 'text-green-500 dark:text-green-400'; // Excelente: < 5m
+            } else if (accuracy <= 15) {
+                return 'text-yellow-500 dark:text-yellow-400'; // Boa: 5m - 15m
+            } else {
+                return 'text-red-500 dark:text-red-400'; // Ruim: > 15m
+            }
+        }
+
         function startCollecting() {
             // Inicia o modo de coleta automática (GPS)
             stopCollecting();
@@ -665,6 +700,10 @@
                         
                         latitudeText.textContent = `Latitude: ${lastKnownPosition.latitude.toFixed(6)}`;
                         longitudeText.textContent = `Longitude: ${lastKnownPosition.longitude.toFixed(6)}`;
+                        
+                        // Aplica a cor de feedback visual na precisão
+                        const accuracyColorClass = getAccuracyColor(lastKnownAccuracy);
+                        accuracyText.className = `text-sm font-medium ${accuracyColorClass}`;
                         accuracyText.textContent = `Precisão: \u00B1 ${lastKnownAccuracy.toFixed(1)}m`;
                         
                         // ATUALIZAÇÃO DO MARCADOR NO MAPA
@@ -741,6 +780,7 @@
                     manualMarker = L.marker([lat, lon]).addTo(map).bindPopup('Ponto pesquisado').openPopup();
                     latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
                     longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
+                    accuracyText.className = `text-sm font-medium ${getAccuracyColor(0)}`; // Cor verde para manual
                     accuracyText.textContent = `Precisão: \u00B1 0m (Manual)`;
 
                     showMessage('Coordenadas localizadas no mapa.', 'success');
@@ -749,6 +789,7 @@
                     showMessage('Formato de coordenadas inválido. Tente "latitude,longitude".', 'error');
                 }
                 setButtonText('search-button', 'Pesquisar');
+                searchInput.value = ''; // Limpeza da barra de pesquisa após busca
             } else {
                 // Busca por endereço (Geocodificação)
                 showMessage('Pesquisando endereço...', 'info');
@@ -769,6 +810,7 @@
                         manualMarker = L.marker([lat, lon]).addTo(map).bindPopup(address).openPopup();
                         latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
                         longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
+                        accuracyText.className = `text-sm font-medium ${getAccuracyColor(0)}`; // Cor verde para manual
                         accuracyText.textContent = `Precisão: \u00B1 0m (Manual)`;
 
                         showMessage('Endereço localizado no mapa.', 'success');
@@ -780,6 +822,7 @@
                     showMessage('Erro ao pesquisar endereço. Verifique sua conexão.', 'error');
                 }
                 setButtonText('search-button', 'Pesquisar');
+                searchInput.value = ''; // Limpeza da barra de pesquisa após busca
             }
         }
 
