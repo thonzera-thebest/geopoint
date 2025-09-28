@@ -449,30 +449,27 @@
                     MapManager.init();
                     SettingsManager.init();
                     this.addEventListeners();
-                    await this.initFirebase();
+                    // A inicialização do Firebase agora é tratada pelo bootstrap
+                    this.bootstrapFirebase();
                 },
 
-                async initFirebase() {
+                bootstrapFirebase() {
                     let firebaseConfigJson = SettingsManager.getFirebaseConfig();
                     if (!firebaseConfigJson && typeof __firebase_config !== 'undefined') {
                         firebaseConfigJson = __firebase_config;
                     }
 
-                    if (!firebaseConfigJson) {
-                        UIManager.showMessage("Configuração do Firebase não encontrada. Por favor, adicione nas configurações.", "error");
+                    if (firebaseConfigJson) {
+                        this.initializeFirebase(firebaseConfigJson);
+                    } else {
+                        // Se nenhuma configuração for encontrada, abre o modal para o usuário inserir.
+                        UIManager.showMessage("Bem-vindo! Por favor, insira sua configuração do Firebase para começar.", "info");
                         UIManager.showModal(UIManager.elements.settingsModal);
-                        return;
                     }
-                    
-                    try {
-                        let configString = firebaseConfigJson;
-                        
-                        const startIndex = configString.indexOf('{');
-                        const endIndex = configString.lastIndexOf('}');
-                        if (startIndex !== -1 && endIndex !== -1) {
-                            configString = configString.substring(startIndex, endIndex + 1);
-                        }
+                },
 
+                async initializeFirebase(configString) {
+                    try {
                         // Solução definitiva: Envolve o objeto em parênteses para evitar ambiguidade com blocos de código
                         const firebaseConfig = new Function('return (' + configString + ')')();
                         
@@ -486,8 +483,14 @@
                         StateManager.auth = getAuth(StateManager.app);
                         
                         onAuthStateChanged(StateManager.auth, user => {
-                            if (user) { StateManager.userId = user.uid; UIManager.displayUserId(user.uid); DataManager.listenForPoints(); }
-                            else { StateManager.userId = null; UIManager.showMessage("Autenticação necessária.", "error"); }
+                            if (user) { 
+                                StateManager.userId = user.uid; 
+                                UIManager.displayUserId(user.uid); 
+                                DataManager.listenForPoints(); 
+                            } else { 
+                                StateManager.userId = null; 
+                                UIManager.showMessage("Autenticação necessária.", "error"); 
+                            }
                         });
 
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -497,8 +500,8 @@
                         }
                     } catch (e) {
                         console.error("Erro na inicialização do Firebase:", e);
-                        UIManager.showMessage("Configuração do Firebase inválida. Verifique os dados.", "error");
-                        UIManager.showModal(UIManager.elements.settingsModal);
+                        UIManager.showMessage("Configuração do Firebase inválida. Verifique os dados e recarregue a página.", "error");
+                        // Não mostra o modal novamente se a configuração salva for inválida, para evitar loops.
                     }
                 },
 
@@ -552,6 +555,7 @@
     </script>
 </body>
 </html>
+
 
 
 
