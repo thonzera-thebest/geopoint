@@ -48,7 +48,7 @@
         .dark .hover\:bg-gray-50:hover { background-color: #4b5563; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
-        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border-radius: 1rem; box-shadow: 0 8px 16px rgba(0,0,0,0.2); width: 80%; max-width: 400px; text-align: center; }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border-radius: 1rem; box-shadow: 0 8px 16px rgba(0,0,0,0.2); width: 90%; max-width: 500px; text-align: center; }
         .dark .modal-content { background-color: #374151; color: #f3f4f6; }
         .modal-buttons { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
         .edited-flash { background-color: #d1fae5 !important; transition: background-color 0.5s ease-out; }
@@ -160,7 +160,7 @@
     <!-- Modais -->
     <div id="confirmation-modal" class="modal"><div class="modal-content"><p>Gostaria de incluir a localização aproximada desse ponto?</p><div class="modal-buttons"><button id="confirm-yes" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Sim</button><button id="confirm-no" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-600">Não</button></div></div></div>
     <div id="clear-data-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Atenção!</p><p>Tem certeza que deseja apagar TODOS os pontos salvos na nuvem? Esta ação é irreversível.</p><div class="modal-buttons"><button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, apagar tudo</button><button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
-    <div id="settings-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Configurações</h3><div class="mb-4"><label for="api-key-input" class="block text-sm font-medium text-gray-900 mb-1">Chave de API do Google Maps</label><input type="password" id="api-key-input" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole sua chave aqui"><p class="text-xs text-gray-600 mt-1">Sua chave é salva apenas no seu navegador.</p></div><div class="mb-4"><label for="firebase-config-input" class="block text-sm font-medium text-gray-900 mb-1">Configuração Firebase</label><textarea id="firebase-config-input" rows="5" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole o objeto de configuração do Firebase aqui"></textarea><p class="text-xs text-gray-600 mt-1">Necessário para usar a aplicação fora do ambiente de desenvolvimento.</p></div><div class="modal-buttons"><button id="save-settings-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">Salvar e Recarregar</button><button id="close-settings-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
+    <div id="settings-modal" class="modal"><div class="modal-content text-left overflow-y-auto max-h-[90vh]"><h3 class="text-xl font-bold mb-4 text-center">Configurações</h3><div class="mb-4"><label for="api-key-input" class="block text-sm font-medium text-gray-900 mb-1">Chave de API do Google Maps</label><input type="password" id="api-key-input" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole sua chave aqui"><p class="text-xs text-gray-600 mt-1">Sua chave é salva apenas no seu navegador.</p></div><div class="space-y-2"><p class="block text-sm font-medium text-gray-900 mb-1">Configuração Firebase</p><input type="text" id="firebase-apiKey" class="w-full p-2 rounded-lg border border-gray-300" placeholder="apiKey"><input type="text" id="firebase-authDomain" class="w-full p-2 rounded-lg border border-gray-300 mt-2" placeholder="authDomain"><input type="text" id="firebase-projectId" class="w-full p-2 rounded-lg border border-gray-300 mt-2" placeholder="projectId"><input type="text" id="firebase-storageBucket" class="w-full p-2 rounded-lg border border-gray-300 mt-2" placeholder="storageBucket"><input type="text" id="firebase-messagingSenderId" class="w-full p-2 rounded-lg border border-gray-300 mt-2" placeholder="messagingSenderId"><input type="text" id="firebase-appId" class="w-full p-2 rounded-lg border border-gray-300 mt-2" placeholder="appId"></div><div class="modal-buttons"><button id="save-settings-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">Salvar e Recarregar</button><button id="close-settings-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
     
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     
@@ -215,7 +215,14 @@
                     saveSettingsButton: document.getElementById('save-settings-button'),
                     closeSettingsButton: document.getElementById('close-settings-button'),
                     apiKeyInput: document.getElementById('api-key-input'),
-                    firebaseConfigInput: document.getElementById('firebase-config-input'),
+                    firebaseConfigInputs: {
+                        apiKey: document.getElementById('firebase-apiKey'),
+                        authDomain: document.getElementById('firebase-authDomain'),
+                        projectId: document.getElementById('firebase-projectId'),
+                        storageBucket: document.getElementById('firebase-storageBucket'),
+                        messagingSenderId: document.getElementById('firebase-messagingSenderId'),
+                        appId: document.getElementById('firebase-appId'),
+                    },
                     userInfo: document.getElementById('user-info'),
                     userId: document.getElementById('user-id'),
                 },
@@ -433,14 +440,24 @@
                 FIREBASE_CONFIG_STORAGE_KEY: 'to_the_point_firebase_config',
                 init() { 
                     UIManager.elements.apiKeyInput.value = this.getApiKey() || '';
-                    UIManager.elements.firebaseConfigInput.value = this.getFirebaseConfig() || '';
+                    const fbConfig = this.getFirebaseConfig();
+                    if(fbConfig) {
+                        for(const key in UIManager.elements.firebaseConfigInputs) {
+                            if(fbConfig[key]) {
+                                UIManager.elements.firebaseConfigInputs[key].value = fbConfig[key];
+                            }
+                        }
+                    }
                 },
                 saveApiKey(key) { localStorage.setItem(this.API_KEY_STORAGE_KEY, key); },
                 getApiKey() { return localStorage.getItem(this.API_KEY_STORAGE_KEY); },
                 saveTheme(theme) { localStorage.setItem(this.THEME_STORAGE_KEY, theme); },
                 getTheme() { return localStorage.getItem(this.THEME_STORAGE_KEY) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); },
-                saveFirebaseConfig(config) { localStorage.setItem(this.FIREBASE_CONFIG_STORAGE_KEY, config); },
-                getFirebaseConfig() { return localStorage.getItem(this.FIREBASE_CONFIG_STORAGE_KEY); },
+                saveFirebaseConfig(config) { localStorage.setItem(this.FIREBASE_CONFIG_STORAGE_KEY, JSON.stringify(config)); },
+                getFirebaseConfig() { 
+                    const configString = localStorage.getItem(this.FIREBASE_CONFIG_STORAGE_KEY);
+                    return configString ? JSON.parse(configString) : null;
+                },
             };
 
             const App = {
@@ -453,39 +470,25 @@
                 },
 
                 bootstrapFirebase() {
-                    let configString = SettingsManager.getFirebaseConfig();
-                    if (!configString && typeof __firebase_config !== 'undefined') {
-                        configString = __firebase_config;
+                    let firebaseConfig = SettingsManager.getFirebaseConfig();
+                    if (!firebaseConfig && typeof __firebase_config !== 'undefined') {
+                        try {
+                           firebaseConfig = JSON.parse(__firebase_config);
+                        } catch(e) {
+                            console.error("Erro ao analisar __firebase_config:", e);
+                        }
                     }
 
-                    if (configString) {
-                        this.initializeFirebase(configString);
+                    if (firebaseConfig && firebaseConfig.apiKey) {
+                        this.initializeFirebase(firebaseConfig);
                     } else {
                         UIManager.showMessage("Bem-vindo! Por favor, insira sua configuração do Firebase para começar.", "info");
                         UIManager.showModal(UIManager.elements.settingsModal);
                     }
                 },
 
-                parseFirebaseConfig(str) {
-                    const config = {};
-                    const lines = str.replace(/[{}]/g, '').split(',');
-                    for (const line of lines) {
-                        const parts = line.split(':');
-                        if (parts.length === 2) {
-                            const key = parts[0].trim().replace(/['"]/g, '');
-                            const value = parts[1].trim().replace(/['"]/g, '');
-                            if (key) {
-                                config[key] = value;
-                            }
-                        }
-                    }
-                    return config;
-                },
-
-                async initializeFirebase(configString) {
+                async initializeFirebase(firebaseConfig) {
                     try {
-                        const firebaseConfig = this.parseFirebaseConfig(configString);
-                        
                         if (!firebaseConfig || !firebaseConfig.apiKey) {
                              throw new Error("A configuração analisada não contém uma chave de API válida.");
                         }
@@ -535,13 +538,23 @@
 
                 handleSaveSettings() {
                     SettingsManager.saveApiKey(UIManager.elements.apiKeyInput.value.trim());
-                    const fbConfig = UIManager.elements.firebaseConfigInput.value.trim();
-                     if (fbConfig) {
+                    
+                    const fbConfig = {};
+                    let allFieldsFilled = true;
+                    for(const key in UIManager.elements.firebaseConfigInputs) {
+                        const value = UIManager.elements.firebaseConfigInputs[key].value.trim();
+                        if(!value) {
+                            allFieldsFilled = false;
+                        }
+                        fbConfig[key] = value;
+                    }
+
+                     if (allFieldsFilled) {
                         SettingsManager.saveFirebaseConfig(fbConfig);
                         UIManager.showMessage('Configurações salvas! A página será recarregada.', 'success');
                         setTimeout(() => location.reload(), 1500);
                     } else {
-                         UIManager.showMessage('O campo de configuração do Firebase não pode estar vazio.', 'error');
+                         UIManager.showMessage('Por favor, preencha todos os campos de configuração do Firebase.', 'error');
                     }
                 },
 
