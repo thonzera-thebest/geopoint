@@ -409,14 +409,19 @@
                     onSnapshot(q, (snapshot) => { 
                         StateManager.localCoordinates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
                         UIManager.updatePreviewTable(); 
-                        if (!snapshot.metadata.fromCache) { // Update message on any server update
-                           if (snapshot.empty) {
-                                UIManager.showMessage("Nenhum ponto na nuvem. Comece a coletar!", 'info');
-                           } else {
-                                UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success');
-                           }
+                        if (snapshot.empty) {
+                            UIManager.showMessage("Nenhum ponto na nuvem. Comece a coletar!", 'info');
+                        } else {
+                            UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success');
                         }
-                    }, (error) => { console.error("Erro ao ouvir os pontos:", error); UIManager.showMessage("Erro ao carregar dados da nuvem. Verifique o console para criar o índice do Firestore, se necessário.", 'error'); });
+                    }, (error) => { 
+                        console.error("Firebase Error:", error); 
+                        let userMessage = "Erro ao carregar dados da nuvem.";
+                        if (error.code === 'failed-precondition') {
+                            userMessage = "Erro: O banco de dados requer um índice. Por favor, verifique o console de desenvolvedor do seu navegador (F12) para encontrar um link para criá-lo.";
+                        }
+                        UIManager.showMessage(userMessage, 'error'); 
+                    });
                 },
                 async addPoint() {
                     if (!StateManager.lastKnownPosition) return; 
@@ -454,7 +459,18 @@
                     try { 
                         await addDoc(this.getPointsCollectionRef(), newPoint); 
                         UIManager.showMessage(`Ponto "${pointName}" salvo na nuvem!`, 'success'); 
-                        UIManager.elements.pointNameInput.value = ''; // Clear input for next point
+                        
+                        // Lógica de sugestão para o próximo ponto (RESTAURADA)
+                        const lastPointName = newPoint.name;
+                        const match = lastPointName.match(/^(.*\D\s*)(\d+)$/);
+                        if (match) {
+                            const prefix = match[1].trim();
+                            const number = parseInt(match[2]) + 1;
+                            UIManager.elements.pointNameInput.value = `${prefix} ${number}`;
+                        } else {
+                            UIManager.elements.pointNameInput.value = '';
+                        }
+
                         Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); 
                         if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); 
                         StateManager.manualMarker = null; 
@@ -621,4 +637,7 @@
     </script>
 </body>
 </html>
+
+
+
 
