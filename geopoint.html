@@ -465,16 +465,21 @@
                     }
                     
                     try {
-                        let configToParse = firebaseConfigJson;
-        
-                        // Tenta extrair o objeto JSON do texto, caso o usuário cole mais do que o necessário
-                        const startIndex = configToParse.indexOf('{');
-                        const endIndex = configToParse.lastIndexOf('}');
+                        let configString = firebaseConfigJson;
+                        
+                        const startIndex = configString.indexOf('{');
+                        const endIndex = configString.lastIndexOf('}');
                         if (startIndex !== -1 && endIndex !== -1) {
-                            configToParse = configToParse.substring(startIndex, endIndex + 1);
+                            configString = configString.substring(startIndex, endIndex + 1);
                         }
 
-                        const firebaseConfig = JSON.parse(configToParse);
+                        // Solução robusta: Usa o construtor de Função para analisar o objeto JS com segurança
+                        const firebaseConfig = new Function('return ' + configString)();
+                        
+                        if (!firebaseConfig || !firebaseConfig.apiKey) {
+                             throw new Error("A configuração analisada não parece ser um objeto Firebase válido.");
+                        }
+
                         UIManager.showMessage("Conectando à nuvem...", "info");
                         StateManager.app = initializeApp(firebaseConfig);
                         StateManager.db = getFirestore(StateManager.app);
@@ -515,15 +520,13 @@
 
                 handleSaveSettings() {
                     SettingsManager.saveApiKey(UIManager.elements.apiKeyInput.value.trim());
-                    
                     const fbConfig = UIManager.elements.firebaseConfigInput.value.trim();
-                    try {
-                        JSON.parse(fbConfig); // Testa se é um JSON válido
+                     if (fbConfig) {
                         SettingsManager.saveFirebaseConfig(fbConfig);
                         UIManager.showMessage('Configurações salvas! A página será recarregada.', 'success');
                         setTimeout(() => location.reload(), 1500);
-                    } catch(e) {
-                        UIManager.showMessage('O texto da configuração Firebase não é um JSON válido.', 'error');
+                    } else {
+                         UIManager.showMessage('O campo de configuração do Firebase não pode estar vazio.', 'error');
                     }
                 },
 
