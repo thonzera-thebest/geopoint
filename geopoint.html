@@ -58,25 +58,10 @@
         .corrected-row:hover { background-color: #dbeafe !important; }
         .dark .corrected-row:hover { background-color: #1e40af !important; }
 
-        /* NOVO: Estilos para o seletor de cores */
-        .color-dot {
-            width: 2rem;
-            height: 2rem;
-            border-radius: 9999px;
-            cursor: pointer;
-            border: 3px solid transparent;
-            transition: all 0.2s;
-        }
-        .color-dot:hover {
-            transform: scale(1.1);
-        }
-        .color-dot.selected {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
-        }
-        .dark .color-dot.selected {
-             box-shadow: 0 0 0 2px #374151, 0 0 0 4px #60a5fa;
-        }
+        .color-dot { width: 2rem; height: 2rem; border-radius: 9999px; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
+        .color-dot:hover { transform: scale(1.1); }
+        .color-dot.selected { border-color: #2563eb; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb; }
+        .dark .color-dot.selected { box-shadow: 0 0 0 2px #374151, 0 0 0 4px #60a5fa; }
         
         @media screen and (max-width: 768px) {
             #points-preview table, #points-preview thead, #points-preview tbody, #points-preview tr, #points-preview td { display: block; }
@@ -132,9 +117,7 @@
             </div>
              <div id="color-picker-container">
                 <label class="block text-sm font-medium text-gray-900 mb-2">Cor do Marcador</label>
-                <div id="color-palette" class="flex justify-center gap-3">
-                    <!-- Cores geradas via JS -->
-                </div>
+                <div id="color-palette" class="flex justify-center gap-3"></div>
             </div>
         </div>
 
@@ -145,7 +128,7 @@
             <button id="capture-button" class="w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50" disabled>Registrar Ponto</button>
             <button id="stop-button" class="w-full bg-gray-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 hidden">Parar/Resetar</button>
             <button id="download-button" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" disabled>Exportar CSV</button>
-            <button id="clear-local-data-button" class="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-yellow-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50" disabled>Limpar Todos os Dados Locais</button>
+            <button id="clear-local-data-button" class="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-yellow-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50" disabled>Limpar Todos os Dados</button>
         </div>
         
         <div id="points-preview" class="mt-8 hidden">
@@ -168,577 +151,653 @@
                 </table>
             </div>
         </div>
+
+        <div id="user-info" class="text-xs text-gray-500 dark:text-gray-400 mt-4 hidden">
+            ID de Usuário: <span id="user-id" class="font-mono"></span>
+        </div>
     </div>
 
     <!-- Modais -->
     <div id="confirmation-modal" class="modal"><div class="modal-content"><p>Gostaria de incluir a localização aproximada desse ponto?</p><div class="modal-buttons"><button id="confirm-yes" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Sim</button><button id="confirm-no" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-600">Não</button></div></div></div>
-    <div id="clear-data-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Atenção!</p><p>Tem certeza que deseja apagar TODOS os pontos salvos localmente? Esta ação é irreversível.</p><div class="modal-buttons"><button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, apagar tudo</button><button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
+    <div id="clear-data-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Atenção!</p><p>Tem certeza que deseja apagar TODOS os pontos salvos na nuvem? Esta ação é irreversível.</p><div class="modal-buttons"><button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, apagar tudo</button><button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
     <div id="settings-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Configurações</h3><div class="mb-4"><label for="api-key-input" class="block text-sm font-medium text-gray-900 mb-1">Chave de API do Google Maps</label><input type="password" id="api-key-input" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole sua chave aqui"><p class="text-xs text-gray-600 mt-1">Sua chave é salva apenas no seu navegador e não é compartilhada.</p></div><div class="modal-buttons"><button id="save-settings-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">Salvar</button><button id="close-settings-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
     
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const StateManager = {
-            localCoordinates: [],
-            markers: [],
-            map: null,
-            watchId: null,
-            lastKnownPosition: null,
-            lastKnownAccuracy: null,
-            lastKnownAddress: null,
-            isManualCapture: false,
-            manualMarker: null,
-            isCollecting: false,
-            currentLocationMarker: null,
-            accuracyCircle: null,
-            availableColors: ['#3b82f6', '#ef4444', '#22c55e', '#f97316', '#8b5cf6', '#ec4899'],
-            selectedColor: '#3b82f6',
-        };
-
-        const UIManager = {
-            elements: {
-                statusMessage: document.getElementById('status-message'),
-                coordinatesDisplay: document.getElementById('coordinates-display'),
-                latitudeText: document.getElementById('latitude-text'),
-                longitudeText: document.getElementById('longitude-text'),
-                accuracyText: document.getElementById('accuracy-text'),
-                startButton: document.getElementById('start-button'),
-                manualCaptureButton: document.getElementById('manual-capture-button'),
-                captureButton: document.getElementById('capture-button'),
-                downloadButton: document.getElementById('download-button'),
-                stopButton: document.getElementById('stop-button'),
-                pointNameInput: document.getElementById('point-name-input'),
-                captureOptions: document.getElementById('capture-options'),
-                searchInput: document.getElementById('search-input'),
-                searchButton: document.getElementById('search-button'),
-                pointsPreview: document.getElementById('points-preview'),
-                pointsCount: document.getElementById('points-count'),
-                pointsTableBody: document.getElementById('points-table-body'),
-                themeToggle: document.getElementById('theme-toggle'),
-                sunIcon: document.getElementById('sun-icon'),
-                moonIcon: document.getElementById('moon-icon'),
-                clearLocalDataButton: document.getElementById('clear-local-data-button'),
-                colorPalette: document.getElementById('color-palette'),
-                confirmationModal: document.getElementById('confirmation-modal'),
-                confirmYesButton: document.getElementById('confirm-yes'),
-                confirmNoButton: document.getElementById('confirm-no'),
-                clearDataModal: document.getElementById('clear-data-modal'),
-                clearDataConfirm: document.getElementById('clear-data-confirm'),
-                clearDataCancel: document.getElementById('clear-data-cancel'),
-                settingsModal: document.getElementById('settings-modal'),
-                settingsButton: document.getElementById('settings-button'),
-                saveSettingsButton: document.getElementById('save-settings-button'),
-                closeSettingsButton: document.getElementById('close-settings-button'),
-                apiKeyInput: document.getElementById('api-key-input'),
-            },
-
-            init() {
-                this.applyTheme(SettingsManager.getTheme());
-                this.initColorPicker();
-            },
-
-            initColorPicker() {
-                const palette = this.elements.colorPalette;
-                palette.innerHTML = '';
-                StateManager.availableColors.forEach(color => {
-                    const dot = document.createElement('div');
-                    dot.className = 'color-dot';
-                    dot.style.backgroundColor = color;
-                    dot.dataset.color = color;
-                    dot.addEventListener('click', () => this.handleColorSelect(color, dot));
-                    palette.appendChild(dot);
-                });
-                this.updateSelectedColorUI();
-            },
-
-            handleColorSelect(color, element) {
-                StateManager.selectedColor = color;
-                this.updateSelectedColorUI();
-            },
-
-            updateSelectedColorUI() {
-                const dots = this.elements.colorPalette.querySelectorAll('.color-dot');
-                dots.forEach(dot => {
-                    dot.classList.toggle('selected', dot.dataset.color === StateManager.selectedColor);
-                });
-            },
-
-            setButtonText(id, text) { this.elements[id].textContent = text; },
-
-            setUIState(collectingStatus) {
-                StateManager.isCollecting = collectingStatus;
-                const isPointReady = StateManager.lastKnownPosition !== null;
-
-                if (!StateManager.isCollecting) {
-                    this.setButtonText('startButton', 'Iniciar GPS');
-                    this.setButtonText('manualCaptureButton', 'Marcar Manualmente');
-                    this.setButtonText('searchButton', 'Pesquisar');
-                }
-
-                this.elements.startButton.disabled = StateManager.isCollecting;
-                this.elements.manualCaptureButton.disabled = StateManager.isCollecting;
-                this.elements.captureButton.disabled = !isPointReady;
-                this.elements.downloadButton.disabled = StateManager.localCoordinates.length === 0;
-                this.elements.clearLocalDataButton.disabled = StateManager.localCoordinates.length === 0;
-                
-                // Lógica de visibilidade CORRIGIDA: Mostra as opções ao entrar em modo de captura
-                const inCollectionMode = StateManager.isCollecting || StateManager.isManualCapture;
-                this.elements.captureOptions.classList.toggle('hidden', !inCollectionMode);
-
-                this.elements.coordinatesDisplay.classList.toggle('hidden', !isPointReady);
-                if (!isPointReady) this.elements.accuracyText.textContent = 'Precisão: --';
-                
-                this.elements.stopButton.classList.toggle('hidden', !StateManager.isCollecting && !StateManager.isManualCapture);
-                this.elements.pointsPreview.classList.toggle('hidden', StateManager.localCoordinates.length === 0);
-            },
-
-            showMessage(message, type = 'info') {
-                const el = this.elements.statusMessage;
-                el.textContent = message;
-                el.className = 'p-3 rounded-xl mb-4 text-sm font-medium';
-                const typeClasses = {
-                    error: ['bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-300'],
-                    success: ['bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-300'],
-                    info: ['bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:text-yellow-300']
-                };
-                el.classList.add(...(typeClasses[type] || typeClasses.info));
-            },
-
-            showModal(modal) { modal.style.display = 'block'; },
-            hideModal(modal) { modal.style.display = 'none'; },
-            
-            showConfirmation(question) {
-                return new Promise(resolve => {
-                    const modal = this.elements.confirmationModal;
-                    modal.querySelector('p').textContent = question;
-                    this.showModal(modal);
-                    this.elements.confirmYesButton.onclick = () => { this.hideModal(modal); resolve(true); };
-                    this.elements.confirmNoButton.onclick = () => { this.hideModal(modal); resolve(false); };
-                });
-            },
-
-            showClearDataConfirmation() {
-                 return new Promise(resolve => {
-                    const modal = this.elements.clearDataModal;
-                    this.showModal(modal);
-                    this.elements.clearDataConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
-                    this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
-                });
-            },
-
-            updateCoordinatesDisplay(lat, lon, acc) {
-                this.elements.latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
-                this.elements.longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
-                this.elements.accuracyText.className = `text-sm font-medium ${this.getAccuracyColor(acc)}`;
-                this.elements.accuracyText.textContent = `Precisão: \u00B1 ${acc.toFixed(1)}m`;
-            },
-            
-            getAccuracyColor(accuracy) {
-                if (accuracy === 0) return 'text-blue-500 dark:text-blue-400';
-                if (accuracy <= 5) return 'text-green-500 dark:text-green-400';
-                if (accuracy <= 15) return 'text-yellow-500 dark:text-yellow-400';
-                return 'text-red-500 dark:text-red-400';
-            },
-
-            updatePreviewTable() {
-                this.elements.pointsTableBody.innerHTML = '';
-                this.elements.pointsCount.textContent = StateManager.localCoordinates.length;
-                
-                StateManager.markers.forEach(marker => StateManager.map.removeLayer(marker));
-                StateManager.markers = [];
-
-                StateManager.localCoordinates.forEach((point, index) => {
-                    MapManager.createPointMarker(point);
-                    this.createTableRow(point, index);
-                });
-
-                if (StateManager.markers.length > 0) {
-                    const group = new L.featureGroup(StateManager.markers);
-                    StateManager.map.fitBounds(group.getBounds());
-                }
-                this.setUIState(false);
-            },
-            
-            createTableRow(point, index) {
-                const row = document.createElement('tr');
-                let rowClass = 'hover:bg-gray-50 dark:hover:bg-gray-600';
-                if ((point.accuracy === 0 && point.originalAccuracy !== 0) || point.nameEdited) {
-                    rowClass = 'corrected-row';
-                }
-                row.className = rowClass + ' transition-colors duration-150';
-
-                row.innerHTML = `
-                    <td data-label="#" class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td>
-                    <td data-label="Cor" class="py-2 px-4 whitespace-nowrap text-sm"><div class="h-4 w-4 rounded-full mx-auto" style="background-color: ${point.color || '#3b82f6'};"></div></td>
-                    <td data-label="Nome" class="py-2 px-4 whitespace-nowrap text-sm font-medium cursor-text" contenteditable="true" data-id="${point.id}" onblur="App.handleEditPointName(this, ${point.id})">${point.name}</td>
-                    <td data-label="Latitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td>
-                    <td data-label="Longitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td>
-                    <td data-label="Status" class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${DataManager.getPointStatus(point)}</td>
-                    <td data-label="Precisão Orig." class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td>
-                    <td data-label="Ação" class="py-2 px-4 whitespace-nowrap text-sm text-center">
-                        <button onclick="App.handleDeletePoint(${point.id})" class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg>
-                        </button>
-                    </td>`;
-                this.elements.pointsTableBody.appendChild(row);
-            },
-
-            applyTheme(theme) {
-                const isDark = theme === 'dark';
-                document.body.classList.toggle('dark', isDark);
-                this.elements.sunIcon.style.display = isDark ? 'none' : 'block';
-                this.elements.moonIcon.style.display = isDark ? 'block' : 'none';
-            },
-
-            toggleDarkMode() {
-                const newTheme = document.body.classList.contains('dark') ? 'light' : 'dark';
-                this.applyTheme(newTheme);
-                SettingsManager.saveTheme(newTheme);
-            }
-        };
-
-        const MapManager = {
-            init() {
-                StateManager.map = L.map('map').setView([-25.4284, -49.2733], 13);
-                this.addBaseLayers();
-                StateManager.map.on('click', this.onMapClick.bind(this));
-            },
-
-            addBaseLayers() {
-                const baseLayers = {
-                    "Híbrido": L.layerGroup([ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'), L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane' })]).addTo(StateManager.map),
-                    "Ruas": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'),
-                    "Topográfico": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'),
-                };
-                L.control.layers(baseLayers).addTo(StateManager.map);
-            },
-
-            async onMapClick(e) {
-                this.stopCollecting();
-                StateManager.isManualCapture = true;
-                UIManager.setButtonText('manualCaptureButton', 'Buscando...');
-                await this.updateMapForManualPoint(e.latlng.lat, e.latlng.lng);
-                UIManager.showMessage('Ponto selecionado. Clique em "Registrar Ponto" para salvar.', 'success');
-            },
-
-            async reverseGeocode(lat, lon) {
-                const apiKey = SettingsManager.getApiKey();
-                if (!apiKey) {
-                    UIManager.showMessage('Chave de API do Google Maps não configurada.', 'error');
-                    return 'Endereço não encontrado (API Key ausente)';
-                }
-                try {
-                    const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`);
-                    const data = await response.json();
-                    if (data.status === 'OK' && data.results.length > 0) return data.results[0].formatted_address;
-                } catch (error) { console.error('Erro na geocodificação reversa:', error); }
-                return 'Endereço não encontrado';
-            },
-
-            startCollecting() {
-                this.stopCollecting();
-                StateManager.isCollecting = true;
-                UIManager.setButtonText('startButton', 'Localizando...');
-                UIManager.showMessage('Acessando localização...', 'info');
-                UIManager.elements.coordinatesDisplay.classList.remove('hidden');
-
-                if (!navigator.geolocation) {
-                    UIManager.showMessage("Seu navegador não suporta geolocalização.", 'error');
-                    UIManager.setUIState(false);
-                    return;
-                }
-
-                StateManager.watchId = navigator.geolocation.watchPosition(
-                    pos => {
-                        const { latitude, longitude, accuracy } = pos.coords;
-                        StateManager.lastKnownPosition = { latitude, longitude };
-                        StateManager.lastKnownAccuracy = accuracy;
-                        UIManager.updateCoordinatesDisplay(latitude, longitude, accuracy);
-                        this.updateCurrentLocationMarker({ lat: latitude, lng: longitude }, accuracy);
-                        StateManager.map.setView([latitude, longitude], StateManager.map.getZoom() > 16 ? StateManager.map.getZoom() : 16);
-                        if (StateManager.manualMarker) { StateManager.map.removeLayer(StateManager.manualMarker); StateManager.manualMarker = null; }
-                        UIManager.showMessage('Localização encontrada. Pronta para capturar!', 'success');
-                        UIManager.setUIState(true);
-                    },
-                    err => {
-                        this.stopCollecting();
-                        let msg = "Erro desconhecido.";
-                        if(err.code === 1) msg = "Acesso à localização negado.";
-                        if(err.code === 2) msg = "Localização indisponível.";
-                        if(err.code === 3) msg = "Tempo esgotado.";
-                        UIManager.showMessage(msg, 'error');
-                    },
-                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-                );
-            },
-
-            stopCollecting() {
-                if (StateManager.watchId) navigator.geolocation.clearWatch(StateManager.watchId);
-                if (StateManager.currentLocationMarker) StateManager.map.removeLayer(StateManager.currentLocationMarker);
-                if (StateManager.accuracyCircle) StateManager.map.removeLayer(StateManager.accuracyCircle);
-                if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker);
-                Object.assign(StateManager, { watchId: null, currentLocationMarker: null, accuracyCircle: null, manualMarker: null, lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null, isCollecting: false, isManualCapture: false });
-                UIManager.setUIState(false);
-                UIManager.showMessage("Coleta interrompida.", "info");
-            },
-
-            updateCurrentLocationMarker(latlng, accuracy) {
-                if (StateManager.currentLocationMarker) {
-                    StateManager.currentLocationMarker.setLatLng(latlng);
-                    StateManager.accuracyCircle.setLatLng(latlng).setRadius(accuracy);
-                } else {
-                    StateManager.currentLocationMarker = L.circleMarker(latlng, { radius: 8, color: '#03A9F4', fillColor: '#2196F3', fillOpacity: 0.8 }).addTo(StateManager.map).bindPopup("Sua Posição").openPopup();
-                    StateManager.accuracyCircle = L.circle(latlng, { radius: accuracy, color: '#03A9F4', fillColor: '#2196F3', fillOpacity: 0.1, weight: 1 }).addTo(StateManager.map);
-                }
-            },
-            
-            createColoredIcon(color = '#3b82f6') {
-                const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
-                    <path fill="${color}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13C19 5.13 15.87 2 12 2zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/>
-                    <path fill="black" opacity="0.25" d="M12 2c-4 0-7 2.8-7 6.2 0 2.3 1 4.8 3.1 7.5L12 22l3.9-6.3c2.1-2.7 3.1-5.2 3.1-7.5C19 4.8 16 2 12 2zm0 1.5c3.3 0 5.5 2.3 5.5 4.7 0 2-1 4.3-2.9 6.8L12 19.3l-2.6-4.3C7.5 12.5 6.5 10.2 6.5 8.2 6.5 4.8 8.7 3.5 12 3.5z"/>
-                </svg>`;
-                return L.divIcon({
-                    html: svg,
-                    className: '',
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 32],
-                    popupAnchor: [0, -32]
-                });
-            },
-
-            createPointMarker(point) {
-                const icon = this.createColoredIcon(point.color);
-                const newMarker = L.marker([point.latitude, point.longitude], { draggable: true, id: point.id, icon: icon })
-                    .addTo(StateManager.map)
-                    .bindPopup(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)}`)
-                    .on('dragend', this.onMarkerDragEnd);
-                StateManager.markers.push(newMarker);
-            },
-            
-            onMarkerDragEnd(e) {
-                const { target: marker } = e;
-                const { lat, lng } = marker.getLatLng();
-                const pointId = marker.options.id;
-                DataManager.updatePointPosition(pointId, lat, lng);
-                const point = StateManager.localCoordinates.find(p => p.id === pointId);
-                marker.setPopupContent(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)} (Corrigido)`);
-                UIManager.updatePreviewTable();
-                UIManager.showMessage(`Ponto '${point.name}' corrigido.`, 'info');
-            },
-            
-            async searchLocation(query) {
-                UIManager.setButtonText('searchButton', 'Buscando...');
-                if (/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query)) {
-                    const [lat, lon] = query.split(',').map(parseFloat);
-                    if (!isNaN(lat) && !isNaN(lon)) {
-                        await this.updateMapForManualPoint(lat, lon, `Coordenadas: ${query}`);
-                        UIManager.showMessage('Coordenadas localizadas.', 'success');
-                    } else { UIManager.showMessage('Coordenadas inválidas.', 'error'); }
-                } else {
-                    UIManager.showMessage('Pesquisando endereço...', 'info');
-                    try {
-                        const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${SettingsManager.getApiKey()}`);
-                        const data = await response.json();
-                        if (data.status === 'OK' && data.results.length > 0) {
-                            const { lat, lng } = data.results[0].geometry.location;
-                            await this.updateMapForManualPoint(lat, lng, data.results[0].formatted_address);
-                            UIManager.showMessage('Endereço localizado.', 'success');
-                        } else { UIManager.showMessage('Endereço não encontrado.', 'error'); }
-                    } catch (error) { UIManager.showMessage('Erro na busca.', 'error'); }
-                }
-                UIManager.setButtonText('searchButton', 'Pesquisar');
-                UIManager.elements.searchInput.value = '';
-            },
-
-            async updateMapForManualPoint(lat, lon, address = null) {
-                StateManager.isManualCapture = true;
-                StateManager.lastKnownPosition = { latitude: lat, longitude: lon };
-                StateManager.lastKnownAccuracy = 0;
-                StateManager.lastKnownAddress = address || await this.reverseGeocode(lat, lon);
-                StateManager.map.setView([lat, lon], 16);
-                if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker);
-                const icon = this.createColoredIcon(StateManager.selectedColor);
-                StateManager.manualMarker = L.marker([lat, lon], { icon }).addTo(StateManager.map)
-                    .bindPopup(`<b>${StateManager.lastKnownAddress}</b>`).openPopup();
-                UIManager.updateCoordinatesDisplay(lat, lon, 0);
-                UIManager.setUIState(true);
-            },
-        };
-
-        const DataManager = {
-            LOCAL_STORAGE_KEY: 'to_the_point_coords',
-            loadFromLocalStorage() { try { const data = localStorage.getItem(this.LOCAL_STORAGE_KEY); if (data) StateManager.localCoordinates = JSON.parse(data); } catch (e) { console.error(e); } },
-            saveToLocalStorage() { try { localStorage.setItem(this.LOCAL_STORAGE_KEY, JSON.stringify(StateManager.localCoordinates)); } catch (e) { console.error(e); } },
-            async addPoint() {
-                if (!StateManager.lastKnownPosition) return;
-                let addr = StateManager.lastKnownAddress;
-                if (!StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) {
-                    addr = await MapManager.reverseGeocode(StateManager.lastKnownPosition.latitude, StateManager.lastKnownPosition.longitude);
-                }
-                const name = UIManager.elements.pointNameInput.value.trim() || `Ponto ${StateManager.localCoordinates.length + 1}`;
-                const newPoint = {
-                    id: Date.now(),
-                    name: name,
-                    latitude: StateManager.lastKnownPosition.latitude,
-                    longitude: StateManager.lastKnownPosition.longitude,
-                    accuracy: StateManager.lastKnownAccuracy,
-                    address: addr || 'Endereço não incluído',
-                    timestamp: new Date().toLocaleString('pt-BR'),
-                    originalAccuracy: StateManager.isManualCapture ? 0 : StateManager.lastKnownAccuracy,
-                    originalLat: StateManager.lastKnownPosition.latitude,
-                    originalLon: StateManager.lastKnownPosition.longitude,
-                    color: StateManager.selectedColor,
-                };
-                StateManager.localCoordinates.push(newPoint);
-                this.saveToLocalStorage();
-                UIManager.updatePreviewTable();
-                UIManager.showMessage(`Ponto "${name}" capturado!`, 'success');
-                const match = name.match(/^(.*\D\s*)(\d+)$/);
-                UIManager.elements.pointNameInput.value = match ? `${match[1]}${parseInt(match[2]) + 1}` : '';
-                Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null });
-                if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker);
-                StateManager.manualMarker = null;
-                UIManager.setUIState(StateManager.isCollecting);
-            },
-
-            deletePoint(id) {
-                StateManager.localCoordinates = StateManager.localCoordinates.filter(p => p.id !== id);
-                this.saveToLocalStorage();
-                UIManager.updatePreviewTable();
-                UIManager.showMessage('Ponto deletado.', 'success');
-            },
-
-            updatePointName(id, newName) {
-                const point = StateManager.localCoordinates.find(p => p.id === id);
-                if (point) {
-                    point.name = newName;
-                    point.nameEdited = true;
-                    this.saveToLocalStorage();
-                    UIManager.updatePreviewTable();
-                }
-            },
-            
-            updatePointPosition(id, lat, lon) {
-                const point = StateManager.localCoordinates.find(p => p.id === id);
-                if (point) {
-                    Object.assign(point, { latitude: lat, longitude: lon, accuracy: 0, address: 'Posição corrigida' });
-                    this.saveToLocalStorage();
-                }
-            },
-            
-            async clearAllData() {
-                if (StateManager.localCoordinates.length > 0 && await UIManager.showClearDataConfirmation()) {
-                    MapManager.stopCollecting();
-                    localStorage.removeItem(this.LOCAL_STORAGE_KEY);
-                    StateManager.localCoordinates = [];
-                    UIManager.updatePreviewTable();
-                    UIManager.showMessage("Todos os dados foram limpos.", 'success');
-                }
-            },
-
-            exportToCSV() {
-                if (StateManager.localCoordinates.length === 0) return;
-                let csv = "Nome;Cor;Lat_Final;Lon_Final;Status;Endereco;Timestamp;Lat_Original;Lon_Original;Precisao_Orig_m\n";
-                StateManager.localCoordinates.forEach(p => {
-                    csv += [ p.name, p.color, p.latitude.toFixed(6).replace('.', ','), p.longitude.toFixed(6).replace('.', ','), this.getPointStatus(p), `"${p.address || ''}"`, p.timestamp, p.originalLat.toFixed(6).replace('.', ','), p.originalLon.toFixed(6).replace('.', ','), this.getOriginalAccuracyText(p, true) ].join(';') + '\n';
-                });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' }));
-                link.download = "COORD.csv";
-                link.click();
-            },
-
-            getPointStatus(point) {
-                if (point.accuracy === 0 && point.originalAccuracy !== 0) return 'Corrigido';
-                if (point.originalAccuracy === 0) return 'Manual';
-                if (point.originalAccuracy <= 5) return 'GPS (Alta)';
-                if (point.originalAccuracy <= 15) return 'GPS (Média)';
-                return 'GPS (Baixa)';
-            },
-
-            getOriginalAccuracyText(point, forCsv = false) {
-                if (point.originalAccuracy === 0) return 'Manual';
-                if (point.originalAccuracy) return forCsv ? point.originalAccuracy.toFixed(1).replace('.', ',') : `\u00B1 ${point.originalAccuracy.toFixed(1)}m`;
-                return 'N/A';
-            }
-        };
+    
+    <script type="module">
+        // Importações do Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
-        const SettingsManager = {
-            API_KEY_STORAGE_KEY: 'to_the_point_api_key',
-            THEME_STORAGE_KEY: 'to_the_point_theme',
-            init() { UIManager.elements.apiKeyInput.value = this.getApiKey() || ''; },
-            saveApiKey(key) { localStorage.setItem(this.API_KEY_STORAGE_KEY, key); },
-            getApiKey() { return localStorage.getItem(this.API_KEY_STORAGE_KEY); },
-            saveTheme(theme) { localStorage.setItem(this.THEME_STORAGE_KEY, theme); },
-            getTheme() { return localStorage.getItem(this.THEME_STORAGE_KEY) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
-        };
+        document.addEventListener('DOMContentLoaded', () => {
+            const StateManager = {
+                app: null,
+                db: null,
+                auth: null,
+                userId: null,
+                localCoordinates: [],
+                markers: [],
+                map: null,
+                watchId: null,
+                lastKnownPosition: null,
+                lastKnownAccuracy: null,
+                lastKnownAddress: null,
+                isManualCapture: false,
+                manualMarker: null,
+                isCollecting: false,
+                currentLocationMarker: null,
+                accuracyCircle: null,
+                availableColors: ['#3b82f6', '#ef4444', '#22c55e', '#f97316', '#8b5cf6', '#ec4899'],
+                selectedColor: '#3b82f6',
+            };
 
-        const App = {
-            init() {
-                SettingsManager.init();
-                UIManager.init();
-                MapManager.init();
-                DataManager.loadFromLocalStorage();
-                UIManager.updatePreviewTable();
-                this.addEventListeners();
-            },
+            const UIManager = {
+                elements: {
+                    statusMessage: document.getElementById('status-message'),
+                    coordinatesDisplay: document.getElementById('coordinates-display'),
+                    latitudeText: document.getElementById('latitude-text'),
+                    longitudeText: document.getElementById('longitude-text'),
+                    accuracyText: document.getElementById('accuracy-text'),
+                    startButton: document.getElementById('start-button'),
+                    manualCaptureButton: document.getElementById('manual-capture-button'),
+                    captureButton: document.getElementById('capture-button'),
+                    downloadButton: document.getElementById('download-button'),
+                    stopButton: document.getElementById('stop-button'),
+                    pointNameInput: document.getElementById('point-name-input'),
+                    captureOptions: document.getElementById('capture-options'),
+                    searchInput: document.getElementById('search-input'),
+                    searchButton: document.getElementById('search-button'),
+                    pointsPreview: document.getElementById('points-preview'),
+                    pointsCount: document.getElementById('points-count'),
+                    pointsTableBody: document.getElementById('points-table-body'),
+                    themeToggle: document.getElementById('theme-toggle'),
+                    sunIcon: document.getElementById('sun-icon'),
+                    moonIcon: document.getElementById('moon-icon'),
+                    clearLocalDataButton: document.getElementById('clear-local-data-button'),
+                    colorPalette: document.getElementById('color-palette'),
+                    confirmationModal: document.getElementById('confirmation-modal'),
+                    confirmYesButton: document.getElementById('confirm-yes'),
+                    confirmNoButton: document.getElementById('confirm-no'),
+                    clearDataModal: document.getElementById('clear-data-modal'),
+                    clearDataConfirm: document.getElementById('clear-data-confirm'),
+                    clearDataCancel: document.getElementById('clear-data-cancel'),
+                    settingsModal: document.getElementById('settings-modal'),
+                    settingsButton: document.getElementById('settings-button'),
+                    saveSettingsButton: document.getElementById('save-settings-button'),
+                    closeSettingsButton: document.getElementById('close-settings-button'),
+                    apiKeyInput: document.getElementById('api-key-input'),
+                    userInfo: document.getElementById('user-info'),
+                    userId: document.getElementById('user-id'),
+                },
 
-            addEventListeners() {
-                const el = UIManager.elements;
-                el.startButton.addEventListener('click', () => MapManager.startCollecting());
-                el.stopButton.addEventListener('click', () => MapManager.stopCollecting());
-                el.captureButton.addEventListener('click', () => DataManager.addPoint());
-                el.downloadButton.addEventListener('click', () => DataManager.exportToCSV());
-                el.clearLocalDataButton.addEventListener('click', () => DataManager.clearAllData());
-                el.themeToggle.addEventListener('click', () => UIManager.toggleDarkMode());
-                el.searchButton.addEventListener('click', () => this.handleSearch());
-                el.searchInput.addEventListener('keypress', (e) => e.key === 'Enter' && this.handleSearch());
-                el.manualCaptureButton.addEventListener('click', () => {
-                    MapManager.stopCollecting();
-                    StateManager.isManualCapture = true;
-                    UIManager.showMessage('Clique no mapa para selecionar um ponto.', 'info');
-                    UIManager.setUIState(true);
-                });
-                el.settingsButton.addEventListener('click', () => UIManager.showModal(el.settingsModal));
-                el.closeSettingsButton.addEventListener('click', () => UIManager.hideModal(el.settingsModal));
-                el.saveSettingsButton.addEventListener('click', () => this.handleSaveSettings());
-            },
+                init() {
+                    this.applyTheme(SettingsManager.getTheme());
+                    this.initColorPicker();
+                },
 
-            handleSaveSettings() {
-                SettingsManager.saveApiKey(UIManager.elements.apiKeyInput.value.trim());
-                UIManager.hideModal(UIManager.elements.settingsModal);
-                UIManager.showMessage('Configurações salvas!', 'success');
-            },
+                initColorPicker() {
+                    const palette = this.elements.colorPalette;
+                    palette.innerHTML = '';
+                    StateManager.availableColors.forEach(color => {
+                        const dot = document.createElement('div');
+                        dot.className = 'color-dot';
+                        dot.style.backgroundColor = color;
+                        dot.dataset.color = color;
+                        dot.addEventListener('click', () => this.handleColorSelect(color));
+                        palette.appendChild(dot);
+                    });
+                    this.updateSelectedColorUI();
+                },
 
-            async handleSearch() {
-                const query = UIManager.elements.searchInput.value.trim();
-                if (!query) return UIManager.showMessage('Digite um endereço para pesquisar.', 'error');
-                if (!SettingsManager.getApiKey()) return UIManager.showMessage('Configure sua chave de API do Google.', 'error');
-                MapManager.stopCollecting();
-                await MapManager.searchLocation(query);
-            },
-            
-            handleDeletePoint(id) { DataManager.deletePoint(id); },
+                handleColorSelect(color) {
+                    StateManager.selectedColor = color;
+                    this.updateSelectedColorUI();
+                },
 
-            handleEditPointName(element, id) {
-                const newName = element.textContent.trim();
-                if (newName) {
-                    DataManager.updatePointName(id, newName);
-                    element.classList.add('edited-flash');
-                    setTimeout(() => {
-                        element.classList.remove('edited-flash');
-                        UIManager.showMessage(`Nome atualizado para '${newName}'.`, 'success');
-                    }, 1000);
-                } else {
-                    UIManager.showMessage('O nome não pode ser vazio.', 'error');
-                    UIManager.updatePreviewTable();
+                updateSelectedColorUI() {
+                    const dots = this.elements.colorPalette.querySelectorAll('.color-dot');
+                    dots.forEach(dot => dot.classList.toggle('selected', dot.dataset.color === StateManager.selectedColor));
+                },
+
+                setButtonText(id, text) { this.elements[id].textContent = text; },
+
+                setUIState(collectingStatus) {
+                    StateManager.isCollecting = collectingStatus;
+                    const isPointReady = StateManager.lastKnownPosition !== null;
+
+                    if (!StateManager.isCollecting) {
+                        this.setButtonText('startButton', 'Iniciar GPS');
+                        this.setButtonText('manualCaptureButton', 'Marcar Manualmente');
+                        this.setButtonText('searchButton', 'Pesquisar');
+                    }
+
+                    this.elements.startButton.disabled = StateManager.isCollecting;
+                    this.elements.manualCaptureButton.disabled = StateManager.isCollecting;
+                    this.elements.captureButton.disabled = !isPointReady;
+                    this.elements.downloadButton.disabled = StateManager.localCoordinates.length === 0;
+                    this.elements.clearLocalDataButton.disabled = StateManager.localCoordinates.length === 0;
+                    
+                    const inCollectionMode = StateManager.isCollecting || StateManager.isManualCapture;
+                    this.elements.captureOptions.classList.toggle('hidden', !inCollectionMode);
+
+                    this.elements.coordinatesDisplay.classList.toggle('hidden', !isPointReady);
+                    if (!isPointReady) this.elements.accuracyText.textContent = 'Precisão: --';
+                    
+                    this.elements.stopButton.classList.toggle('hidden', !inCollectionMode);
+                    this.elements.pointsPreview.classList.toggle('hidden', StateManager.localCoordinates.length === 0);
+                },
+
+                showMessage(message, type = 'info') {
+                    const el = this.elements.statusMessage;
+                    el.textContent = message;
+                    el.className = 'p-3 rounded-xl mb-4 text-sm font-medium';
+                    const typeClasses = {
+                        error: ['bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-300'],
+                        success: ['bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-300'],
+                        info: ['bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:text-yellow-300']
+                    };
+                    el.classList.add(...(typeClasses[type] || typeClasses.info));
+                },
+
+                showModal(modal) { modal.style.display = 'block'; },
+                hideModal(modal) { modal.style.display = 'none'; },
+                
+                showConfirmation(question) {
+                    return new Promise(resolve => {
+                        const modal = this.elements.confirmationModal;
+                        modal.querySelector('p').textContent = question;
+                        this.showModal(modal);
+                        this.elements.confirmYesButton.onclick = () => { this.hideModal(modal); resolve(true); };
+                        this.elements.confirmNoButton.onclick = () => { this.hideModal(modal); resolve(false); };
+                    });
+                },
+
+                showClearDataConfirmation() {
+                     return new Promise(resolve => {
+                        const modal = this.elements.clearDataModal;
+                        this.showModal(modal);
+                        this.elements.clearDataConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
+                        this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
+                    });
+                },
+
+                updateCoordinatesDisplay(lat, lon, acc) {
+                    this.elements.latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
+                    this.elements.longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
+                    this.elements.accuracyText.className = `text-sm font-medium ${this.getAccuracyColor(acc)}`;
+                    this.elements.accuracyText.textContent = `Precisão: \u00B1 ${acc.toFixed(1)}m`;
+                },
+                
+                getAccuracyColor(accuracy) {
+                    if (accuracy === 0) return 'text-blue-500 dark:text-blue-400';
+                    if (accuracy <= 5) return 'text-green-500 dark:text-green-400';
+                    if (accuracy <= 15) return 'text-yellow-500 dark:text-yellow-400';
+                    return 'text-red-500 dark:text-red-400';
+                },
+
+                updatePreviewTable() {
+                    this.elements.pointsTableBody.innerHTML = '';
+                    this.elements.pointsCount.textContent = StateManager.localCoordinates.length;
+                    
+                    StateManager.markers.forEach(marker => StateManager.map.removeLayer(marker));
+                    StateManager.markers = [];
+
+                    StateManager.localCoordinates.forEach((point, index) => {
+                        MapManager.createPointMarker(point);
+                        this.createTableRow(point, index);
+                    });
+
+                    if (StateManager.markers.length > 0) {
+                        const group = new L.featureGroup(StateManager.markers);
+                        StateManager.map.fitBounds(group.getBounds());
+                    }
+                    this.setUIState(false);
+                },
+                
+                createTableRow(point, index) {
+                    const row = document.createElement('tr');
+                    let rowClass = 'hover:bg-gray-50 dark:hover:bg-gray-600';
+                    if ((point.accuracy === 0 && point.originalAccuracy !== 0) || point.nameEdited) {
+                        rowClass = 'corrected-row';
+                    }
+                    row.className = rowClass + ' transition-colors duration-150';
+
+                    row.innerHTML = `
+                        <td data-label="#" class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td>
+                        <td data-label="Cor" class="py-2 px-4 whitespace-nowrap text-sm"><div class="h-4 w-4 rounded-full mx-auto" style="background-color: ${point.color || '#3b82f6'};"></div></td>
+                        <td data-label="Nome" class="py-2 px-4 whitespace-nowrap text-sm font-medium cursor-text" contenteditable="true" data-id="${point.id}" onblur="App.handleEditPointName(this, '${point.id}')">${point.name}</td>
+                        <td data-label="Latitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td>
+                        <td data-label="Longitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td>
+                        <td data-label="Status" class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${DataManager.getPointStatus(point)}</td>
+                        <td data-label="Precisão Orig." class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td>
+                        <td data-label="Ação" class="py-2 px-4 whitespace-nowrap text-sm text-center">
+                            <button onclick="App.handleDeletePoint('${point.id}')" class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </td>`;
+                    this.elements.pointsTableBody.appendChild(row);
+                },
+
+                applyTheme(theme) {
+                    const isDark = theme === 'dark';
+                    document.body.classList.toggle('dark', isDark);
+                    this.elements.sunIcon.style.display = isDark ? 'none' : 'block';
+                    this.elements.moonIcon.style.display = isDark ? 'block' : 'none';
+                },
+
+                toggleDarkMode() {
+                    const newTheme = document.body.classList.contains('dark') ? 'light' : 'dark';
+                    this.applyTheme(newTheme);
+                    SettingsManager.saveTheme(newTheme);
+                },
+
+                displayUserId(userId) {
+                    this.elements.userId.textContent = userId;
+                    this.elements.userInfo.classList.remove('hidden');
                 }
-            }
-        };
+            };
 
-        App.init();
-        window.App = App;
-    });
+            const MapManager = {
+                init() {
+                    StateManager.map = L.map('map').setView([-25.4284, -49.2733], 13);
+                    this.addBaseLayers();
+                    StateManager.map.on('click', this.onMapClick.bind(this));
+                },
+
+                addBaseLayers() {
+                    const baseLayers = {
+                        "Híbrido": L.layerGroup([ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'), L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane' })]).addTo(StateManager.map),
+                        "Ruas": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'),
+                        "Topográfico": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'),
+                    };
+                    L.control.layers(baseLayers).addTo(StateManager.map);
+                },
+
+                async onMapClick(e) {
+                    this.stopCollecting();
+                    StateManager.isManualCapture = true;
+                    UIManager.setButtonText('manualCaptureButton', 'Buscando...');
+                    await this.updateMapForManualPoint(e.latlng.lat, e.latlng.lng);
+                    UIManager.showMessage('Ponto selecionado. Clique em "Registrar Ponto" para salvar.', 'success');
+                },
+
+                async reverseGeocode(lat, lon) {
+                    const apiKey = SettingsManager.getApiKey();
+                    if (!apiKey) {
+                        UIManager.showMessage('Chave de API do Google Maps não configurada.', 'error');
+                        return 'Endereço não encontrado (API Key ausente)';
+                    }
+                    try {
+                        const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`);
+                        const data = await response.json();
+                        if (data.status === 'OK' && data.results.length > 0) return data.results[0].formatted_address;
+                    } catch (error) { console.error('Erro na geocodificação reversa:', error); }
+                    return 'Endereço não encontrado';
+                },
+
+                startCollecting() {
+                    this.stopCollecting();
+                    StateManager.isCollecting = true;
+                    UIManager.setButtonText('startButton', 'Localizando...');
+                    UIManager.showMessage('Acessando localização...', 'info');
+                    if (!navigator.geolocation) {
+                        UIManager.showMessage("Seu navegador não suporta geolocalização.", 'error');
+                        UIManager.setUIState(false);
+                        return;
+                    }
+
+                    StateManager.watchId = navigator.geolocation.watchPosition(
+                        pos => {
+                            const { latitude, longitude, accuracy } = pos.coords;
+                            StateManager.lastKnownPosition = { latitude, longitude };
+                            StateManager.lastKnownAccuracy = accuracy;
+                            UIManager.updateCoordinatesDisplay(latitude, longitude, accuracy);
+                            this.updateCurrentLocationMarker({ lat: latitude, lng: longitude }, accuracy);
+                            StateManager.map.setView([latitude, longitude], StateManager.map.getZoom() > 16 ? StateManager.map.getZoom() : 16);
+                            if (StateManager.manualMarker) { StateManager.map.removeLayer(StateManager.manualMarker); StateManager.manualMarker = null; }
+                            UIManager.showMessage('Localização encontrada. Pronta para capturar!', 'success');
+                            UIManager.setUIState(true);
+                        },
+                        err => {
+                            this.stopCollecting();
+                            let msg = "Erro desconhecido.";
+                            if(err.code === 1) msg = "Acesso à localização negado.";
+                            if(err.code === 2) msg = "Localização indisponível.";
+                            if(err.code === 3) msg = "Tempo esgotado.";
+                            UIManager.showMessage(msg, 'error');
+                        },
+                        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                    );
+                },
+
+                stopCollecting() {
+                    if (StateManager.watchId) navigator.geolocation.clearWatch(StateManager.watchId);
+                    if (StateManager.currentLocationMarker) StateManager.map.removeLayer(StateManager.currentLocationMarker);
+                    if (StateManager.accuracyCircle) StateManager.map.removeLayer(StateManager.accuracyCircle);
+                    if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker);
+                    Object.assign(StateManager, { watchId: null, currentLocationMarker: null, accuracyCircle: null, manualMarker: null, lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null, isCollecting: false, isManualCapture: false });
+                    UIManager.setUIState(false);
+                    UIManager.showMessage("Coleta interrompida.", "info");
+                },
+
+                updateCurrentLocationMarker(latlng, accuracy) {
+                    if (StateManager.currentLocationMarker) {
+                        StateManager.currentLocationMarker.setLatLng(latlng);
+                        StateManager.accuracyCircle.setLatLng(latlng).setRadius(accuracy);
+                    } else {
+                        StateManager.currentLocationMarker = L.circleMarker(latlng, { radius: 8, color: '#03A9F4', fillColor: '#2196F3', fillOpacity: 0.8 }).addTo(StateManager.map).bindPopup("Sua Posição").openPopup();
+                        StateManager.accuracyCircle = L.circle(latlng, { radius: accuracy, color: '#03A9F4', fillColor: '#2196F3', fillOpacity: 0.1, weight: 1 }).addTo(StateManager.map);
+                    }
+                },
+                
+                createColoredIcon(color = '#3b82f6') {
+                    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32"><path fill="${color}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13C19 5.13 15.87 2 12 2zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path fill="black" opacity="0.25" d="M12 2c-4 0-7 2.8-7 6.2 0 2.3 1 4.8 3.1 7.5L12 22l3.9-6.3c2.1-2.7 3.1-5.2 3.1-7.5C19 4.8 16 2 12 2zm0 1.5c3.3 0 5.5 2.3 5.5 4.7 0 2-1 4.3-2.9 6.8L12 19.3l-2.6-4.3C7.5 12.5 6.5 10.2 6.5 8.2 6.5 4.8 8.7 3.5 12 3.5z"/></svg>`;
+                    return L.divIcon({ html: svg, className: '', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32] });
+                },
+
+                createPointMarker(point) {
+                    const icon = this.createColoredIcon(point.color);
+                    const newMarker = L.marker([point.latitude, point.longitude], { draggable: true, id: point.id, icon: icon })
+                        .addTo(StateManager.map)
+                        .bindPopup(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)}`)
+                        .on('dragend', this.onMarkerDragEnd);
+                    StateManager.markers.push(newMarker);
+                },
+                
+                onMarkerDragEnd(e) {
+                    const { target: marker } = e;
+                    const { lat, lng } = marker.getLatLng();
+                    const pointId = marker.options.id;
+                    DataManager.updatePointPosition(pointId, lat, lng);
+                    const point = StateManager.localCoordinates.find(p => p.id === pointId);
+                    marker.setPopupContent(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)} (Corrigido)`);
+                    UIManager.updatePreviewTable();
+                    UIManager.showMessage(`Ponto '${point.name}' corrigido.`, 'info');
+                },
+                
+                async searchLocation(query) {
+                    UIManager.setButtonText('searchButton', 'Buscando...');
+                    if (/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query)) {
+                        const [lat, lon] = query.split(',').map(parseFloat);
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            await this.updateMapForManualPoint(lat, lon, `Coordenadas: ${query}`);
+                            UIManager.showMessage('Coordenadas localizadas.', 'success');
+                        } else { UIManager.showMessage('Coordenadas inválidas.', 'error'); }
+                    } else {
+                        UIManager.showMessage('Pesquisando endereço...', 'info');
+                        try {
+                            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${SettingsManager.getApiKey()}`);
+                            const data = await response.json();
+                            if (data.status === 'OK' && data.results.length > 0) {
+                                const { lat, lng } = data.results[0].geometry.location;
+                                await this.updateMapForManualPoint(lat, lng, data.results[0].formatted_address);
+                                UIManager.showMessage('Endereço localizado.', 'success');
+                            } else { UIManager.showMessage('Endereço não encontrado.', 'error'); }
+                        } catch (error) { UIManager.showMessage('Erro na busca.', 'error'); }
+                    }
+                    UIManager.setButtonText('searchButton', 'Pesquisar');
+                    UIManager.elements.searchInput.value = '';
+                },
+
+                async updateMapForManualPoint(lat, lon, address = null) {
+                    StateManager.isManualCapture = true;
+                    StateManager.lastKnownPosition = { latitude: lat, longitude: lon };
+                    StateManager.lastKnownAccuracy = 0;
+                    StateManager.lastKnownAddress = address || await this.reverseGeocode(lat, lon);
+                    StateManager.map.setView([lat, lon], 16);
+                    if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker);
+                    const icon = this.createColoredIcon(StateManager.selectedColor);
+                    StateManager.manualMarker = L.marker([lat, lon], { icon }).addTo(StateManager.map)
+                        .bindPopup(`<b>${StateManager.lastKnownAddress}</b>`).openPopup();
+                    UIManager.updateCoordinatesDisplay(lat, lon, 0);
+                    UIManager.setUIState(true);
+                },
+            };
+
+            const DataManager = {
+                getPointsCollectionRef() {
+                    if (!StateManager.userId) return null;
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    return collection(StateManager.db, `/artifacts/${appId}/users/${StateManager.userId}/points`);
+                },
+
+                listenForPoints() {
+                    const collectionRef = this.getPointsCollectionRef();
+                    if (!collectionRef) return;
+
+                    onSnapshot(collectionRef, (snapshot) => {
+                        StateManager.localCoordinates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        UIManager.updatePreviewTable();
+                        UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success');
+                    }, (error) => {
+                        console.error("Erro ao ouvir os pontos:", error);
+                        UIManager.showMessage("Erro ao carregar dados da nuvem.", 'error');
+                    });
+                },
+                
+                async addPoint() {
+                    if (!StateManager.lastKnownPosition) return;
+                    let addr = StateManager.lastKnownAddress;
+                    if (!StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) {
+                        addr = await MapManager.reverseGeocode(StateManager.lastKnownPosition.latitude, StateManager.lastKnownPosition.longitude);
+                    }
+                    const name = UIManager.elements.pointNameInput.value.trim() || `Ponto ${StateManager.localCoordinates.length + 1}`;
+                    const newPoint = {
+                        name: name,
+                        latitude: StateManager.lastKnownPosition.latitude,
+                        longitude: StateManager.lastKnownPosition.longitude,
+                        accuracy: StateManager.lastKnownAccuracy,
+                        address: addr || 'Endereço não incluído',
+                        timestamp: new Date().toLocaleString('pt-BR'),
+                        originalAccuracy: StateManager.isManualCapture ? 0 : StateManager.lastKnownAccuracy,
+                        originalLat: StateManager.lastKnownPosition.latitude,
+                        originalLon: StateManager.lastKnownPosition.longitude,
+                        color: StateManager.selectedColor,
+                    };
+                    
+                    try {
+                        const collectionRef = this.getPointsCollectionRef();
+                        await addDoc(collectionRef, newPoint);
+                        UIManager.showMessage(`Ponto "${name}" salvo na nuvem!`, 'success');
+                        const match = name.match(/^(.*\D\s*)(\d+)$/);
+                        UIManager.elements.pointNameInput.value = match ? `${match[1]}${parseInt(match[2]) + 1}` : '';
+                        Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null });
+                        if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker);
+                        StateManager.manualMarker = null;
+                        UIManager.setUIState(StateManager.isCollecting);
+                    } catch (e) {
+                        console.error("Erro ao adicionar ponto: ", e);
+                        UIManager.showMessage("Falha ao salvar o ponto na nuvem.", 'error');
+                    }
+                },
+
+                async deletePoint(docId) {
+                    try {
+                        const docRef = doc(this.getPointsCollectionRef(), docId);
+                        await deleteDoc(docRef);
+                        UIManager.showMessage('Ponto deletado da nuvem.', 'success');
+                    } catch (e) {
+                         console.error("Erro ao deletar ponto: ", e);
+                         UIManager.showMessage("Falha ao deletar o ponto.", 'error');
+                    }
+                },
+
+                async updatePointName(docId, newName) {
+                     try {
+                        const docRef = doc(this.getPointsCollectionRef(), docId);
+                        await updateDoc(docRef, { name: newName, nameEdited: true });
+                    } catch (e) {
+                         console.error("Erro ao atualizar nome: ", e);
+                         UIManager.showMessage("Falha ao atualizar o nome.", 'error');
+                    }
+                },
+                
+                async updatePointPosition(docId, lat, lon) {
+                    try {
+                        const docRef = doc(this.getPointsCollectionRef(), docId);
+                        await updateDoc(docRef, { latitude: lat, longitude: lon, accuracy: 0, address: 'Posição corrigida' });
+                    } catch (e) {
+                        console.error("Erro ao atualizar posição: ", e);
+                        UIManager.showMessage("Falha ao atualizar a posição.", 'error');
+                    }
+                },
+                
+                async clearAllData() {
+                    const collectionRef = this.getPointsCollectionRef();
+                    if (!collectionRef || StateManager.localCoordinates.length === 0) return;
+                    
+                    const confirmed = await UIManager.showClearDataConfirmation();
+                    if (confirmed) {
+                        MapManager.stopCollecting();
+                        UIManager.showMessage("Limpando dados da nuvem...", "info");
+                        try {
+                            const querySnapshot = await getDocs(collectionRef);
+                            const batch = writeBatch(StateManager.db);
+                            querySnapshot.forEach((doc) => {
+                                batch.delete(doc.ref);
+                            });
+                            await batch.commit();
+                            UIManager.showMessage("Todos os dados foram limpos da nuvem.", 'success');
+                        } catch(e) {
+                            console.error("Erro ao limpar dados: ", e);
+                            UIManager.showMessage("Falha ao limpar dados da nuvem.", 'error');
+                        }
+                    }
+                },
+
+                exportToCSV() {
+                    if (StateManager.localCoordinates.length === 0) return;
+                    let csv = "Nome;Cor;Lat_Final;Lon_Final;Status;Endereco;Timestamp;Lat_Original;Lon_Original;Precisao_Orig_m\n";
+                    StateManager.localCoordinates.forEach(p => {
+                        csv += [ p.name, p.color, p.latitude.toFixed(6).replace('.', ','), p.longitude.toFixed(6).replace('.', ','), this.getPointStatus(p), `"${p.address || ''}"`, p.timestamp, p.originalLat.toFixed(6).replace('.', ','), p.originalLon.toFixed(6).replace('.', ','), this.getOriginalAccuracyText(p, true) ].join(';') + '\n';
+                    });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' }));
+                    link.download = "COORD.csv";
+                    link.click();
+                },
+
+                getPointStatus(point) {
+                    if (point.accuracy === 0 && point.originalAccuracy !== 0) return 'Corrigido';
+                    if (point.originalAccuracy === 0) return 'Manual';
+                    if (point.originalAccuracy <= 5) return 'GPS (Alta)';
+                    if (point.originalAccuracy <= 15) return 'GPS (Média)';
+                    return 'GPS (Baixa)';
+                },
+
+                getOriginalAccuracyText(point, forCsv = false) {
+                    if (point.originalAccuracy === 0) return 'Manual';
+                    if (point.originalAccuracy) return forCsv ? point.originalAccuracy.toFixed(1).replace('.', ',') : `\u00B1 ${point.originalAccuracy.toFixed(1)}m`;
+                    return 'N/A';
+                }
+            };
+            
+            const SettingsManager = {
+                API_KEY_STORAGE_KEY: 'to_the_point_api_key',
+                THEME_STORAGE_KEY: 'to_the_point_theme',
+                init() { UIManager.elements.apiKeyInput.value = this.getApiKey() || ''; },
+                saveApiKey(key) { localStorage.setItem(this.API_KEY_STORAGE_KEY, key); },
+                getApiKey() { return localStorage.getItem(this.API_KEY_STORAGE_KEY); },
+                saveTheme(theme) { localStorage.setItem(this.THEME_STORAGE_KEY, theme); },
+                getTheme() { return localStorage.getItem(this.THEME_STORAGE_KEY) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+            };
+
+            const App = {
+                async init() {
+                    UIManager.init();
+                    MapManager.init();
+                    SettingsManager.init();
+                    this.addEventListeners();
+                    await this.initFirebase();
+                },
+
+                async initFirebase() {
+                    try {
+                        UIManager.showMessage("Conectando à nuvem...", "info");
+                        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+                        StateManager.app = initializeApp(firebaseConfig);
+                        StateManager.db = getFirestore(StateManager.app);
+                        StateManager.auth = getAuth(StateManager.app);
+                        
+                        onAuthStateChanged(StateManager.auth, user => {
+                            if (user) {
+                                StateManager.userId = user.uid;
+                                UIManager.displayUserId(user.uid);
+                                DataManager.listenForPoints();
+                            } else {
+                                StateManager.userId = null;
+                                UIManager.showMessage("Autenticação necessária.", "error");
+                            }
+                        });
+
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(StateManager.auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(StateManager.auth);
+                        }
+                    } catch (e) {
+                        console.error("Erro na inicialização do Firebase:", e);
+                        UIManager.showMessage("Não foi possível conectar à nuvem. Verifique a configuração.", "error");
+                    }
+                },
+
+                addEventListeners() {
+                    const el = UIManager.elements;
+                    el.startButton.addEventListener('click', () => MapManager.startCollecting());
+                    el.stopButton.addEventListener('click', () => MapManager.stopCollecting());
+                    el.captureButton.addEventListener('click', () => DataManager.addPoint());
+                    el.downloadButton.addEventListener('click', () => DataManager.exportToCSV());
+                    el.clearLocalDataButton.addEventListener('click', () => DataManager.clearAllData());
+                    el.themeToggle.addEventListener('click', () => UIManager.toggleDarkMode());
+                    el.searchButton.addEventListener('click', () => this.handleSearch());
+                    el.searchInput.addEventListener('keypress', (e) => e.key === 'Enter' && this.handleSearch());
+                    el.manualCaptureButton.addEventListener('click', () => {
+                        MapManager.stopCollecting();
+                        StateManager.isManualCapture = true;
+                        UIManager.showMessage('Clique no mapa para selecionar um ponto.', 'info');
+                        UIManager.setUIState(true);
+                    });
+                    el.settingsButton.addEventListener('click', () => UIManager.showModal(el.settingsModal));
+                    el.closeSettingsButton.addEventListener('click', () => UIManager.hideModal(el.settingsModal));
+                    el.saveSettingsButton.addEventListener('click', () => this.handleSaveSettings());
+                },
+
+                handleSaveSettings() {
+                    SettingsManager.saveApiKey(UIManager.elements.apiKeyInput.value.trim());
+                    UIManager.hideModal(UIManager.elements.settingsModal);
+                    UIManager.showMessage('Configurações salvas!', 'success');
+                },
+
+                async handleSearch() {
+                    const query = UIManager.elements.searchInput.value.trim();
+                    if (!query) return UIManager.showMessage('Digite um endereço para pesquisar.', 'error');
+                    if (!SettingsManager.getApiKey()) return UIManager.showMessage('Configure sua chave de API do Google.', 'error');
+                    MapManager.stopCollecting();
+                    await MapManager.searchLocation(query);
+                },
+                
+                handleDeletePoint(id) { DataManager.deletePoint(id); },
+
+                handleEditPointName(element, id) {
+                    const newName = element.textContent.trim();
+                    if (newName) {
+                        DataManager.updatePointName(id, newName);
+                        element.classList.add('edited-flash');
+                        setTimeout(() => {
+                            element.classList.remove('edited-flash');
+                            UIManager.showMessage(`Nome atualizado para '${newName}'.`, 'success');
+                        }, 1000);
+                    } else {
+                        UIManager.showMessage('O nome não pode ser vazio.', 'error');
+                        UIManager.updatePreviewTable();
+                    }
+                }
+            };
+
+            App.init();
+            window.App = App;
+        });
     </script>
 </body>
 </html>
