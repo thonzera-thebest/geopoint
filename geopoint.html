@@ -254,14 +254,11 @@
                     this.elements.startButton.disabled = StateManager.isCollecting;
                     this.elements.manualCaptureButton.disabled = StateManager.isCollecting;
                     this.elements.captureButton.disabled = !isPointReady;
-                    this.elements.downloadButton.disabled = StateManager.localCoordinates.length === 0;
-                    this.elements.clearLocalDataButton.disabled = StateManager.localCoordinates.length === 0;
                     const inCollectionMode = StateManager.isCollecting || StateManager.isManualCapture;
                     this.elements.captureOptions.classList.toggle('hidden', !inCollectionMode);
                     this.elements.coordinatesDisplay.classList.toggle('hidden', !isPointReady);
                     if (!isPointReady) this.elements.accuracyText.textContent = 'Precisão: --';
                     this.elements.stopButton.classList.toggle('hidden', !inCollectionMode);
-                    this.elements.pointsPreview.classList.toggle('hidden', StateManager.localCoordinates.length === 0);
                 },
 
                 showMessage(message, type = 'info') {
@@ -310,17 +307,24 @@
                 updatePreviewTable() {
                     this.elements.pointsTableBody.innerHTML = '';
                     this.elements.pointsCount.textContent = StateManager.localCoordinates.length;
+                    
                     StateManager.markers.forEach(marker => StateManager.map.removeLayer(marker));
                     StateManager.markers = [];
+
                     StateManager.localCoordinates.forEach((point, index) => {
                         MapManager.createPointMarker(point);
                         this.createTableRow(point, index);
                     });
+
                     if (StateManager.markers.length > 0) {
                         const group = new L.featureGroup(StateManager.markers);
                         StateManager.map.fitBounds(group.getBounds());
                     }
-                    this.setUIState(false);
+
+                    const hasData = StateManager.localCoordinates.length > 0;
+                    this.elements.downloadButton.disabled = !hasData;
+                    this.elements.clearLocalDataButton.disabled = !hasData;
+                    this.elements.pointsPreview.classList.toggle('hidden', !hasData);
                 },
                 createTableRow(point, index) {
                     const row = document.createElement('tr');
@@ -401,7 +405,11 @@
                 getPointsCollectionRef() { if (!StateManager.userId) return null; const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; return collection(StateManager.db, `/artifacts/${appId}/users/${StateManager.userId}/points`); },
                 listenForPoints() {
                     const collectionRef = this.getPointsCollectionRef(); if (!collectionRef) return;
-                    onSnapshot(collectionRef, (snapshot) => { StateManager.localCoordinates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); UIManager.updatePreviewTable(); UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success'); }, (error) => { console.error("Erro ao ouvir os pontos:", error); UIManager.showMessage("Erro ao carregar dados da nuvem.", 'error'); });
+                    onSnapshot(collectionRef, (snapshot) => { 
+                        StateManager.localCoordinates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
+                        UIManager.updatePreviewTable(); 
+                        UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success'); 
+                    }, (error) => { console.error("Erro ao ouvir os pontos:", error); UIManager.showMessage("Erro ao carregar dados da nuvem.", 'error'); });
                 },
                 async addPoint() {
                     if (!StateManager.lastKnownPosition) return; let addr = StateManager.lastKnownAddress; if (!StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) { addr = await MapManager.reverseGeocode(StateManager.lastKnownPosition.latitude, StateManager.lastKnownPosition.longitude); }
@@ -468,15 +476,9 @@
 
                 parseFirebaseConfig(str) {
                     try {
-                        // Remove comments and find the object literal
                         const objectStr = str.substring(str.indexOf('{'), str.lastIndexOf('}') + 1);
-                        if (!objectStr) throw new Error("Object literal not found in config string.");
-
-                        // Use a safer parsing method by evaluating the string in a restricted context
-                        const config = (new Function(`return ${objectStr}`))();
-                        if (typeof config !== 'object' || config === null) throw new Error("Parsed result is not an object.");
-                        
-                        return config;
+                        if (!objectStr) return null;
+                        return (new Function(`return ${objectStr}`))();
                     } catch (e) {
                         console.error("Error parsing Firebase config:", e);
                         return null;
@@ -543,7 +545,6 @@
                         return;
                     }
 
-                    // Validate before saving
                     const parsedConfig = this.parseFirebaseConfig(fbConfigString);
                      if (parsedConfig && parsedConfig.apiKey) {
                         SettingsManager.saveFirebaseConfig(fbConfigString);
@@ -576,3 +577,4 @@
     </script>
 </body>
 </html>
+
