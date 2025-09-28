@@ -430,27 +430,17 @@
             const SettingsManager = {
                 API_KEY_STORAGE_KEY: 'to_the_point_api_key',
                 THEME_STORAGE_KEY: 'to_the_point_theme',
-                FIREBASE_CONFIG_STORAGE_KEY: 'to_the_point_firebase_config',
+                FIREBASE_CONFIG_STORAGE_KEY: 'to_the_point_firebase_config_text',
                 init() { 
                     UIManager.elements.apiKeyInput.value = this.getApiKey() || '';
-                    const fbConfig = this.getFirebaseConfig();
-                    if(fbConfig) {
-                        for(const key in UIManager.elements.firebaseConfigInputs) {
-                            if(fbConfig[key]) {
-                                UIManager.elements.firebaseConfigInputs[key].value = fbConfig[key];
-                            }
-                        }
-                    }
+                    UIManager.elements.firebaseConfigInput.value = this.getFirebaseConfig() || '';
                 },
                 saveApiKey(key) { localStorage.setItem(this.API_KEY_STORAGE_KEY, key); },
                 getApiKey() { return localStorage.getItem(this.API_KEY_STORAGE_KEY); },
                 saveTheme(theme) { localStorage.setItem(this.THEME_STORAGE_KEY, theme); },
                 getTheme() { return localStorage.getItem(this.THEME_STORAGE_KEY) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); },
-                saveFirebaseConfig(config) { localStorage.setItem(this.FIREBASE_CONFIG_STORAGE_KEY, JSON.stringify(config)); },
-                getFirebaseConfig() { 
-                    const configString = localStorage.getItem(this.FIREBASE_CONFIG_STORAGE_KEY);
-                    return configString ? JSON.parse(configString) : null;
-                },
+                saveFirebaseConfig(configString) { localStorage.setItem(this.FIREBASE_CONFIG_STORAGE_KEY, configString); },
+                getFirebaseConfig() { return localStorage.getItem(this.FIREBASE_CONFIG_STORAGE_KEY); },
             };
 
             const App = {
@@ -463,27 +453,42 @@
                 },
 
                 bootstrapFirebase() {
-                    let firebaseConfig = SettingsManager.getFirebaseConfig();
-                    if (!firebaseConfig && typeof __firebase_config !== 'undefined') {
-                        try {
-                           firebaseConfig = JSON.parse(__firebase_config);
-                        } catch(e) {
-                            console.error("Erro ao analisar __firebase_config:", e);
-                        }
+                    let configString = SettingsManager.getFirebaseConfig();
+                    if (!configString && typeof __firebase_config !== 'undefined') {
+                        configString = __firebase_config;
                     }
 
-                    if (firebaseConfig && firebaseConfig.apiKey) {
-                        this.initializeFirebase(firebaseConfig);
+                    if (configString) {
+                        this.initializeFirebase(configString);
                     } else {
                         UIManager.showMessage("Bem-vindo! Por favor, insira sua configuração do Firebase para começar.", "info");
                         UIManager.showModal(UIManager.elements.settingsModal);
                     }
                 },
 
-                async initializeFirebase(firebaseConfig) {
+                parseFirebaseConfig(str) {
                     try {
+                        // Remove comments and find the object literal
+                        const objectStr = str.substring(str.indexOf('{'), str.lastIndexOf('}') + 1);
+                        if (!objectStr) throw new Error("Object literal not found in config string.");
+
+                        // Use a safer parsing method by evaluating the string in a restricted context
+                        const config = (new Function(`return ${objectStr}`))();
+                        if (typeof config !== 'object' || config === null) throw new Error("Parsed result is not an object.");
+                        
+                        return config;
+                    } catch (e) {
+                        console.error("Error parsing Firebase config:", e);
+                        return null;
+                    }
+                },
+
+                async initializeFirebase(configString) {
+                    try {
+                        const firebaseConfig = this.parseFirebaseConfig(configString);
+                        
                         if (!firebaseConfig || !firebaseConfig.apiKey) {
-                             throw new Error("A configuração analisada não contém uma chave de API válida.");
+                             throw new Error("A configuração analisada não parece ser um objeto Firebase válido.");
                         }
 
                         UIManager.showMessage("Conectando à nuvem...", "info");
@@ -502,14 +507,14 @@
                             }
                         });
 
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await signInWithCustomToken(StateManager.auth, __initial_auth_token);
                         } else {
                             await signInAnonymously(StateManager.auth);
                         }
                     } catch (e) {
                         console.error("Erro na inicialização do Firebase:", e);
-                        UIManager.showMessage("Configuração do Firebase inválida. Verifique os dados e recarregue a página.", "error");
+                        UIManager.showMessage("Configuração do Firebase inválida. Verifique os dados e tente novamente.", "error");
                     }
                 },
 
@@ -531,23 +536,21 @@
 
                 handleSaveSettings() {
                     SettingsManager.saveApiKey(UIManager.elements.apiKeyInput.value.trim());
+                    const fbConfigString = UIManager.elements.firebaseConfigInput.value.trim();
                     
-                    const fbConfig = {};
-                    let allFieldsFilled = true;
-                    for(const key in UIManager.elements.firebaseConfigInputs) {
-                        const value = UIManager.elements.firebaseConfigInputs[key].value.trim();
-                        if(!value) {
-                            allFieldsFilled = false;
-                        }
-                        fbConfig[key] = value;
+                    if (!fbConfigString) {
+                        UIManager.showMessage('O campo de configuração do Firebase não pode estar vazio.', 'error');
+                        return;
                     }
 
-                     if (allFieldsFilled) {
-                        SettingsManager.saveFirebaseConfig(fbConfig);
+                    // Validate before saving
+                    const parsedConfig = this.parseFirebaseConfig(fbConfigString);
+                     if (parsedConfig && parsedConfig.apiKey) {
+                        SettingsManager.saveFirebaseConfig(fbConfigString);
                         UIManager.showMessage('Configurações salvas! A página será recarregada.', 'success');
                         setTimeout(() => location.reload(), 1500);
                     } else {
-                         UIManager.showMessage('Por favor, preencha todos os campos de configuração do Firebase.', 'error');
+                         UIManager.showMessage('Configuração Firebase parece inválida. Por favor, verifique o texto colado.', 'error');
                     }
                 },
 
@@ -573,4 +576,3 @@
     </script>
 </body>
 </html>
-
