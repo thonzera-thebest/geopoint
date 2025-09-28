@@ -409,16 +409,37 @@
                     onSnapshot(q, (snapshot) => { 
                         StateManager.localCoordinates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
                         UIManager.updatePreviewTable(); 
-                        if(snapshot.docs.length > 0 && !snapshot.metadata.fromCache) {
-                            UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success');
+                        if (!snapshot.metadata.fromCache) { // Update message on any server update
+                           if (snapshot.empty) {
+                                UIManager.showMessage("Nenhum ponto na nuvem. Comece a coletar!", 'info');
+                           } else {
+                                UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success');
+                           }
                         }
                     }, (error) => { console.error("Erro ao ouvir os pontos:", error); UIManager.showMessage("Erro ao carregar dados da nuvem. Verifique o console para criar o índice do Firestore, se necessário.", 'error'); });
                 },
                 async addPoint() {
-                    if (!StateManager.lastKnownPosition) return; let addr = StateManager.lastKnownAddress; if (!StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) { addr = await MapManager.reverseGeocode(StateManager.lastKnownPosition.latitude, StateManager.lastKnownPosition.longitude); }
-                    const name = UIManager.elements.pointNameInput.value.trim() || `Ponto ${StateManager.localCoordinates.length + 1}`;
+                    if (!StateManager.lastKnownPosition) return; 
+                    let addr = StateManager.lastKnownAddress; 
+                    if (!StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) { 
+                        addr = await MapManager.reverseGeocode(StateManager.lastKnownPosition.latitude, StateManager.lastKnownPosition.longitude); 
+                    }
+                    
+                    const lastPoint = StateManager.localCoordinates.length > 0 ? StateManager.localCoordinates[StateManager.localCoordinates.length - 1] : null;
+                    let pointName = UIManager.elements.pointNameInput.value.trim();
+                    if (!pointName) {
+                        if (lastPoint && lastPoint.name.match(/^(.*\D\s*)(\d+)$/)) {
+                            const match = lastPoint.name.match(/^(.*\D\s*)(\d+)$/);
+                            const prefix = match[1].trim();
+                            const number = parseInt(match[2]) + 1;
+                            pointName = `${prefix} ${number}`;
+                        } else {
+                            pointName = `Ponto ${StateManager.localCoordinates.length + 1}`;
+                        }
+                    }
+
                     const newPoint = { 
-                        name: name, 
+                        name: pointName, 
                         latitude: StateManager.lastKnownPosition.latitude, 
                         longitude: StateManager.lastKnownPosition.longitude, 
                         accuracy: StateManager.lastKnownAccuracy, 
@@ -432,16 +453,8 @@
                     };
                     try { 
                         await addDoc(this.getPointsCollectionRef(), newPoint); 
-                        UIManager.showMessage(`Ponto "${name}" salvo na nuvem!`, 'success'); 
-                        const lastPointName = newPoint.name;
-                        const match = lastPointName.match(/^(.*\D\s*)(\d+)$/);
-                        if (match) {
-                            const prefix = match[1];
-                            const number = parseInt(match[2]) + 1;
-                            UIManager.elements.pointNameInput.value = `${prefix.trim()} ${number}`;
-                        } else {
-                            UIManager.elements.pointNameInput.value = '';
-                        }
+                        UIManager.showMessage(`Ponto "${pointName}" salvo na nuvem!`, 'success'); 
+                        UIManager.elements.pointNameInput.value = ''; // Clear input for next point
                         Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); 
                         if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); 
                         StateManager.manualMarker = null; 
