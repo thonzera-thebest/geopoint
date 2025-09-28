@@ -166,7 +166,7 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs, writeBatch, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
         document.addEventListener('DOMContentLoaded', () => {
@@ -405,17 +405,48 @@
                 getPointsCollectionRef() { if (!StateManager.userId) return null; const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; return collection(StateManager.db, `/artifacts/${appId}/users/${StateManager.userId}/points`); },
                 listenForPoints() {
                     const collectionRef = this.getPointsCollectionRef(); if (!collectionRef) return;
-                    onSnapshot(collectionRef, (snapshot) => { 
+                    const q = query(collectionRef, orderBy("createdAt", "asc"));
+                    onSnapshot(q, (snapshot) => { 
                         StateManager.localCoordinates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
                         UIManager.updatePreviewTable(); 
-                        UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success'); 
-                    }, (error) => { console.error("Erro ao ouvir os pontos:", error); UIManager.showMessage("Erro ao carregar dados da nuvem.", 'error'); });
+                        if(snapshot.docs.length > 0 && !snapshot.metadata.fromCache) {
+                            UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success');
+                        }
+                    }, (error) => { console.error("Erro ao ouvir os pontos:", error); UIManager.showMessage("Erro ao carregar dados da nuvem. Verifique o console para criar o índice do Firestore, se necessário.", 'error'); });
                 },
                 async addPoint() {
                     if (!StateManager.lastKnownPosition) return; let addr = StateManager.lastKnownAddress; if (!StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) { addr = await MapManager.reverseGeocode(StateManager.lastKnownPosition.latitude, StateManager.lastKnownPosition.longitude); }
                     const name = UIManager.elements.pointNameInput.value.trim() || `Ponto ${StateManager.localCoordinates.length + 1}`;
-                    const newPoint = { name: name, latitude: StateManager.lastKnownPosition.latitude, longitude: StateManager.lastKnownPosition.longitude, accuracy: StateManager.lastKnownAccuracy, address: addr || 'Endereço não incluído', timestamp: new Date().toLocaleString('pt-BR'), originalAccuracy: StateManager.isManualCapture ? 0 : StateManager.lastKnownAccuracy, originalLat: StateManager.lastKnownPosition.latitude, originalLon: StateManager.lastKnownPosition.longitude, color: StateManager.selectedColor, };
-                    try { await addDoc(this.getPointsCollectionRef(), newPoint); UIManager.showMessage(`Ponto "${name}" salvo na nuvem!`, 'success'); const match = name.match(/^(.*\D\s*)(\d+)$/); UIManager.elements.pointNameInput.value = match ? `${match[1]}${parseInt(match[2]) + 1}` : ''; Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); StateManager.manualMarker = null; UIManager.setUIState(StateManager.isCollecting); }
+                    const newPoint = { 
+                        name: name, 
+                        latitude: StateManager.lastKnownPosition.latitude, 
+                        longitude: StateManager.lastKnownPosition.longitude, 
+                        accuracy: StateManager.lastKnownAccuracy, 
+                        address: addr || 'Endereço não incluído', 
+                        createdAt: serverTimestamp(),
+                        captureTime: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                        originalAccuracy: StateManager.isManualCapture ? 0 : StateManager.lastKnownAccuracy, 
+                        originalLat: StateManager.lastKnownPosition.latitude, 
+                        originalLon: StateManager.lastKnownPosition.longitude, 
+                        color: StateManager.selectedColor, 
+                    };
+                    try { 
+                        await addDoc(this.getPointsCollectionRef(), newPoint); 
+                        UIManager.showMessage(`Ponto "${name}" salvo na nuvem!`, 'success'); 
+                        const lastPointName = newPoint.name;
+                        const match = lastPointName.match(/^(.*\D\s*)(\d+)$/);
+                        if (match) {
+                            const prefix = match[1];
+                            const number = parseInt(match[2]) + 1;
+                            UIManager.elements.pointNameInput.value = `${prefix.trim()} ${number}`;
+                        } else {
+                            UIManager.elements.pointNameInput.value = '';
+                        }
+                        Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); 
+                        if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); 
+                        StateManager.manualMarker = null; 
+                        UIManager.setUIState(StateManager.isCollecting); 
+                    }
                     catch (e) { console.error("Erro ao adicionar ponto: ", e); UIManager.showMessage("Falha ao salvar o ponto na nuvem.", 'error'); }
                 },
                 async deletePoint(docId) { try { await deleteDoc(doc(this.getPointsCollectionRef(), docId)); UIManager.showMessage('Ponto deletado da nuvem.', 'success'); } catch (e) { console.error("Erro ao deletar ponto: ", e); UIManager.showMessage("Falha ao deletar o ponto.", 'error'); } },
@@ -428,7 +459,7 @@
                 exportToCSV() {
                     if (StateManager.localCoordinates.length === 0) return;
                     let csv = "Nome;Cor;Lat_Final;Lon_Final;Status;Endereco;Timestamp;Lat_Original;Lon_Original;Precisao_Orig_m\n";
-                    StateManager.localCoordinates.forEach(p => { csv += [p.name, p.color, p.latitude.toFixed(6).replace('.', ','), p.longitude.toFixed(6).replace('.', ','), this.getPointStatus(p), `"${p.address || ''}"`, p.timestamp, p.originalLat.toFixed(6).replace('.', ','), p.originalLon.toFixed(6).replace('.', ','), this.getOriginalAccuracyText(p, true)].join(';') + '\n'; });
+                    StateManager.localCoordinates.forEach(p => { csv += [p.name, p.color, p.latitude.toFixed(6).replace('.', ','), p.longitude.toFixed(6).replace('.', ','), this.getPointStatus(p), `"${p.address || ''}"`, p.captureTime, p.originalLat.toFixed(6).replace('.', ','), p.originalLon.toFixed(6).replace('.', ','), this.getOriginalAccuracyText(p, true)].join(';') + '\n'; });
                     const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })); link.download = "COORD.csv"; link.click();
                 },
                 getPointStatus(point) { if (point.accuracy === 0 && point.originalAccuracy !== 0) return 'Corrigido'; if (point.originalAccuracy === 0) return 'Manual'; if (point.originalAccuracy <= 5) return 'GPS (Alta)'; if (point.originalAccuracy <= 15) return 'GPS (Média)'; return 'GPS (Baixa)'; },
