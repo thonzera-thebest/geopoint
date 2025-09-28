@@ -465,7 +465,16 @@
                     }
                     
                     try {
-                        const firebaseConfig = JSON.parse(firebaseConfigJson);
+                        let configToParse = firebaseConfigJson;
+        
+                        // Tenta extrair o objeto JSON do texto, caso o usuário cole mais do que o necessário
+                        const startIndex = configToParse.indexOf('{');
+                        const endIndex = configToParse.lastIndexOf('}');
+                        if (startIndex !== -1 && endIndex !== -1) {
+                            configToParse = configToParse.substring(startIndex, endIndex + 1);
+                        }
+
+                        const firebaseConfig = JSON.parse(configToParse);
                         UIManager.showMessage("Conectando à nuvem...", "info");
                         StateManager.app = initializeApp(firebaseConfig);
                         StateManager.db = getFirestore(StateManager.app);
@@ -540,4 +549,5 @@
     </script>
 </body>
 </html>
+
 
