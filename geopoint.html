@@ -473,8 +473,8 @@
                             configString = configString.substring(startIndex, endIndex + 1);
                         }
 
-                        // Solução robusta: Usa o construtor de Função para analisar o objeto JS com segurança
-                        const firebaseConfig = new Function('return ' + configString)();
+                        // Solução definitiva: Envolve o objeto em parênteses para evitar ambiguidade com blocos de código
+                        const firebaseConfig = new Function('return (' + configString + ')')();
                         
                         if (!firebaseConfig || !firebaseConfig.apiKey) {
                              throw new Error("A configuração analisada não parece ser um objeto Firebase válido.");
@@ -552,5 +552,6 @@
     </script>
 </body>
 </html>
+
 
 
