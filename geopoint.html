@@ -202,13 +202,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             const StateManager = {
                 app: null, db: null, auth: null, userId: null,
+                isMapInitialized: false,
                 localCoordinates: [], markers: [], map: null, watchId: null,
                 lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null,
                 isManualCapture: false, manualMarker: null, isCollecting: false,
                 currentLocationMarker: null, accuracyCircle: null,
                 availableColors: ['#0d6efd', '#dc3545', '#198754', '#ffc107', '#6c757d', '#4f5b93'],
                 selectedColor: '#0d6efd',
-                unsubscribe: null, // To stop listening to Firestore changes on logout
+                unsubscribe: null,
             };
 
             const UIManager = {
@@ -424,9 +425,11 @@
 
             const MapManager = {
                 init() {
+                    if(StateManager.isMapInitialized) return;
                     StateManager.map = L.map('map').setView([-25.4284, -49.2733], 13);
                     this.addBaseLayers();
                     StateManager.map.on('click', this.onMapClick.bind(this));
+                    StateManager.isMapInitialized = true;
                 },
                 addBaseLayers() {
                     const baseLayers = { "Híbrido": L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'), L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane' })]).addTo(StateManager.map), "Ruas": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'), "Topográfico": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'), };
@@ -561,7 +564,6 @@
             const App = {
                 init() {
                     UIManager.init();
-                    MapManager.init();
                     SettingsManager.init();
                     this.addEventListeners();
                     this.bootstrapFirebase();
@@ -608,6 +610,9 @@
                             if (user) { 
                                 StateManager.userId = user.uid;
                                 UIManager.displayUser(user);
+                                if (!StateManager.isMapInitialized) {
+                                    MapManager.init();
+                                }
                                 DataManager.listenForPoints();
                                 UIManager.showAppScreen();
                             } else { 
@@ -715,3 +720,4 @@
     </script>
 </body>
 </html>
+
