@@ -58,6 +58,9 @@
         .corrected-row:hover { background-color: #dbeafe !important; }
         .dark .corrected-row:hover { background-color: #1e40af !important; }
 
+        .pending-sync-row { background-color: #fef9c3; }
+        .dark .pending-sync-row { background-color: #78350f; }
+
         .color-dot { width: 2rem; height: 2rem; border-radius: 9999px; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
         .color-dot:hover { transform: scale(1.1); }
         .color-dot.selected { border-color: #2563eb; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb; }
@@ -154,8 +157,8 @@
     </div>
 
     <div id="main-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center relative transition-colors duration-300 hidden">
-        <div id="offline-indicator" class="hidden p-3 mb-4 -mx-8 rounded-t-2xl bg-yellow-500 text-white text-center font-bold">
-            Você está offline. Os pontos serão salvos localmente e enviados para a nuvem quando a conexão retornar.
+        <div id="offline-indicator" class="hidden p-3 mb-4 rounded-xl bg-yellow-400 text-yellow-900 text-center font-bold dark:bg-yellow-700 dark:text-yellow-200">
+            Você está offline. Os pontos serão salvos localmente.
         </div>
         <div class="absolute top-4 right-4 flex gap-2 z-10">
              <button id="manage-projects-button" title="Gerenciar Projetos" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-black dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg></button>
@@ -257,6 +260,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const StateManager = {
                 app: null, db: null, auth: null, userId: null,
+                isOnline: navigator.onLine,
                 isMapInitialized: false,
                 projects: [],
                 activeProjectId: null,
@@ -274,6 +278,7 @@
             const UIManager = {
                 elements: {
                     mainContainer: document.getElementById('main-container'),
+                    offlineIndicator: document.getElementById('offline-indicator'),
                     dashboardContainer: document.getElementById('dashboard-container'),
                     recentProjectsGrid: document.getElementById('recent-projects-grid'),
                     dashboardLogoutButton: document.getElementById('dashboard-logout-button'),
@@ -344,6 +349,11 @@
                 init() {
                     this.applyTheme(SettingsManager.getTheme());
                     this.initColorPicker();
+                    this.updateOnlineStatus();
+                },
+
+                updateOnlineStatus() {
+                    this.elements.offlineIndicator.classList.toggle('hidden', StateManager.isOnline);
                 },
 
                 initColorPicker() {
@@ -411,20 +421,20 @@
 
                 showDeleteConfirmation(modal, textElement, confirmText) {
                      return new Promise(resolve => {
-                        textElement.textContent = confirmText;
-                        this.showModal(modal);
-                        this.elements.deleteProjectConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
-                        this.elements.deleteProjectCancel.onclick = () => { this.hideModal(modal); resolve(false); };
-                    });
+                         textElement.textContent = confirmText;
+                         this.showModal(modal);
+                         this.elements.deleteProjectConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
+                         this.elements.deleteProjectCancel.onclick = () => { this.hideModal(modal); resolve(false); };
+                     });
                 },
                 
                 showClearDataConfirmation() {
                      return new Promise(resolve => {
-                        const modal = this.elements.clearDataModal;
-                        this.showModal(modal);
-                        this.elements.clearDataConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
-                        this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
-                    });
+                         const modal = this.elements.clearDataModal;
+                         this.showModal(modal);
+                         this.elements.clearDataConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
+                         this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
+                     });
                 },
                 
                 updateCoordinatesDisplay(lat, lon, acc) {
@@ -443,19 +453,20 @@
                 
                 updatePreviewTable() {
                     this.elements.pointsTableBody.innerHTML = '';
-                    this.elements.pointsCount.textContent = StateManager.localCoordinates.length;
+                    const combinedPoints = [...StateManager.localCoordinates, ...OfflineManager.getQueue()];
+                    this.elements.pointsCount.textContent = combinedPoints.length;
                     
                     if (StateManager.isMapInitialized) {
                         StateManager.markers.forEach(marker => StateManager.map.removeLayer(marker));
                         StateManager.markers = [];
 
-                        StateManager.localCoordinates.forEach((point, index) => {
+                        combinedPoints.forEach((point, index) => {
                             MapManager.createPointMarker(point);
                             this.createTableRow(point, index);
                         });
 
-                        if (StateManager.isSwitchingProject && StateManager.localCoordinates.length > 0) {
-                            const lastPoint = StateManager.localCoordinates[StateManager.localCoordinates.length - 1];
+                        if (StateManager.isSwitchingProject && combinedPoints.length > 0) {
+                            const lastPoint = combinedPoints[combinedPoints.length - 1];
                             const activeProject = StateManager.projects.find(p => p.id === StateManager.activeProjectId);
                             const projectName = activeProject ? activeProject.name : '';
                             MapManager.zoomToLastPoint(
@@ -469,7 +480,7 @@
                         }
                     }
 
-                    const hasData = StateManager.localCoordinates.length > 0;
+                    const hasData = combinedPoints.length > 0;
                     this.elements.downloadButton.disabled = !hasData;
                     this.elements.clearLocalDataButton.disabled = !hasData;
                     this.elements.pointsPreview.classList.toggle('hidden', !hasData);
@@ -478,9 +489,13 @@
                 createTableRow(point, index) {
                     const row = document.createElement('tr');
                     let rowClass = 'hover:bg-gray-50 dark:hover:bg-gray-600';
-                    if ((point.accuracy === 0 && point.originalAccuracy !== 0) || point.nameEdited) rowClass = 'corrected-row';
+                    if (point.status === 'pendingSync') rowClass = 'pending-sync-row';
+                    else if ((point.accuracy === 0 && point.originalAccuracy !== 0) || point.nameEdited) rowClass = 'corrected-row';
                     row.className = rowClass + ' transition-colors duration-150';
-                    row.innerHTML = `<td data-label="#" class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td><td data-label="Cor" class="py-2 px-4 whitespace-nowrap text-sm"><div class="h-4 w-4 rounded-full mx-auto" style="background-color: ${point.color || '#3b82f6'};"></div></td><td data-label="Nome" class="py-2 px-4 whitespace-nowrap text-sm font-medium cursor-text" contenteditable="true" data-id="${point.id}" onblur="App.handleEditPointName(this, '${point.id}')">${point.name}</td><td data-label="Latitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td><td data-label="Longitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td><td data-label="Status" class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${DataManager.getPointStatus(point)}</td><td data-label="Precisão Orig." class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td><td data-label="Ação" class="py-2 px-4 whitespace-nowrap text-sm text-center"><button onclick="App.handleDeletePoint('${point.id}')" class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg></button></td>`;
+
+                    const isEditable = !point.status || point.status !== 'pendingSync';
+                    
+                    row.innerHTML = `<td data-label="#" class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td><td data-label="Cor" class="py-2 px-4 whitespace-nowrap text-sm"><div class="h-4 w-4 rounded-full mx-auto" style="background-color: ${point.color || '#3b82f6'};"></div></td><td data-label="Nome" class="py-2 px-4 whitespace-nowrap text-sm font-medium ${isEditable ? 'cursor-text' : 'cursor-not-allowed text-gray-500'}" contenteditable="${isEditable}" data-id="${point.id}" onblur="App.handleEditPointName(this, '${point.id}')">${point.name}</td><td data-label="Latitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td><td data-label="Longitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td><td data-label="Status" class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${DataManager.getPointStatus(point)}</td><td data-label="Precisão Orig." class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td><td data-label="Ação" class="py-2 px-4 whitespace-nowrap text-sm text-center"><button onclick="App.handleDeletePoint('${point.id}')" ${!isEditable ? 'disabled' : ''} class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900 ${!isEditable ? 'opacity-50 cursor-not-allowed' : ''}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg></button></td>`;
                     this.elements.pointsTableBody.appendChild(row);
                 },
                 
@@ -633,7 +648,7 @@
                 },
                 createColoredIcon(color = '#3b82f6') { const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32"><path fill="${color}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13C19 5.13 15.87 2 12 2zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path fill="black" opacity="0.25" d="M12 2c-4 0-7 2.8-7 6.2 0 2.3 1 4.8 3.1 7.5L12 22l3.9-6.3c2.1-2.7 3.1-5.2 3.1-7.5C19 4.8 16 2 12 2zm0 1.5c3.3 0 5.5 2.3 5.5 4.7 0 2-1 4.3-2.9 6.8L12 19.3l-2.6-4.3C7.5 12.5 6.5 10.2 6.5 8.2 6.5 4.8 8.7 3.5 12 3.5z"/></svg>`; return L.divIcon({ html: svg, className: '', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32] }); },
                 createPointMarker(point) { const icon = this.createColoredIcon(point.color); const newMarker = L.marker([point.latitude, point.longitude], { draggable: true, id: point.id, icon: icon }).addTo(StateManager.map).bindPopup(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)}`).on('dragend', this.onMarkerDragEnd); StateManager.markers.push(newMarker); },
-                onMarkerDragEnd(e) { const { target: marker } = e; const { lat, lng } = marker.getLatLng(); const pointId = marker.options.id; DataManager.updatePointPosition(pointId, lat, lng); const point = StateManager.localCoordinates.find(p => p.id === pointId); marker.setPopupContent(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)} (Corrigido)`); UIManager.updatePreviewTable(); UIManager.showMessage(`Ponto '${point.name}' corrigido.`, 'info'); },
+                onMarkerDragEnd(e) { const { target: marker } = e; const { lat, lng } = marker.getLatLng(); const pointId = marker.options.id; DataManager.updatePointPosition(pointId, lat, lng); const point = [...StateManager.localCoordinates, ...OfflineManager.getQueue()].find(p => p.id === pointId); marker.setPopupContent(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)} (Corrigido)`); UIManager.updatePreviewTable(); UIManager.showMessage(`Ponto '${point.name}' corrigido.`, 'info'); },
                 async searchLocation(query) {
                     UIManager.setButtonText('searchButton', 'Buscando...');
                     if (/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query)) { const [lat, lon] = query.split(',').map(parseFloat); if (!isNaN(lat) && !isNaN(lon)) { await this.updateMapForManualPoint(lat, lon, `Coordenadas: ${query}`); UIManager.showMessage('Coordenadas localizadas.', 'success'); } else { UIManager.showMessage('Coordenadas inválidas.', 'error'); } }
@@ -660,6 +675,56 @@
                 },
             };
 
+            const OfflineManager = {
+                getQueueKey() {
+                    if (!StateManager.activeProjectId) return null;
+                    return `offline_queue_${StateManager.activeProjectId}`;
+                },
+                getQueue() {
+                    const key = this.getQueueKey();
+                    if (!key) return [];
+                    return JSON.parse(localStorage.getItem(key)) || [];
+                },
+                saveQueue(queue) {
+                    const key = this.getQueueKey();
+                    if (key) localStorage.setItem(key, JSON.stringify(queue));
+                },
+                addToQueue(point) {
+                    const queue = this.getQueue();
+                    queue.push(point);
+                    this.saveQueue(queue);
+                },
+                clearQueue() {
+                    const key = this.getQueueKey();
+                    if (key) localStorage.removeItem(key);
+                },
+                async syncPendingPoints() {
+                    if (!StateManager.isOnline) return;
+                    const queue = this.getQueue();
+                    if (queue.length === 0) return;
+
+                    UIManager.showMessage(`Sincronizando ${queue.length} ponto(s) local(is)...`, 'info');
+                    const collectionRef = DataManager.getPointsCollectionRef();
+                    if (!collectionRef) return;
+
+                    try {
+                        const batch = writeBatch(StateManager.db);
+                        queue.forEach(point => {
+                            const docRef = doc(collectionRef); // Gera um novo ID para o ponto
+                            const { id, status, ...pointData } = point; // Remove o ID temporário e o status
+                            batch.set(docRef, pointData);
+                        });
+                        await batch.commit();
+                        this.clearQueue();
+                        UIManager.showMessage(`${queue.length} ponto(s) salvo(s) na nuvem com sucesso!`, 'success');
+                        // O onSnapshot do Firebase irá atualizar a tabela automaticamente.
+                    } catch (error) {
+                        console.error("Erro ao sincronizar pontos:", error);
+                        UIManager.showMessage("Falha ao sincronizar pontos com a nuvem.", "error");
+                    }
+                }
+            };
+
             const DataManager = {
                 getProjectsCollectionRef() { if (!StateManager.userId) return null; const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; return collection(StateManager.db, `users/${StateManager.userId}/projects`); },
                 getPointsCollectionRef() { if (!StateManager.activeProjectId) return null; return collection(this.getProjectsCollectionRef(), `${StateManager.activeProjectId}/points`); },
@@ -681,9 +746,12 @@
                     StateManager.pointsUnsubscribe = onSnapshot(q, (snapshot) => { 
                         StateManager.localCoordinates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
                         UIManager.updatePreviewTable(); 
-                        if (!snapshot.metadata.fromCache) {
-                           if (snapshot.empty) { UIManager.showMessage("Nenhum ponto neste projeto. Comece a coletar!", 'info'); } 
-                           else if(!StateManager.isSwitchingProject) { UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success'); }
+                        if (!snapshot.metadata.fromCache && StateManager.isOnline) {
+                           if (snapshot.empty && OfflineManager.getQueue().length === 0) { 
+                               UIManager.showMessage("Nenhum ponto neste projeto. Comece a coletar!", 'info'); 
+                           } else if(!StateManager.isSwitchingProject) { 
+                               UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success'); 
+                           }
                         }
                     }, (error) => { console.error("Firebase Error:", error); let msg = "Erro ao carregar dados da nuvem."; if (error.code === 'failed-precondition') { msg = "Erro: O banco de dados requer um índice. Verifique o console do navegador (F12) para um link de criação."; } UIManager.showMessage(msg, 'error'); });
                 },
@@ -702,6 +770,9 @@
 
                 async deleteProject(projectId) {
                     try {
+                        // Limpa a fila offline para este projeto antes de deletar
+                        OfflineManager.clearQueue();
+
                         const pointsRef = collection(this.getProjectsCollectionRef(), `${projectId}/points`);
                         const pointsSnapshot = await getDocs(pointsRef);
                         const batch = writeBatch(StateManager.db);
@@ -720,11 +791,12 @@
                     if (!StateManager.activeProjectId) { UIManager.showMessage("Nenhum projeto selecionado.", 'error'); return; }
                     if (!StateManager.lastKnownPosition) return; 
                     let addr = StateManager.lastKnownAddress; 
-                    if (!StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) { 
+                    
+                    if (StateManager.isOnline && !StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) { 
                         addr = await MapManager.reverseGeocode(StateManager.lastKnownPosition.latitude, StateManager.lastKnownPosition.longitude); 
                     }
                     
-                    const lastPoint = StateManager.localCoordinates.length > 0 ? StateManager.localCoordinates[StateManager.localCoordinates.length - 1] : null;
+                    const lastPoint = [...StateManager.localCoordinates, ...OfflineManager.getQueue()].pop();
                     let pointName = UIManager.elements.pointNameInput.value.trim();
                     if (!pointName) {
                         if (lastPoint && lastPoint.name.match(/^(.*\D\s*)(\d+)$/)) {
@@ -733,7 +805,7 @@
                             const number = parseInt(match[2]) + 1;
                             pointName = `${prefix} ${number}`;
                         } else {
-                            pointName = `Ponto ${StateManager.localCoordinates.length + 1}`;
+                            pointName = `Ponto ${[...StateManager.localCoordinates, ...OfflineManager.getQueue()].length + 1}`;
                         }
                     }
 
@@ -741,31 +813,91 @@
                         name: pointName, latitude: StateManager.lastKnownPosition.latitude, longitude: StateManager.lastKnownPosition.longitude, accuracy: StateManager.lastKnownAccuracy, address: addr || 'Endereço não incluído', createdAt: serverTimestamp(), captureTime: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
                         originalAccuracy: StateManager.isManualCapture ? 0 : StateManager.lastKnownAccuracy, originalLat: StateManager.lastKnownPosition.latitude, originalLon: StateManager.lastKnownPosition.longitude, color: StateManager.selectedColor, 
                     };
-                    try { 
-                        await addDoc(this.getPointsCollectionRef(), newPoint); 
-                        UIManager.showMessage(`Ponto "${pointName}" salvo na nuvem!`, 'success'); 
-                        UIManager.elements.pointNameInput.value = '';
-                        Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); 
-                        if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); 
-                        StateManager.manualMarker = null; 
-                        UIManager.setUIState(StateManager.isCollecting); 
+                    
+                    if (StateManager.isOnline) {
+                         try { 
+                            await addDoc(this.getPointsCollectionRef(), newPoint); 
+                            UIManager.showMessage(`Ponto "${pointName}" salvo na nuvem!`, 'success'); 
+                        } catch (e) { 
+                            console.error("Erro ao adicionar ponto: ", e); 
+                            UIManager.showMessage("Falha ao salvar o ponto na nuvem.", 'error'); 
+                        }
+                    } else {
+                        // Modo Offline
+                        newPoint.id = crypto.randomUUID(); // ID Temporário
+                        newPoint.status = 'pendingSync';
+                        delete newPoint.createdAt; // será definido pelo servidor ao sincronizar
+                        OfflineManager.addToQueue(newPoint);
+                        UIManager.updatePreviewTable(); // Atualiza a UI imediatamente com o ponto local
+                        UIManager.showMessage(`Ponto "${pointName}" salvo localmente!`, 'info');
                     }
-                    catch (e) { console.error("Erro ao adicionar ponto: ", e); UIManager.showMessage("Falha ao salvar o ponto na nuvem.", 'error'); }
+                    
+                    // Reset UI
+                    UIManager.elements.pointNameInput.value = '';
+                    Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); 
+                    if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); 
+                    StateManager.manualMarker = null; 
+                    UIManager.setUIState(StateManager.isCollecting); 
                 },
-                async deletePoint(docId) { try { await deleteDoc(doc(this.getPointsCollectionRef(), docId)); UIManager.showMessage('Ponto deletado da nuvem.', 'success'); } catch (e) { console.error("Erro ao deletar ponto: ", e); UIManager.showMessage("Falha ao deletar o ponto.", 'error'); } },
+                async deletePoint(docId) { 
+                    const pointInQueue = OfflineManager.getQueue().find(p => p.id === docId);
+                    if(pointInQueue) {
+                        const newQueue = OfflineManager.getQueue().filter(p => p.id !== docId);
+                        OfflineManager.saveQueue(newQueue);
+                        UIManager.updatePreviewTable();
+                        UIManager.showMessage('Ponto local deletado.', 'success');
+                    } else {
+                         try { 
+                            await deleteDoc(doc(this.getPointsCollectionRef(), docId)); 
+                            UIManager.showMessage('Ponto deletado da nuvem.', 'success'); 
+                        } catch (e) { 
+                            console.error("Erro ao deletar ponto: ", e); 
+                            UIManager.showMessage("Falha ao deletar o ponto.", 'error'); 
+                        } 
+                    }
+                },
                 async updatePointName(docId, newName) { try { await updateDoc(doc(this.getPointsCollectionRef(), docId), { name: newName, nameEdited: true }); } catch (e) { console.error("Erro ao atualizar nome: ", e); UIManager.showMessage("Falha ao atualizar o nome.", 'error'); } },
                 async updatePointPosition(docId, lat, lon) { try { await updateDoc(doc(this.getPointsCollectionRef(), docId), { latitude: lat, longitude: lon, accuracy: 0, address: 'Posição corrigida' }); } catch (e) { console.error("Erro ao atualizar posição: ", e); UIManager.showMessage("Falha ao atualizar a posição.", 'error'); } },
                 async clearAllData() {
-                    const collectionRef = this.getPointsCollectionRef(); if (!collectionRef || StateManager.localCoordinates.length === 0) return;
-                    if (await UIManager.showClearDataConfirmation()) { MapManager.stopCollecting(); UIManager.showMessage("Limpando dados da nuvem...", "info"); try { const querySnapshot = await getDocs(collectionRef); const batch = writeBatch(StateManager.db); querySnapshot.forEach((doc) => batch.delete(doc.ref)); await batch.commit(); UIManager.showMessage("Todos os dados foram limpos da nuvem.", 'success'); } catch (e) { console.error("Erro ao limpar dados: ", e); UIManager.showMessage("Falha ao limpar dados da nuvem.", 'error'); } }
+                    const collectionRef = this.getPointsCollectionRef(); 
+                    if (!collectionRef || (StateManager.localCoordinates.length === 0 && OfflineManager.getQueue().length === 0)) return;
+                    
+                    if (await UIManager.showClearDataConfirmation()) { 
+                        MapManager.stopCollecting(); 
+                        OfflineManager.clearQueue();
+                        if (StateManager.isOnline) {
+                            UIManager.showMessage("Limpando dados da nuvem...", "info"); 
+                            try { 
+                                const querySnapshot = await getDocs(collectionRef); 
+                                const batch = writeBatch(StateManager.db); 
+                                querySnapshot.forEach((doc) => batch.delete(doc.ref)); 
+                                await batch.commit(); 
+                                UIManager.showMessage("Todos os dados foram limpos da nuvem.", 'success'); 
+                            } catch (e) { 
+                                console.error("Erro ao limpar dados: ", e); 
+                                UIManager.showMessage("Falha ao limpar dados da nuvem.", 'error'); 
+                            } 
+                        } else {
+                            UIManager.showMessage("Pontos locais limpos. Os pontos na nuvem serão mantidos.", 'info');
+                            UIManager.updatePreviewTable();
+                        }
+                    }
                 },
                 exportToCSV() {
-                    if (StateManager.localCoordinates.length === 0) return;
+                    const combinedPoints = [...StateManager.localCoordinates, ...OfflineManager.getQueue()];
+                    if (combinedPoints.length === 0) return;
                     let csv = "Nome;Cor;Lat_Final;Lon_Final;Status;Endereco;Timestamp;Lat_Original;Lon_Original;Precisao_Orig_m\n";
-                    StateManager.localCoordinates.forEach(p => { csv += [p.name, p.color, p.latitude.toFixed(6).replace('.', ','), p.longitude.toFixed(6).replace('.', ','), this.getPointStatus(p), `"${p.address || ''}"`, p.captureTime, p.originalLat.toFixed(6).replace('.', ','), p.originalLon.toFixed(6).replace('.', ','), this.getOriginalAccuracyText(p, true)].join(';') + '\n'; });
+                    combinedPoints.forEach(p => { csv += [p.name, p.color, p.latitude.toFixed(6).replace('.', ','), p.longitude.toFixed(6).replace('.', ','), this.getPointStatus(p), `"${p.address || ''}"`, p.captureTime || 'N/A', p.originalLat.toFixed(6).replace('.', ','), p.originalLon.toFixed(6).replace('.', ','), this.getOriginalAccuracyText(p, true)].join(';') + '\n'; });
                     const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })); link.download = "COORD.csv"; link.click();
                 },
-                getPointStatus(point) { if (point.accuracy === 0 && point.originalAccuracy !== 0) return 'Corrigido'; if (point.originalAccuracy === 0) return 'Manual'; if (point.originalAccuracy <= 5) return 'GPS (Alta)'; if (point.originalAccuracy <= 15) return 'GPS (Média)'; return 'GPS (Baixa)'; },
+                getPointStatus(point) { 
+                    if(point.status === 'pendingSync') return 'Pendente';
+                    if (point.accuracy === 0 && point.originalAccuracy !== 0) return 'Corrigido'; 
+                    if (point.originalAccuracy === 0) return 'Manual'; 
+                    if (point.originalAccuracy <= 5) return 'GPS (Alta)'; 
+                    if (point.originalAccuracy <= 15) return 'GPS (Média)'; 
+                    return 'GPS (Baixa)'; 
+                },
                 getOriginalAccuracyText(point, forCsv = false) { if (point.originalAccuracy === 0) return 'Manual'; if (point.originalAccuracy) return forCsv ? point.originalAccuracy.toFixed(1).replace('.', ',') : `\u00B1 ${point.originalAccuracy.toFixed(1)}m`; return 'N/A'; }
             };
             
@@ -856,7 +988,7 @@
 
                         if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                            try {
-                                await signInWithCustomToken(StateManager.auth, __initial_auth_token);
+                               await signInWithCustomToken(StateManager.auth, __initial_auth_token);
                            } catch (e) {
                                console.error("Custom token login failed", e);
                                UIManager.showMessage("Falha no login automático do ambiente de desenvolvimento.", "error", true);
@@ -873,6 +1005,8 @@
                 
                 addEventListeners() {
                     const el = UIManager.elements;
+                    window.addEventListener('online', () => this.handleOnlineStatusChange(true));
+                    window.addEventListener('offline', () => this.handleOnlineStatusChange(false));
                     el.loginForm.addEventListener('submit', (e) => { e.preventDefault(); this.handleLogin(); });
                     el.registerForm.addEventListener('submit', (e) => { e.preventDefault(); this.handleRegister(); });
                     el.logoutButton.addEventListener('click', () => this.handleLogout());
@@ -896,6 +1030,14 @@
                     el.confirmCreateProjectButton.addEventListener('click', () => this.handleCreateProjectFromModal());
                     el.cancelCreateProjectButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.createProjectModal));
                     el.backToDashboardButton.addEventListener('click', () => UIManager.showDashboardScreen());
+                },
+
+                handleOnlineStatusChange(isOnline) {
+                    StateManager.isOnline = isOnline;
+                    UIManager.updateOnlineStatus();
+                    if(isOnline) {
+                        OfflineManager.syncPendingPoints();
+                    }
                 },
                 
                 async handleLogin() {
@@ -974,6 +1116,7 @@
                     UIManager.updateCurrentProjectDisplay();
                     UIManager.renderProjectsList();
                     DataManager.listenForPoints();
+                    OfflineManager.syncPendingPoints(); // Tenta sincronizar ao trocar de projeto
                     UIManager.showAppScreen();
                 },
 
