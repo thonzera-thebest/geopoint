@@ -359,17 +359,19 @@
                     this.elements.pointsTableBody.innerHTML = '';
                     this.elements.pointsCount.textContent = StateManager.localCoordinates.length;
                     
-                    StateManager.markers.forEach(marker => StateManager.map.removeLayer(marker));
-                    StateManager.markers = [];
+                    if (StateManager.isMapInitialized) {
+                        StateManager.markers.forEach(marker => StateManager.map.removeLayer(marker));
+                        StateManager.markers = [];
 
-                    StateManager.localCoordinates.forEach((point, index) => {
-                        MapManager.createPointMarker(point);
-                        this.createTableRow(point, index);
-                    });
+                        StateManager.localCoordinates.forEach((point, index) => {
+                            MapManager.createPointMarker(point);
+                            this.createTableRow(point, index);
+                        });
 
-                    if (StateManager.markers.length > 0) {
-                        const group = new L.featureGroup(StateManager.markers);
-                        StateManager.map.fitBounds(group.getBounds());
+                        if (StateManager.markers.length > 0) {
+                            const group = new L.featureGroup(StateManager.markers);
+                            StateManager.map.fitBounds(group.getBounds());
+                        }
                     }
 
                     const hasData = StateManager.localCoordinates.length > 0;
@@ -413,6 +415,9 @@
                 showAppScreen() {
                     this.elements.authContainer.classList.add('hidden');
                     this.elements.mainContainer.classList.remove('hidden');
+                    if (!StateManager.isMapInitialized) {
+                        MapManager.init();
+                    }
                 },
 
                 toggleAuthForms(showRegister = false) {
@@ -478,7 +483,7 @@
             const DataManager = {
                 getPointsCollectionRef() { if (!StateManager.userId) return null; const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; return collection(StateManager.db, `/artifacts/${appId}/users/${StateManager.userId}/points`); },
                 listenForPoints() {
-                    if(StateManager.unsubscribe) StateManager.unsubscribe(); // Stop previous listener
+                    if(StateManager.unsubscribe) StateManager.unsubscribe();
                     const collectionRef = this.getPointsCollectionRef(); if (!collectionRef) return;
                     const q = query(collectionRef, orderBy("createdAt", "asc"));
                     StateManager.unsubscribe = onSnapshot(q, (snapshot) => { 
@@ -520,7 +525,16 @@
                     try { 
                         await addDoc(this.getPointsCollectionRef(), newPoint); 
                         UIManager.showMessage(`Ponto "${pointName}" salvo na nuvem!`, 'success'); 
-                        UIManager.elements.pointNameInput.value = '';
+                        
+                        const match = pointName.match(/^(.*\D\s*)(\d+)$/);
+                        if (match) {
+                            const prefix = match[1].trim();
+                            const number = parseInt(match[2]) + 1;
+                            UIManager.elements.pointNameInput.value = `${prefix} ${number}`;
+                        } else {
+                            UIManager.elements.pointNameInput.value = '';
+                        }
+
                         Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); 
                         if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); 
                         StateManager.manualMarker = null; 
@@ -579,7 +593,7 @@
                         this.initializeFirebase(configString);
                     } else {
                         UIManager.showAuthScreen();
-                        UIManager.showMessage("Bem-vindo! Insira sua configuração do Firebase para começar.", "info");
+                        UIManager.showMessage("Bem-vindo! Insira sua configuração do Firebase para começar.", "info", true);
                         UIManager.showModal(UIManager.elements.settingsModal);
                     }
                 },
@@ -610,11 +624,8 @@
                             if (user) { 
                                 StateManager.userId = user.uid;
                                 UIManager.displayUser(user);
-                                if (!StateManager.isMapInitialized) {
-                                    MapManager.init();
-                                }
-                                DataManager.listenForPoints();
                                 UIManager.showAppScreen();
+                                DataManager.listenForPoints();
                             } else { 
                                 StateManager.userId = null; 
                                 if (StateManager.unsubscribe) StateManager.unsubscribe();
@@ -625,7 +636,7 @@
                         });
                     } catch (e) {
                         console.error("Erro na inicialização do Firebase:", e);
-                        UIManager.showMessage("Configuração do Firebase inválida. Verifique os dados e tente novamente.", "error");
+                        UIManager.showMessage("Configuração do Firebase inválida. Verifique os dados e tente novamente.", "error", true);
                         UIManager.showAuthScreen();
                     }
                 },
