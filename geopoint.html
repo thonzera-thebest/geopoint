@@ -63,6 +63,18 @@
         .color-dot.selected { border-color: #2563eb; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb; }
         .dark .color-dot.selected { box-shadow: 0 0 0 2px #374151, 0 0 0 4px #60a5fa; }
         
+        .project-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .project-item.active {
+            background-color: #dbeafe; /* blue-100 */
+            font-weight: 600;
+        }
+        .dark .project-item.active {
+            background-color: #1e40af; /* blue-800 */
+        }
+        
         @media screen and (max-width: 768px) {
             #points-preview table, #points-preview thead, #points-preview tbody, #points-preview tr, #points-preview td { display: block; }
             #points-preview table { box-shadow: none; }
@@ -120,9 +132,10 @@
             </button>
         </div>
         
-        <h1 class="text-4xl font-bold mb-4 text-black dark:text-white flex items-center justify-center pt-16 sm:pt-0"><span>ToTheP</span><svg class="h-10 w-10 text-blue-600 mx-[-6px]" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg><span>int</span></h1>
-        <p class="text-gray-900 dark:text-gray-400 text-sm mb-4">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
-        <p class="text-gray-900 dark:text-gray-300 mb-6">Capture coordenadas, adicione um nome e visualize os pontos em tempo real.</p>
+        <div id="project-bar" class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-xl flex justify-between items-center">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200">Projeto: <span id="current-project-name">Nenhum</span></h2>
+            <button id="manage-projects-button" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-indigo-700 transition-colors">Gerenciar Projetos</button>
+        </div>
         
         <div id="map"></div>
 
@@ -158,7 +171,7 @@
             <button id="capture-button" class="w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50" disabled>Registrar Ponto</button>
             <button id="stop-button" class="w-full bg-gray-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 hidden">Parar/Resetar</button>
             <button id="download-button" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" disabled>Exportar CSV</button>
-            <button id="clear-local-data-button" class="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-yellow-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50" disabled>Limpar Todos os Dados</button>
+            <button id="clear-local-data-button" class="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-yellow-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50" disabled>Limpar Todos os Pontos</button>
         </div>
         
         <div id="points-preview" class="mt-8 hidden">
@@ -188,8 +201,9 @@
     </div>
 
     <!-- Modais -->
+    <div id="projects-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Meus Projetos</h3><div class="mb-6"><h4 class="font-semibold mb-2">Criar Novo Projeto</h4><div class="flex gap-2"><input type="text" id="new-project-input" class="flex-1 p-2 rounded-lg border border-gray-300" placeholder="Nome do novo projeto"><button id="create-project-button" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Criar</button></div></div><div><h4 class="font-semibold mb-2">Selecionar Projeto</h4><div id="projects-list" class="max-h-60 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div></div><div class="modal-buttons"><button id="close-projects-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
     <div id="confirmation-modal" class="modal"><div class="modal-content"><p>Gostaria de incluir a localização aproximada desse ponto?</p><div class="modal-buttons"><button id="confirm-yes" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Sim</button><button id="confirm-no" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-600">Não</button></div></div></div>
-    <div id="clear-data-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Atenção!</p><p>Tem certeza que deseja apagar TODOS os pontos salvos na nuvem? Esta ação é irreversível.</p><div class="modal-buttons"><button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, apagar tudo</button><button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
+    <div id="clear-data-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Atenção!</p><p>Tem certeza que deseja apagar TODOS os pontos deste projeto? Esta ação é irreversível.</p><div class="modal-buttons"><button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, apagar pontos</button><button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
     <div id="settings-modal" class="modal"><div class="modal-content text-left overflow-y-auto max-h-[90vh]"><h3 class="text-xl font-bold mb-4 text-center">Configurações</h3><div class="mb-4"><label for="api-key-input" class="block text-sm font-medium text-gray-900 mb-1">Chave de API do Google Maps</label><input type="password" id="api-key-input" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole sua chave aqui"><p class="text-xs text-gray-600 mt-1">Sua chave é salva apenas no seu navegador.</p></div><div class="mb-4"><p class="block text-sm font-medium text-gray-900 mb-1">Configuração Firebase</p><textarea id="firebase-config-input" rows="8" class="w-full p-2 rounded-lg border border-gray-300 font-mono text-xs" placeholder="Cole o objeto de configuração do Firebase aqui"></textarea><p class="text-xs text-gray-600 mt-1">Necessário para usar a aplicação fora do ambiente de desenvolvimento.</p></div><div class="modal-buttons"><button id="save-settings-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">Salvar e Recarregar</button><button id="close-settings-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
     
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -203,13 +217,16 @@
             const StateManager = {
                 app: null, db: null, auth: null, userId: null,
                 isMapInitialized: false,
+                projects: [],
+                activeProjectId: null,
                 localCoordinates: [], markers: [], map: null, watchId: null,
                 lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null,
                 isManualCapture: false, manualMarker: null, isCollecting: false,
                 currentLocationMarker: null, accuracyCircle: null,
                 availableColors: ['#0d6efd', '#dc3545', '#198754', '#ffc107', '#6c757d', '#4f5b93'],
                 selectedColor: '#0d6efd',
-                unsubscribe: null,
+                projectsUnsubscribe: null,
+                pointsUnsubscribe: null,
             };
 
             const UIManager = {
@@ -262,6 +279,14 @@
                     firebaseConfigInput: document.getElementById('firebase-config-input'),
                     userInfo: document.getElementById('user-info'),
                     userEmail: document.getElementById('user-email'),
+                    projectBar: document.getElementById('project-bar'),
+                    currentProjectName: document.getElementById('current-project-name'),
+                    manageProjectsButton: document.getElementById('manage-projects-button'),
+                    projectsModal: document.getElementById('projects-modal'),
+                    newProjectInput: document.getElementById('new-project-input'),
+                    createProjectButton: document.getElementById('create-project-button'),
+                    projectsList: document.getElementById('projects-list'),
+                    closeProjectsModalButton: document.getElementById('close-projects-modal-button'),
                 },
 
                 init() {
@@ -425,6 +450,30 @@
                     this.elements.registerForm.classList.toggle('hidden', !showRegister);
                     this.elements.toggleToRegister.classList.toggle('hidden', showRegister);
                     this.elements.toggleToLogin.classList.toggle('hidden', !showRegister);
+                },
+
+                updateCurrentProjectDisplay() {
+                    const activeProject = StateManager.projects.find(p => p.id === StateManager.activeProjectId);
+                    this.elements.currentProjectName.textContent = activeProject ? activeProject.name : 'Nenhum';
+                },
+
+                renderProjectsList() {
+                    this.elements.projectsList.innerHTML = '';
+                    if (StateManager.projects.length === 0) {
+                        this.elements.projectsList.innerHTML = '<p class="p-4 text-center text-gray-500">Nenhum projeto encontrado.</p>';
+                        return;
+                    }
+                    StateManager.projects.forEach(project => {
+                        const item = document.createElement('div');
+                        item.textContent = project.name;
+                        item.dataset.id = project.id;
+                        item.className = 'project-item p-4 hover:bg-gray-100 dark:hover:bg-gray-600';
+                        if (project.id === StateManager.activeProjectId) {
+                            item.classList.add('active');
+                        }
+                        item.addEventListener('click', () => App.handleProjectSelect(project.id));
+                        this.elements.projectsList.appendChild(item);
+                    });
                 }
             };
 
@@ -481,24 +530,46 @@
             };
 
             const DataManager = {
-                getPointsCollectionRef() { if (!StateManager.userId) return null; const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; return collection(StateManager.db, `/artifacts/${appId}/users/${StateManager.userId}/points`); },
+                getProjectsCollectionRef() { if (!StateManager.userId) return null; const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; return collection(StateManager.db, `users/${StateManager.userId}/projects`); },
+                getPointsCollectionRef() { if (!StateManager.activeProjectId) return null; return collection(this.getProjectsCollectionRef(), `${StateManager.activeProjectId}/points`); },
+                
+                listenForProjects(onProjectsLoaded) {
+                    if(StateManager.projectsUnsubscribe) StateManager.projectsUnsubscribe();
+                    const collectionRef = this.getProjectsCollectionRef(); if (!collectionRef) return;
+                    const q = query(collectionRef, orderBy("createdAt", "desc"));
+                    StateManager.projectsUnsubscribe = onSnapshot(q, (snapshot) => { 
+                        StateManager.projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        onProjectsLoaded(snapshot.empty);
+                    }, (error) => { console.error("Firebase Error:", error); UIManager.showMessage("Erro ao carregar projetos.", 'error'); });
+                },
+
                 listenForPoints() {
-                    if(StateManager.unsubscribe) StateManager.unsubscribe();
-                    const collectionRef = this.getPointsCollectionRef(); if (!collectionRef) return;
+                    if(StateManager.pointsUnsubscribe) StateManager.pointsUnsubscribe();
+                    const collectionRef = this.getPointsCollectionRef(); if (!collectionRef) { StateManager.localCoordinates = []; UIManager.updatePreviewTable(); return; }
                     const q = query(collectionRef, orderBy("createdAt", "asc"));
-                    StateManager.unsubscribe = onSnapshot(q, (snapshot) => { 
+                    StateManager.pointsUnsubscribe = onSnapshot(q, (snapshot) => { 
                         StateManager.localCoordinates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
                         UIManager.updatePreviewTable(); 
                         if (!snapshot.metadata.fromCache) {
-                           if (snapshot.empty) {
-                                UIManager.showMessage("Nenhum ponto na nuvem. Comece a coletar!", 'info');
-                           } else {
-                                UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success');
-                           }
+                           if (snapshot.empty) { UIManager.showMessage("Nenhum ponto neste projeto. Comece a coletar!", 'info'); } 
+                           else { UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success'); }
                         }
-                    }, (error) => { console.error("Firebase Error:", error); let userMessage = "Erro ao carregar dados da nuvem."; if (error.code === 'failed-precondition') { userMessage = "Erro: O banco de dados requer um índice. Verifique o console do navegador (F12) para um link de criação."; } UIManager.showMessage(userMessage, 'error'); });
+                    }, (error) => { console.error("Firebase Error:", error); let msg = "Erro ao carregar dados da nuvem."; if (error.code === 'failed-precondition') { msg = "Erro: O banco de dados requer um índice. Verifique o console do navegador (F12) para um link de criação."; } UIManager.showMessage(msg, 'error'); });
                 },
+                
+                async createProject(name) {
+                    if (!name) return;
+                    try {
+                        await addDoc(this.getProjectsCollectionRef(), { name, createdAt: serverTimestamp() });
+                        UIManager.elements.newProjectInput.value = '';
+                    } catch (e) {
+                        console.error("Erro ao criar projeto: ", e);
+                        UIManager.showMessage("Falha ao criar o projeto.", 'error');
+                    }
+                },
+
                 async addPoint() {
+                    if (!StateManager.activeProjectId) { UIManager.showMessage("Nenhum projeto selecionado.", 'error'); return; }
                     if (!StateManager.lastKnownPosition) return; 
                     let addr = StateManager.lastKnownAddress; 
                     if (!StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) { 
@@ -525,16 +596,7 @@
                     try { 
                         await addDoc(this.getPointsCollectionRef(), newPoint); 
                         UIManager.showMessage(`Ponto "${pointName}" salvo na nuvem!`, 'success'); 
-                        
-                        const match = pointName.match(/^(.*\D\s*)(\d+)$/);
-                        if (match) {
-                            const prefix = match[1].trim();
-                            const number = parseInt(match[2]) + 1;
-                            UIManager.elements.pointNameInput.value = `${prefix} ${number}`;
-                        } else {
-                            UIManager.elements.pointNameInput.value = '';
-                        }
-
+                        UIManager.elements.pointNameInput.value = '';
                         Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); 
                         if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); 
                         StateManager.manualMarker = null; 
@@ -624,11 +686,24 @@
                             if (user) { 
                                 StateManager.userId = user.uid;
                                 UIManager.displayUser(user);
+                                DataManager.listenForProjects((isProjectListEmpty) => {
+                                    UIManager.renderProjectsList();
+                                    if (isProjectListEmpty) {
+                                        UIManager.showMessage("Crie seu primeiro projeto para começar", "info");
+                                        UIManager.showModal(UIManager.elements.projectsModal);
+                                    } else {
+                                        if(!StateManager.activeProjectId) {
+                                            StateManager.activeProjectId = StateManager.projects[0].id;
+                                        }
+                                        this.handleProjectSelect(StateManager.activeProjectId);
+                                    }
+                                });
                                 UIManager.showAppScreen();
-                                DataManager.listenForPoints();
                             } else { 
                                 StateManager.userId = null; 
-                                if (StateManager.unsubscribe) StateManager.unsubscribe();
+                                if (StateManager.projectsUnsubscribe) StateManager.projectsUnsubscribe();
+                                if (StateManager.pointsUnsubscribe) StateManager.pointsUnsubscribe();
+                                StateManager.projects = [];
                                 StateManager.localCoordinates = [];
                                 UIManager.updatePreviewTable();
                                 UIManager.showAuthScreen();
@@ -660,6 +735,9 @@
                     el.settingsButton.addEventListener('click', () => UIManager.showModal(el.settingsModal));
                     el.closeSettingsButton.addEventListener('click', () => UIManager.hideModal(el.settingsModal));
                     el.saveSettingsButton.addEventListener('click', () => this.handleSaveSettings());
+                    el.manageProjectsButton.addEventListener('click', () => UIManager.showModal(UIManager.elements.projectsModal));
+                    el.closeProjectsModalButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.projectsModal));
+                    el.createProjectButton.addEventListener('click', () => this.handleCreateProject());
                 },
                 
                 async handleLogin() {
@@ -715,6 +793,19 @@
                     if (!SettingsManager.getApiKey()) return UIManager.showMessage('Configure sua chave de API do Google.', 'error');
                     MapManager.stopCollecting();
                     await MapManager.searchLocation(query);
+                },
+
+                async handleCreateProject() {
+                    const name = UIManager.elements.newProjectInput.value.trim();
+                    await DataManager.createProject(name);
+                },
+
+                handleProjectSelect(projectId) {
+                    StateManager.activeProjectId = projectId;
+                    UIManager.updateCurrentProjectDisplay();
+                    UIManager.renderProjectsList(); // To update the 'active' class
+                    DataManager.listenForPoints();
+                    UIManager.hideModal(UIManager.elements.projectsModal);
                 },
                 
                 handleDeletePoint(id) { DataManager.deletePoint(id); },
