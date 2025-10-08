@@ -256,7 +256,7 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs, writeBatch, query, orderBy, serverTimestamp, where, setDoc, getDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs, writeBatch, query, orderBy, serverTimestamp, where, setDoc, getDoc, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
         document.addEventListener('DOMContentLoaded', () => {
@@ -1229,10 +1229,11 @@
                 
                 async handleRemoveMember(memberId) {
                      const projectRef = doc(DataManager.getProjectsCollectionRef(), StateManager.activeProjectId);
+                     const fieldPath = `memberInfo.${memberId}`;
                      try {
                         await updateDoc(projectRef, {
                             members: arrayRemove(memberId),
-                            [`memberInfo.${memberId}`]: deleteDoc // Firestore way to remove a map field
+                            [fieldPath]: deleteField()
                         });
                         UIManager.showMessage(`Membro removido do projeto.`, 'success');
                         this.handleOpenShareModal(); // Refresh member list
