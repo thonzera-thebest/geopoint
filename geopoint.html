@@ -127,6 +127,7 @@
 
     <div id="main-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center relative transition-colors duration-300 hidden">
         <div class="absolute top-4 right-4 flex gap-2 z-10">
+             <button id="manage-projects-button" title="Gerenciar Projetos" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-black dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg></button>
             <button id="logout-button" title="Sair" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
             <button id="settings-button" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-black dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
             <button id="theme-toggle" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none">
@@ -135,10 +136,9 @@
             </button>
         </div>
         
-        <div class="pt-16 sm:pt-0"> <!-- Container para dar espaço aos botões absolutos -->
-             <div id="project-bar" class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-xl flex justify-between items-center">
+        <div class="pt-16 sm:pt-0">
+            <div id="project-bar" class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-xl flex justify-center items-center">
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 truncate pr-2">Projeto: <span id="current-project-name">Nenhum</span></h2>
-                <button id="manage-projects-button" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-indigo-700 transition-colors flex-shrink-0">Gerenciar</button>
             </div>
         </div>
         
@@ -225,6 +225,7 @@
                 isMapInitialized: false,
                 projects: [],
                 activeProjectId: null,
+                isSwitchingProject: false,
                 localCoordinates: [], markers: [], map: null, watchId: null,
                 lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null,
                 isManualCapture: false, manualMarker: null, isCollecting: false,
@@ -412,7 +413,17 @@
                             this.createTableRow(point, index);
                         });
 
-                        if (StateManager.markers.length > 0) {
+                        if (StateManager.isSwitchingProject && StateManager.localCoordinates.length > 0) {
+                            const lastPoint = StateManager.localCoordinates[StateManager.localCoordinates.length - 1];
+                            const activeProject = StateManager.projects.find(p => p.id === StateManager.activeProjectId);
+                            const projectName = activeProject ? activeProject.name : '';
+                            MapManager.zoomToLastPoint(
+                                [lastPoint.latitude, lastPoint.longitude],
+                                lastPoint.name,
+                                projectName
+                            );
+                            StateManager.isSwitchingProject = false;
+                        } else if (StateManager.markers.length > 0) {
                             StateManager.map.fitBounds(new L.featureGroup(StateManager.markers).getBounds(), { padding: [50, 50] });
                         }
                     }
@@ -556,6 +567,20 @@
                 async updateMapForManualPoint(lat, lon, address = null) {
                     StateManager.isManualCapture = true; StateManager.lastKnownPosition = { latitude: lat, longitude: lon }; StateManager.lastKnownAccuracy = 0; StateManager.lastKnownAddress = address || await this.reverseGeocode(lat, lon); StateManager.map.setView([lat, lon], 16);
                     if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); const icon = this.createColoredIcon(StateManager.selectedColor); StateManager.manualMarker = L.marker([lat, lon], { icon }).addTo(StateManager.map).bindPopup(`<b>${StateManager.lastKnownAddress}</b>`).openPopup(); UIManager.updateCoordinatesDisplay(lat, lon, 0); UIManager.setUIState(true);
+                },
+                zoomToLastPoint(latLng, pointName, projectName) {
+                    StateManager.map.setView(latLng, 18);
+                    const tooltipContent = `<b>${pointName}</b><br><span class="text-xs">Último ponto em '${projectName}'</span>`;
+                    const tooltip = L.tooltip({ permanent: true, direction: 'top', offset: L.point(0, -32) })
+                        .setLatLng(latLng)
+                        .setContent(tooltipContent)
+                        .addTo(StateManager.map);
+
+                    setTimeout(() => {
+                        if (StateManager.map && tooltip) {
+                            StateManager.map.closeTooltip(tooltip);
+                        }
+                    }, 4000);
                 },
             };
 
@@ -735,6 +760,7 @@
                             if (user) { 
                                 StateManager.userId = user.uid;
                                 UIManager.displayUser(user);
+                                UIManager.showAppScreen();
                                 DataManager.listenForProjects((isProjectListEmpty) => {
                                     UIManager.renderProjectsList();
                                     if (isProjectListEmpty) {
@@ -744,10 +770,9 @@
                                         if(!StateManager.activeProjectId || !StateManager.projects.find(p => p.id === StateManager.activeProjectId)) {
                                             StateManager.activeProjectId = StateManager.projects[0].id;
                                         }
-                                        this.handleProjectSelect(StateManager.activeProjectId, true); // Don't show success message on initial load
+                                        this.handleProjectSelect(StateManager.activeProjectId, true);
                                     }
                                 });
-                                UIManager.showAppScreen();
                             } else { 
                                 StateManager.userId = null; 
                                 if (StateManager.projectsUnsubscribe) StateManager.projectsUnsubscribe();
@@ -851,6 +876,7 @@
 
                 handleProjectSelect(projectId, isInitialLoad = false) {
                     StateManager.activeProjectId = projectId;
+                    StateManager.isSwitchingProject = !isInitialLoad;
                     const project = StateManager.projects.find(p => p.id === projectId);
                     if (project && !isInitialLoad) {
                         UIManager.showMessage(`Projeto '${project.name}' carregado.`, 'success');
