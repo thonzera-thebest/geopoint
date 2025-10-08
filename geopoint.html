@@ -81,8 +81,38 @@
 </head>
 <body class="flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
 
-    <div id="main-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center relative transition-colors duration-300">
+    <div id="auth-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center transition-colors duration-300 hidden">
+        <h1 class="text-3xl font-bold mb-6 text-black dark:text-white flex items-center justify-center"><span>ToTheP</span><svg class="h-8 w-8 text-blue-600 mx-[-4px]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg><span>int</span></h1>
+        
+        <form id="login-form">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Entrar</h2>
+            <div class="space-y-4">
+                <input type="email" id="login-email" placeholder="E-mail" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="password" id="login-password" placeholder="Senha" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <button type="submit" id="login-button" class="mt-6 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition-colors duration-200">Entrar</button>
+        </form>
+
+        <form id="register-form" class="hidden">
+             <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Criar Conta</h2>
+            <div class="space-y-4">
+                <input type="email" id="register-email" placeholder="E-mail" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="password" id="register-password" placeholder="Senha (mínimo 6 caracteres)" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <button type="submit" id="register-button" class="mt-6 w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition-colors duration-200">Registrar</button>
+        </form>
+
+        <p id="auth-error" class="text-red-500 text-sm mt-4 h-4"></p>
+
+        <p class="mt-6 text-sm">
+            <a href="#" id="toggle-to-register" class="font-medium text-blue-600 hover:text-blue-500">Ainda não tem uma conta? Registre-se</a>
+            <a href="#" id="toggle-to-login" class="font-medium text-blue-600 hover:text-blue-500 hidden">Já tem uma conta? Entre</a>
+        </p>
+    </div>
+
+    <div id="main-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center relative transition-colors duration-300 hidden">
         <div class="absolute top-4 right-4 flex gap-2">
+            <button id="logout-button" title="Sair" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
             <button id="settings-button" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-black dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
             <button id="theme-toggle" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none">
                 <svg id="sun-icon" class="h-6 w-6 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 4 L12 2 M12 20 L12 22 M4 12 L2 12 M20 12 L22 12 M6.34 6.34 L4.93 4.93 M17.66 6.34 L19.07 4.93 M6.34 17.66 L4.93 19.07 M17.66 17.66 L19.07 19.07" /></svg>
@@ -153,7 +183,7 @@
         </div>
 
         <div id="user-info" class="text-xs text-gray-500 dark:text-gray-400 mt-4 hidden">
-            ID de Usuário: <span id="user-id" class="font-mono"></span>
+            Usuário: <span id="user-email" class="font-mono"></span>
         </div>
     </div>
 
@@ -167,7 +197,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs, writeBatch, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
         document.addEventListener('DOMContentLoaded', () => {
             const StateManager = {
@@ -178,10 +208,23 @@
                 currentLocationMarker: null, accuracyCircle: null,
                 availableColors: ['#0d6efd', '#dc3545', '#198754', '#ffc107', '#6c757d', '#4f5b93'],
                 selectedColor: '#0d6efd',
+                unsubscribe: null, // To stop listening to Firestore changes on logout
             };
 
             const UIManager = {
                 elements: {
+                    mainContainer: document.getElementById('main-container'),
+                    authContainer: document.getElementById('auth-container'),
+                    loginForm: document.getElementById('login-form'),
+                    registerForm: document.getElementById('register-form'),
+                    loginEmail: document.getElementById('login-email'),
+                    loginPassword: document.getElementById('login-password'),
+                    registerEmail: document.getElementById('register-email'),
+                    registerPassword: document.getElementById('register-password'),
+                    authError: document.getElementById('auth-error'),
+                    toggleToRegister: document.getElementById('toggle-to-register'),
+                    toggleToLogin: document.getElementById('toggle-to-login'),
+                    logoutButton: document.getElementById('logout-button'),
                     statusMessage: document.getElementById('status-message'),
                     coordinatesDisplay: document.getElementById('coordinates-display'),
                     latitudeText: document.getElementById('latitude-text'),
@@ -217,7 +260,7 @@
                     apiKeyInput: document.getElementById('api-key-input'),
                     firebaseConfigInput: document.getElementById('firebase-config-input'),
                     userInfo: document.getElementById('user-info'),
-                    userId: document.getElementById('user-id'),
+                    userEmail: document.getElementById('user-email'),
                 },
 
                 init() {
@@ -261,20 +304,23 @@
                     this.elements.stopButton.classList.toggle('hidden', !inCollectionMode);
                 },
 
-                showMessage(message, type = 'info') {
-                    const el = this.elements.statusMessage;
+                showMessage(message, type = 'info', isAuthError = false) {
+                    const el = isAuthError ? this.elements.authError : this.elements.statusMessage;
                     el.textContent = message;
-                    el.className = 'p-3 rounded-xl mb-4 text-sm font-medium';
-                    const typeClasses = {
-                        error: ['bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-300'],
-                        success: ['bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-300'],
-                        info: ['bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:text-yellow-300']
-                    };
-                    el.classList.add(...(typeClasses[type] || typeClasses.info));
+                    el.className = isAuthError ? 'text-red-500 text-sm mt-4 h-4' : 'p-3 rounded-xl mb-4 text-sm font-medium';
+                    if(!isAuthError) {
+                        const typeClasses = {
+                            error: ['bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-300'],
+                            success: ['bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-300'],
+                            info: ['bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:text-yellow-300']
+                        };
+                        el.classList.add(...(typeClasses[type] || typeClasses.info));
+                    }
                 },
-
+                
                 showModal(modal) { modal.style.display = 'block'; },
                 hideModal(modal) { modal.style.display = 'none'; },
+                
                 showConfirmation(question) {
                     return new Promise(resolve => {
                         const modal = this.elements.confirmationModal;
@@ -284,6 +330,7 @@
                         this.elements.confirmNoButton.onclick = () => { this.hideModal(modal); resolve(false); };
                     });
                 },
+                
                 showClearDataConfirmation() {
                      return new Promise(resolve => {
                         const modal = this.elements.clearDataModal;
@@ -292,18 +339,21 @@
                         this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
                     });
                 },
+                
                 updateCoordinatesDisplay(lat, lon, acc) {
                     this.elements.latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
                     this.elements.longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
                     this.elements.accuracyText.className = `text-sm font-medium ${this.getAccuracyColor(acc)}`;
                     this.elements.accuracyText.textContent = `Precisão: \u00B1 ${acc.toFixed(1)}m`;
                 },
+                
                 getAccuracyColor(accuracy) {
                     if (accuracy === 0) return 'text-blue-500 dark:text-blue-400';
                     if (accuracy <= 5) return 'text-green-500 dark:text-green-400';
                     if (accuracy <= 15) return 'text-yellow-500 dark:text-yellow-400';
                     return 'text-red-500 dark:text-red-400';
                 },
+                
                 updatePreviewTable() {
                     this.elements.pointsTableBody.innerHTML = '';
                     this.elements.pointsCount.textContent = StateManager.localCoordinates.length;
@@ -326,6 +376,7 @@
                     this.elements.clearLocalDataButton.disabled = !hasData;
                     this.elements.pointsPreview.classList.toggle('hidden', !hasData);
                 },
+                
                 createTableRow(point, index) {
                     const row = document.createElement('tr');
                     let rowClass = 'hover:bg-gray-50 dark:hover:bg-gray-600';
@@ -334,20 +385,40 @@
                     row.innerHTML = `<td data-label="#" class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td><td data-label="Cor" class="py-2 px-4 whitespace-nowrap text-sm"><div class="h-4 w-4 rounded-full mx-auto" style="background-color: ${point.color || '#3b82f6'};"></div></td><td data-label="Nome" class="py-2 px-4 whitespace-nowrap text-sm font-medium cursor-text" contenteditable="true" data-id="${point.id}" onblur="App.handleEditPointName(this, '${point.id}')">${point.name}</td><td data-label="Latitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td><td data-label="Longitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td><td data-label="Status" class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${DataManager.getPointStatus(point)}</td><td data-label="Precisão Orig." class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td><td data-label="Ação" class="py-2 px-4 whitespace-nowrap text-sm text-center"><button onclick="App.handleDeletePoint('${point.id}')" class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg></button></td>`;
                     this.elements.pointsTableBody.appendChild(row);
                 },
+                
                 applyTheme(theme) {
                     const isDark = theme === 'dark';
                     document.body.classList.toggle('dark', isDark);
                     this.elements.sunIcon.style.display = isDark ? 'none' : 'block';
                     this.elements.moonIcon.style.display = isDark ? 'block' : 'none';
                 },
+                
                 toggleDarkMode() {
                     const newTheme = document.body.classList.contains('dark') ? 'light' : 'dark';
                     this.applyTheme(newTheme);
                     SettingsManager.saveTheme(newTheme);
                 },
-                displayUserId(userId) {
-                    this.elements.userId.textContent = userId;
+                
+                displayUser(user) {
+                    this.elements.userEmail.textContent = user.email;
                     this.elements.userInfo.classList.remove('hidden');
+                },
+
+                showAuthScreen() {
+                    this.elements.mainContainer.classList.add('hidden');
+                    this.elements.authContainer.classList.remove('hidden');
+                },
+                
+                showAppScreen() {
+                    this.elements.authContainer.classList.add('hidden');
+                    this.elements.mainContainer.classList.remove('hidden');
+                },
+
+                toggleAuthForms(showRegister = false) {
+                    this.elements.loginForm.classList.toggle('hidden', showRegister);
+                    this.elements.registerForm.classList.toggle('hidden', !showRegister);
+                    this.elements.toggleToRegister.classList.toggle('hidden', showRegister);
+                    this.elements.toggleToLogin.classList.toggle('hidden', !showRegister);
                 }
             };
 
@@ -404,24 +475,20 @@
             const DataManager = {
                 getPointsCollectionRef() { if (!StateManager.userId) return null; const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; return collection(StateManager.db, `/artifacts/${appId}/users/${StateManager.userId}/points`); },
                 listenForPoints() {
+                    if(StateManager.unsubscribe) StateManager.unsubscribe(); // Stop previous listener
                     const collectionRef = this.getPointsCollectionRef(); if (!collectionRef) return;
                     const q = query(collectionRef, orderBy("createdAt", "asc"));
-                    onSnapshot(q, (snapshot) => { 
+                    StateManager.unsubscribe = onSnapshot(q, (snapshot) => { 
                         StateManager.localCoordinates = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
                         UIManager.updatePreviewTable(); 
-                        if (snapshot.empty) {
-                            UIManager.showMessage("Nenhum ponto na nuvem. Comece a coletar!", 'info');
-                        } else {
-                            UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success');
+                        if (!snapshot.metadata.fromCache) {
+                           if (snapshot.empty) {
+                                UIManager.showMessage("Nenhum ponto na nuvem. Comece a coletar!", 'info');
+                           } else {
+                                UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success');
+                           }
                         }
-                    }, (error) => { 
-                        console.error("Firebase Error:", error); 
-                        let userMessage = "Erro ao carregar dados da nuvem.";
-                        if (error.code === 'failed-precondition') {
-                            userMessage = "Erro: O banco de dados requer um índice. Por favor, verifique o console de desenvolvedor do seu navegador (F12) para encontrar um link para criá-lo.";
-                        }
-                        UIManager.showMessage(userMessage, 'error'); 
-                    });
+                    }, (error) => { console.error("Firebase Error:", error); let userMessage = "Erro ao carregar dados da nuvem."; if (error.code === 'failed-precondition') { userMessage = "Erro: O banco de dados requer um índice. Verifique o console do navegador (F12) para um link de criação."; } UIManager.showMessage(userMessage, 'error'); });
                 },
                 async addPoint() {
                     if (!StateManager.lastKnownPosition) return; 
@@ -444,33 +511,13 @@
                     }
 
                     const newPoint = { 
-                        name: pointName, 
-                        latitude: StateManager.lastKnownPosition.latitude, 
-                        longitude: StateManager.lastKnownPosition.longitude, 
-                        accuracy: StateManager.lastKnownAccuracy, 
-                        address: addr || 'Endereço não incluído', 
-                        createdAt: serverTimestamp(),
-                        captureTime: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
-                        originalAccuracy: StateManager.isManualCapture ? 0 : StateManager.lastKnownAccuracy, 
-                        originalLat: StateManager.lastKnownPosition.latitude, 
-                        originalLon: StateManager.lastKnownPosition.longitude, 
-                        color: StateManager.selectedColor, 
+                        name: pointName, latitude: StateManager.lastKnownPosition.latitude, longitude: StateManager.lastKnownPosition.longitude, accuracy: StateManager.lastKnownAccuracy, address: addr || 'Endereço não incluído', createdAt: serverTimestamp(), captureTime: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                        originalAccuracy: StateManager.isManualCapture ? 0 : StateManager.lastKnownAccuracy, originalLat: StateManager.lastKnownPosition.latitude, originalLon: StateManager.lastKnownPosition.longitude, color: StateManager.selectedColor, 
                     };
                     try { 
                         await addDoc(this.getPointsCollectionRef(), newPoint); 
                         UIManager.showMessage(`Ponto "${pointName}" salvo na nuvem!`, 'success'); 
-                        
-                        // Lógica de sugestão para o próximo ponto (RESTAURADA)
-                        const lastPointName = newPoint.name;
-                        const match = lastPointName.match(/^(.*\D\s*)(\d+)$/);
-                        if (match) {
-                            const prefix = match[1].trim();
-                            const number = parseInt(match[2]) + 1;
-                            UIManager.elements.pointNameInput.value = `${prefix} ${number}`;
-                        } else {
-                            UIManager.elements.pointNameInput.value = '';
-                        }
-
+                        UIManager.elements.pointNameInput.value = '';
                         Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); 
                         if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); 
                         StateManager.manualMarker = null; 
@@ -529,7 +576,8 @@
                     if (configString) {
                         this.initializeFirebase(configString);
                     } else {
-                        UIManager.showMessage("Bem-vindo! Por favor, insira sua configuração do Firebase para começar.", "info");
+                        UIManager.showAuthScreen();
+                        UIManager.showMessage("Bem-vindo! Insira sua configuração do Firebase para começar.", "info");
                         UIManager.showModal(UIManager.elements.settingsModal);
                     }
                 },
@@ -548,40 +596,42 @@
                 async initializeFirebase(configString) {
                     try {
                         const firebaseConfig = this.parseFirebaseConfig(configString);
-                        
                         if (!firebaseConfig || !firebaseConfig.apiKey) {
                              throw new Error("A configuração analisada não parece ser um objeto Firebase válido.");
                         }
 
-                        UIManager.showMessage("Conectando à nuvem...", "info");
                         StateManager.app = initializeApp(firebaseConfig);
                         StateManager.db = getFirestore(StateManager.app);
                         StateManager.auth = getAuth(StateManager.app);
                         
                         onAuthStateChanged(StateManager.auth, user => {
                             if (user) { 
-                                StateManager.userId = user.uid; 
-                                UIManager.displayUserId(user.uid); 
-                                DataManager.listenForPoints(); 
+                                StateManager.userId = user.uid;
+                                UIManager.displayUser(user);
+                                DataManager.listenForPoints();
+                                UIManager.showAppScreen();
                             } else { 
                                 StateManager.userId = null; 
-                                UIManager.showMessage("Autenticação necessária.", "error"); 
+                                if (StateManager.unsubscribe) StateManager.unsubscribe();
+                                StateManager.localCoordinates = [];
+                                UIManager.updatePreviewTable();
+                                UIManager.showAuthScreen();
                             }
                         });
-
-                        if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(StateManager.auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(StateManager.auth);
-                        }
                     } catch (e) {
                         console.error("Erro na inicialização do Firebase:", e);
                         UIManager.showMessage("Configuração do Firebase inválida. Verifique os dados e tente novamente.", "error");
+                        UIManager.showAuthScreen();
                     }
                 },
 
                 addEventListeners() {
                     const el = UIManager.elements;
+                    el.loginForm.addEventListener('submit', (e) => { e.preventDefault(); this.handleLogin(); });
+                    el.registerForm.addEventListener('submit', (e) => { e.preventDefault(); this.handleRegister(); });
+                    el.logoutButton.addEventListener('click', () => this.handleLogout());
+                    el.toggleToRegister.addEventListener('click', (e) => { e.preventDefault(); UIManager.toggleAuthForms(true); });
+                    el.toggleToLogin.addEventListener('click', (e) => { e.preventDefault(); UIManager.toggleAuthForms(false); });
                     el.startButton.addEventListener('click', () => MapManager.startCollecting());
                     el.stopButton.addEventListener('click', () => MapManager.stopCollecting());
                     el.captureButton.addEventListener('click', () => DataManager.addPoint());
@@ -594,6 +644,34 @@
                     el.settingsButton.addEventListener('click', () => UIManager.showModal(el.settingsModal));
                     el.closeSettingsButton.addEventListener('click', () => UIManager.hideModal(el.settingsModal));
                     el.saveSettingsButton.addEventListener('click', () => this.handleSaveSettings());
+                },
+                
+                async handleLogin() {
+                    const email = UIManager.elements.loginEmail.value;
+                    const password = UIManager.elements.loginPassword.value;
+                    try {
+                        await signInWithEmailAndPassword(StateManager.auth, email, password);
+                    } catch (error) {
+                        UIManager.showMessage(error.message, 'error', true);
+                    }
+                },
+                
+                async handleRegister() {
+                    const email = UIManager.elements.registerEmail.value;
+                    const password = UIManager.elements.registerPassword.value;
+                    try {
+                        await createUserWithEmailAndPassword(StateManager.auth, email, password);
+                    } catch (error) {
+                        UIManager.showMessage(error.message, 'error', true);
+                    }
+                },
+                
+                async handleLogout() {
+                    try {
+                        await signOut(StateManager.auth);
+                    } catch(error) {
+                        console.error("Logout error", error);
+                    }
                 },
 
                 handleSaveSettings() {
@@ -637,7 +715,3 @@
     </script>
 </body>
 </html>
-
-
-
-
