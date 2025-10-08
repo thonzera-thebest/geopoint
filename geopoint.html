@@ -233,7 +233,8 @@
     </div>
 
     <!-- Modais -->
-    <div id="projects-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Meus Projetos</h3><div class="mb-6"><h4 class="font-semibold mb-2">Criar Novo Projeto</h4><div class="flex gap-2"><input type="text" id="new-project-input" class="flex-1 p-2 rounded-lg border border-gray-300" placeholder="Nome do novo projeto"><button id="create-project-button" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Criar</button></div></div><div><h4 class="font-semibold mb-2">Selecionar Projeto</h4><div id="projects-list" class="max-h-60 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div></div><div class="modal-buttons"><button id="close-projects-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
+    <div id="projects-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Gerenciar Projetos</h3><div><h4 class="font-semibold mb-2">Selecionar ou Excluir um Projeto</h4><div id="projects-list" class="max-h-60 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div></div><div class="modal-buttons"><button id="close-projects-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
+    <div id="create-project-modal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-4">Criar Novo Projeto</h3><p class="text-gray-600 dark:text-gray-400 mb-4">Digite o nome para o seu novo projeto.</p><input type="text" id="new-project-name-input" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome do Projeto"><div class="modal-buttons"><button id="confirm-create-project-button" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Criar Projeto</button><button id="cancel-create-project-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
     <div id="delete-project-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Excluir Projeto?</p><p id="delete-project-confirm-text"></p><div class="modal-buttons"><button id="delete-project-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, excluir</button><button id="delete-project-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
     <div id="confirmation-modal" class="modal"><div class="modal-content"><p>Gostaria de incluir a localização aproximada desse ponto?</p><div class="modal-buttons"><button id="confirm-yes" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Sim</button><button id="confirm-no" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-600">Não</button></div></div></div>
     <div id="clear-data-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Atenção!</p><p>Tem certeza que deseja apagar TODOS os pontos deste projeto? Esta ação é irreversível.</p><div class="modal-buttons"><button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, apagar pontos</button><button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
@@ -325,6 +326,10 @@
                     createProjectButton: document.getElementById('create-project-button'),
                     projectsList: document.getElementById('projects-list'),
                     closeProjectsModalButton: document.getElementById('close-projects-modal-button'),
+                    createProjectModal: document.getElementById('create-project-modal'),
+                    newProjectNameInput: document.getElementById('new-project-name-input'),
+                    confirmCreateProjectButton: document.getElementById('confirm-create-project-button'),
+                    cancelCreateProjectButton: document.getElementById('cancel-create-project-button'),
                     deleteProjectModal: document.getElementById('delete-project-modal'),
                     deleteProjectConfirmText: document.getElementById('delete-project-confirm-text'),
                     deleteProjectConfirm: document.getElementById('delete-project-confirm'),
@@ -401,20 +406,20 @@
 
                 showDeleteConfirmation(modal, textElement, confirmText) {
                      return new Promise(resolve => {
-                        textElement.textContent = confirmText;
-                        this.showModal(modal);
-                        this.elements.deleteProjectConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
-                        this.elements.deleteProjectCancel.onclick = () => { this.hideModal(modal); resolve(false); };
-                    });
+                         textElement.textContent = confirmText;
+                         this.showModal(modal);
+                         this.elements.deleteProjectConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
+                         this.elements.deleteProjectCancel.onclick = () => { this.hideModal(modal); resolve(false); };
+                     });
                 },
                 
                 showClearDataConfirmation() {
                      return new Promise(resolve => {
-                        const modal = this.elements.clearDataModal;
-                        this.showModal(modal);
-                        this.elements.clearDataConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
-                        this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
-                    });
+                         const modal = this.elements.clearDataModal;
+                         this.showModal(modal);
+                         this.elements.clearDataConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
+                         this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
+                     });
                 },
                 
                 updateCoordinatesDisplay(lat, lon, acc) {
@@ -576,7 +581,8 @@
                     grid.innerHTML += manageCard;
 
                     document.getElementById('create-new-project-card').addEventListener('click', () => {
-                        UIManager.showModal(UIManager.elements.projectsModal);
+                        UIManager.elements.newProjectNameInput.value = ''; // Clear input field
+                        UIManager.showModal(UIManager.elements.createProjectModal);
                     });
                     document.getElementById('manage-all-projects-card').addEventListener('click', () => {
                         UIManager.showModal(UIManager.elements.projectsModal);
@@ -686,7 +692,7 @@
                     try {
                         const newProjectRef = await addDoc(this.getProjectsCollectionRef(), { name, createdAt: serverTimestamp() });
                         App.handleProjectSelect(newProjectRef.id);
-                        UIManager.elements.newProjectInput.value = '';
+                        UIManager.elements.newProjectNameInput.value = '';
                     } catch (e) {
                         console.error("Erro ao criar projeto: ", e);
                         UIManager.showMessage("Falha ao criar o projeto.", 'error');
@@ -876,7 +882,8 @@
                     el.saveSettingsButton.addEventListener('click', () => this.handleSaveSettings());
                     el.manageProjectsButton.addEventListener('click', () => UIManager.showModal(UIManager.elements.projectsModal));
                     el.closeProjectsModalButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.projectsModal));
-                    el.createProjectButton.addEventListener('click', () => this.handleCreateProject());
+                    el.confirmCreateProjectButton.addEventListener('click', () => this.handleCreateProject());
+                    el.cancelCreateProjectButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.createProjectModal));
                     el.backToDashboardButton.addEventListener('click', () => UIManager.showDashboardScreen());
                 },
                 
@@ -936,8 +943,13 @@
                 },
 
                 async handleCreateProject() {
-                    const name = UIManager.elements.newProjectInput.value.trim();
-                    await DataManager.createProject(name);
+                    const name = UIManager.elements.newProjectNameInput.value.trim();
+                    if (name) {
+                        await DataManager.createProject(name);
+                        UIManager.hideModal(UIManager.elements.createProjectModal); // Hide modal on success
+                    } else {
+                        UIManager.showMessage("O nome do projeto não pode ser vazio.", "error"); 
+                    }
                 },
 
                 handleProjectSelect(projectId, isInitialLoad = false) {
@@ -981,3 +993,4 @@
     </script>
 </body>
 </html>
+
