@@ -151,8 +151,15 @@
                  <button id="dashboard-logout-button" title="Sair" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
             </div>
         </div>
-        <div id="recent-projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Cards de projeto serão inseridos aqui -->
+        <div id="owned-projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Cards de projetos do usuário serão inseridos aqui -->
+        </div>
+
+        <div id="shared-projects-section" class="mt-12 hidden">
+            <h2 class="text-3xl font-bold text-black dark:text-white mb-6">Projetos Compartilhados Comigo</h2>
+            <div id="shared-projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards de projetos compartilhados serão inseridos aqui -->
+            </div>
         </div>
     </div>
 
@@ -282,7 +289,9 @@
                     mainContainer: document.getElementById('main-container'),
                     offlineIndicator: document.getElementById('offline-indicator'),
                     dashboardContainer: document.getElementById('dashboard-container'),
-                    recentProjectsGrid: document.getElementById('recent-projects-grid'),
+                    ownedProjectsGrid: document.getElementById('owned-projects-grid'),
+                    sharedProjectsSection: document.getElementById('shared-projects-section'),
+                    sharedProjectsGrid: document.getElementById('shared-projects-grid'),
                     dashboardLogoutButton: document.getElementById('dashboard-logout-button'),
                     authContainer: document.getElementById('auth-container'),
                     loginForm: document.getElementById('login-form'),
@@ -597,28 +606,41 @@
                 },
 
                 renderDashboard() {
-                    const grid = this.elements.recentProjectsGrid;
-                    grid.innerHTML = '';
+                    const ownedGrid = this.elements.ownedProjectsGrid;
+                    const sharedGrid = this.elements.sharedProjectsGrid;
+                    const sharedSection = this.elements.sharedProjectsSection;
 
-                    const createCard = `<div id="create-new-project-card" class="project-card bg-green-500 text-white flex flex-col items-center justify-center"><svg class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg><h3 class="font-bold text-lg">Criar Novo Projeto</h3></div>`;
-                    grid.innerHTML += createCard;
+                    ownedGrid.innerHTML = '';
+                    sharedGrid.innerHTML = '';
+                    sharedSection.classList.add('hidden');
 
-                    const recentProjects = StateManager.projects.slice(0, 4);
-                    recentProjects.forEach(p => {
-                        const isShared = p.ownerId !== StateManager.userId;
-                        const projectCard = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m-6-2l6 3m0 0l6-3m-6 3v10" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${isShared ? '<svg class="w-5 h-5 inline-block text-blue-500 ml-2 flex-shrink-0" title="Compartilhado com você" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>' : ''}</h3></div>`;
-                        grid.innerHTML += projectCard;
+                    const ownedProjects = StateManager.projects.filter(p => p.ownerId === StateManager.userId);
+                    const sharedProjects = StateManager.projects.filter(p => p.ownerId !== StateManager.userId);
+
+                    const createCardHTML = `<div id="create-new-project-card" class="project-card bg-green-500 text-white flex flex-col items-center justify-center"><svg class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg><h3 class="font-bold text-lg">Criar Novo Projeto</h3></div>`;
+                    ownedGrid.insertAdjacentHTML('beforeend', createCardHTML);
+
+                    ownedProjects.forEach(p => {
+                        const isSharedByMe = p.members && p.members.length > 1;
+                        const sharedIcon = isSharedByMe ? `<svg class="w-5 h-5 inline-block text-purple-500 ml-2 flex-shrink-0" title="Compartilhado por você" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>` : '';
+                        const projectCardHTML = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503-6.734l-3 1.875a.75.75 0 01-1.006 0l-3-1.875m10.5 0a48.498 48.498 0 01-10.5 0" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${sharedIcon}</h3></div>`;
+                        ownedGrid.insertAdjacentHTML('beforeend', projectCardHTML);
                     });
                     
-                    const manageCard = `<div id="manage-all-projects-card" class="project-card bg-indigo-500 text-white flex flex-col items-center justify-center"><svg class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><h3 class="font-bold text-lg">Gerenciar Projetos</h3></div>`;
-                    grid.innerHTML += manageCard;
+                    const manageCardHTML = `<div id="manage-all-projects-card" class="project-card bg-indigo-500 text-white flex flex-col items-center justify-center"><svg class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><h3 class="font-bold text-lg">Gerenciar Projetos</h3></div>`;
+                    ownedGrid.insertAdjacentHTML('beforeend', manageCardHTML);
 
-                    document.getElementById('create-new-project-card').addEventListener('click', () => {
-                        UIManager.showModal(UIManager.elements.createProjectModal);
-                    });
-                    document.getElementById('manage-all-projects-card').addEventListener('click', () => {
-                        UIManager.showModal(UIManager.elements.projectsModal);
-                    });
+                    if (sharedProjects.length > 0) {
+                        sharedSection.classList.remove('hidden');
+                        sharedProjects.forEach(p => {
+                            const sharedIcon = `<svg class="w-5 h-5 inline-block text-blue-500 ml-2 flex-shrink-0" title="Compartilhado com você" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>`;
+                            const projectCardHTML = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503-6.734l-3 1.875a.75.75 0 01-1.006 0l-3-1.875m10.5 0a48.498 48.498 0 01-10.5 0" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${sharedIcon}</h3></div>`;
+                            sharedGrid.insertAdjacentHTML('beforeend', projectCardHTML);
+                        });
+                    }
+
+                    document.getElementById('create-new-project-card').addEventListener('click', () => UIManager.showModal(UIManager.elements.createProjectModal));
+                    document.getElementById('manage-all-projects-card').addEventListener('click', () => UIManager.showModal(UIManager.elements.projectsModal));
                     document.querySelectorAll('.project-card-item').forEach(card => {
                         card.addEventListener('click', () => App.handleProjectSelect(card.dataset.id));
                     });
@@ -1004,7 +1026,7 @@
                                     try {
                                         await setDoc(userRef, { email: user.email });
                                     } catch (e) {
-                                        console.error("Error creating user document:", e);
+                                        console.error("Error creating user document on login:", e);
                                     }
                                 }
 
@@ -1280,3 +1302,4 @@
     </script>
 </body>
 </html>
+
