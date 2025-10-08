@@ -130,7 +130,7 @@
         </form>
 
         <p id="auth-error" class="text-red-500 text-sm mt-4 h-4"></p>
-
+        
         <p class="mt-6 text-sm">
             <a href="#" id="toggle-to-register" class="font-medium text-blue-600 hover:text-blue-500">Ainda não tem uma conta? Registre-se</a>
             <a href="#" id="toggle-to-login" class="font-medium text-blue-600 hover:text-blue-500 hidden">Já tem uma conta? Entre</a>
@@ -138,8 +138,12 @@
     </div>
     
     <div id="dashboard-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-4xl transition-colors duration-300 hidden">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-4 text-black dark:text-white flex items-center justify-center"><span>ToTheP</span><svg class="h-10 w-10 text-blue-600 mx-[-6px]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg><span>int</span></h1>
+            <p class="text-gray-900 dark:text-gray-400 text-sm max-w-xl mx-auto">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
+        </div>
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-black dark:text-white">Meus Projetos</h1>
+            <h2 class="text-3xl font-bold text-black dark:text-white">Meus Projetos</h2>
             <div class="flex gap-2">
                  <button id="dashboard-logout-button" title="Sair" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
             </div>
@@ -233,8 +237,8 @@
     </div>
 
     <!-- Modais -->
-    <div id="projects-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Gerenciar Projetos</h3><div><h4 class="font-semibold mb-2">Selecionar ou Excluir um Projeto</h4><div id="projects-list" class="max-h-60 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div></div><div class="modal-buttons"><button id="close-projects-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
-    <div id="create-project-modal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-4">Criar Novo Projeto</h3><p class="text-gray-600 dark:text-gray-400 mb-4">Digite o nome para o seu novo projeto.</p><input type="text" id="new-project-name-input" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome do Projeto"><div class="modal-buttons"><button id="confirm-create-project-button" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Criar Projeto</button><button id="cancel-create-project-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
+    <div id="projects-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Gerenciar Projetos</h3><div><h4 class="font-semibold mb-2">Meus Projetos</h4><div id="projects-list" class="max-h-60 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div></div><div class="modal-buttons"><button id="close-projects-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
+    <div id="create-project-modal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-4 text-center">Criar Novo Projeto</h3><div class="mb-4"><label for="new-project-name-input" class="block text-sm font-medium text-gray-700 mb-1">Nome do Projeto</label><input type="text" id="new-project-name-input" class="w-full p-2 rounded-lg border border-gray-300" placeholder="Ex: Levantamento Rua Principal"></div><div class="modal-buttons"><button id="confirm-create-project-button" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Criar e Abrir</button><button id="cancel-create-project-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
     <div id="delete-project-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Excluir Projeto?</p><p id="delete-project-confirm-text"></p><div class="modal-buttons"><button id="delete-project-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, excluir</button><button id="delete-project-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
     <div id="confirmation-modal" class="modal"><div class="modal-content"><p>Gostaria de incluir a localização aproximada desse ponto?</p><div class="modal-buttons"><button id="confirm-yes" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Sim</button><button id="confirm-no" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-600">Não</button></div></div></div>
     <div id="clear-data-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Atenção!</p><p>Tem certeza que deseja apagar TODOS os pontos deste projeto? Esta ação é irreversível.</p><div class="modal-buttons"><button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, apagar pontos</button><button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
@@ -245,7 +249,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs, writeBatch, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
         document.addEventListener('DOMContentLoaded', () => {
             const StateManager = {
@@ -322,8 +326,6 @@
                     currentProjectName: document.getElementById('current-project-name'),
                     manageProjectsButton: document.getElementById('manage-projects-button'),
                     projectsModal: document.getElementById('projects-modal'),
-                    newProjectInput: document.getElementById('new-project-input'),
-                    createProjectButton: document.getElementById('create-project-button'),
                     projectsList: document.getElementById('projects-list'),
                     closeProjectsModalButton: document.getElementById('close-projects-modal-button'),
                     createProjectModal: document.getElementById('create-project-modal'),
@@ -406,20 +408,20 @@
 
                 showDeleteConfirmation(modal, textElement, confirmText) {
                      return new Promise(resolve => {
-                         textElement.textContent = confirmText;
-                         this.showModal(modal);
-                         this.elements.deleteProjectConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
-                         this.elements.deleteProjectCancel.onclick = () => { this.hideModal(modal); resolve(false); };
-                     });
+                        textElement.textContent = confirmText;
+                        this.showModal(modal);
+                        this.elements.deleteProjectConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
+                        this.elements.deleteProjectCancel.onclick = () => { this.hideModal(modal); resolve(false); };
+                    });
                 },
                 
                 showClearDataConfirmation() {
                      return new Promise(resolve => {
-                         const modal = this.elements.clearDataModal;
-                         this.showModal(modal);
-                         this.elements.clearDataConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
-                         this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
-                     });
+                        const modal = this.elements.clearDataModal;
+                        this.showModal(modal);
+                        this.elements.clearDataConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
+                        this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
+                    });
                 },
                 
                 updateCoordinatesDisplay(lat, lon, acc) {
@@ -493,7 +495,7 @@
                 },
                 
                 displayUser(user) {
-                    this.elements.userEmail.textContent = user.email;
+                    this.elements.userEmail.textContent = user.email || "Visitante";
                     this.elements.userInfo.classList.remove('hidden');
                 },
 
@@ -533,7 +535,7 @@
                 renderProjectsList() {
                     this.elements.projectsList.innerHTML = '';
                     if (StateManager.projects.length === 0) {
-                        this.elements.projectsList.innerHTML = '<p class="p-4 text-center text-gray-500">Crie seu primeiro projeto acima.</p>';
+                        this.elements.projectsList.innerHTML = '<p class="p-4 text-center text-gray-500">Nenhum projeto encontrado.</p>';
                         return;
                     }
                     StateManager.projects.forEach(project => {
@@ -581,7 +583,6 @@
                     grid.innerHTML += manageCard;
 
                     document.getElementById('create-new-project-card').addEventListener('click', () => {
-                        UIManager.elements.newProjectNameInput.value = ''; // Clear input field
                         UIManager.showModal(UIManager.elements.createProjectModal);
                     });
                     document.getElementById('manage-all-projects-card').addEventListener('click', () => {
@@ -836,13 +837,12 @@
                                 DataManager.listenForProjects((isProjectListEmpty) => {
                                     UIManager.renderProjectsList();
                                     UIManager.renderDashboard();
-                                    if (StateManager.activeProjectId) {
-                                        this.handleProjectSelect(StateManager.activeProjectId, true);
-                                    } else if (!isProjectListEmpty) {
-                                        this.handleProjectSelect(StateManager.projects[0].id, true)
+                                    if (StateManager.activeProjectId && StateManager.projects.find(p => p.id === StateManager.activeProjectId)) {
+                                       this.handleProjectSelect(StateManager.activeProjectId, true);
+                                    } else {
+                                       UIManager.showDashboardScreen();
                                     }
                                 });
-                                UIManager.showDashboardScreen();
                             } else { 
                                 StateManager.userId = null; 
                                 if (StateManager.projectsUnsubscribe) StateManager.projectsUnsubscribe();
@@ -853,13 +853,24 @@
                                 UIManager.showAuthScreen();
                             }
                         });
+
+                        if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                           try {
+                                await signInWithCustomToken(StateManager.auth, __initial_auth_token);
+                           } catch (e) {
+                               console.error("Custom token login failed", e);
+                               UIManager.showMessage("Falha no login automático do ambiente de desenvolvimento.", "error", true);
+                               UIManager.showAuthScreen();
+                           }
+                        }
+
                     } catch (e) {
                         console.error("Erro na inicialização do Firebase:", e);
                         UIManager.showMessage("Configuração do Firebase inválida. Verifique os dados e tente novamente.", "error", true);
                         UIManager.showAuthScreen();
                     }
                 },
-
+                
                 addEventListeners() {
                     const el = UIManager.elements;
                     el.loginForm.addEventListener('submit', (e) => { e.preventDefault(); this.handleLogin(); });
@@ -882,7 +893,7 @@
                     el.saveSettingsButton.addEventListener('click', () => this.handleSaveSettings());
                     el.manageProjectsButton.addEventListener('click', () => UIManager.showModal(UIManager.elements.projectsModal));
                     el.closeProjectsModalButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.projectsModal));
-                    el.confirmCreateProjectButton.addEventListener('click', () => this.handleCreateProject());
+                    el.confirmCreateProjectButton.addEventListener('click', () => this.handleCreateProjectFromModal());
                     el.cancelCreateProjectButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.createProjectModal));
                     el.backToDashboardButton.addEventListener('click', () => UIManager.showDashboardScreen());
                 },
@@ -909,6 +920,7 @@
                 
                 async handleLogout() {
                     try {
+                        StateManager.activeProjectId = null;
                         await signOut(StateManager.auth);
                     } catch(error) {
                         console.error("Logout error", error);
@@ -942,13 +954,13 @@
                     await MapManager.searchLocation(query);
                 },
 
-                async handleCreateProject() {
+                async handleCreateProjectFromModal() {
                     const name = UIManager.elements.newProjectNameInput.value.trim();
                     if (name) {
                         await DataManager.createProject(name);
-                        UIManager.hideModal(UIManager.elements.createProjectModal); // Hide modal on success
+                        UIManager.hideModal(UIManager.elements.createProjectModal);
                     } else {
-                        UIManager.showMessage("O nome do projeto não pode ser vazio.", "error"); 
+                        UIManager.showMessage("O nome do projeto não pode ser vazio.", "error");
                     }
                 },
 
@@ -975,6 +987,7 @@
                         await DataManager.deleteProject(projectId);
                         if(StateManager.activeProjectId === projectId) {
                             StateManager.activeProjectId = null;
+                            UIManager.showDashboardScreen();
                         }
                     }
                 },
