@@ -161,6 +161,7 @@
             Você está offline. Os pontos serão salvos localmente.
         </div>
         <div class="absolute top-4 right-4 flex gap-2 z-10">
+             <button id="share-project-button" title="Compartilhar Projeto" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none hidden"><svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg></button>
              <button id="manage-projects-button" title="Gerenciar Projetos" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-black dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg></button>
             <button id="logout-button" title="Sair" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
             <button id="settings-button" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-black dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
@@ -249,12 +250,13 @@
     <div id="confirmation-modal" class="modal"><div class="modal-content"><p>Gostaria de incluir a localização aproximada desse ponto?</p><div class="modal-buttons"><button id="confirm-yes" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Sim</button><button id="confirm-no" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-600">Não</button></div></div></div>
     <div id="clear-data-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Atenção!</p><p>Tem certeza que deseja apagar TODOS os pontos deste projeto? Esta ação é irreversível.</p><div class="modal-buttons"><button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, apagar pontos</button><button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
     <div id="settings-modal" class="modal"><div class="modal-content text-left overflow-y-auto max-h-[90vh]"><h3 class="text-xl font-bold mb-4 text-center">Configurações</h3><div class="mb-4"><label for="api-key-input" class="block text-sm font-medium text-gray-900 mb-1">Chave de API do Google Maps</label><input type="password" id="api-key-input" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole sua chave aqui"><p class="text-xs text-gray-600 mt-1">Sua chave é salva apenas no seu navegador.</p></div><div class="mb-4"><p class="block text-sm font-medium text-gray-900 mb-1">Configuração Firebase</p><textarea id="firebase-config-input" rows="8" class="w-full p-2 rounded-lg border border-gray-300 font-mono text-xs" placeholder="Cole o objeto de configuração do Firebase aqui"></textarea><p class="text-xs text-gray-600 mt-1">Necessário para usar a aplicação fora do ambiente de desenvolvimento.</p></div><div class="modal-buttons"><button id="save-settings-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">Salvar e Recarregar</button><button id="close-settings-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
+    <div id="share-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Compartilhar Projeto "<span id="share-project-name"></span>"</h3><div class="mb-4"><h4 class="font-semibold mb-2">Convidar Novo Membro</h4><div class="flex gap-2"><input type="email" id="share-email-input" class="flex-1 p-2 rounded-lg border border-gray-300" placeholder="E-mail do usuário"><button id="invite-button" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-600">Convidar</button></div></div><div><h4 class="font-semibold mb-2">Membros do Projeto</h4><div id="members-list" class="max-h-40 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div></div><div class="modal-buttons"><button id="close-share-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
     
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs, writeBatch, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs, writeBatch, query, orderBy, serverTimestamp, where, setDoc, getDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
         document.addEventListener('DOMContentLoaded', () => {
@@ -344,6 +346,13 @@
                     deleteProjectConfirmText: document.getElementById('delete-project-confirm-text'),
                     deleteProjectConfirm: document.getElementById('delete-project-confirm'),
                     deleteProjectCancel: document.getElementById('delete-project-cancel'),
+                    shareProjectButton: document.getElementById('share-project-button'),
+                    shareModal: document.getElementById('share-modal'),
+                    shareProjectName: document.getElementById('share-project-name'),
+                    shareEmailInput: document.getElementById('share-email-input'),
+                    inviteButton: document.getElementById('invite-button'),
+                    membersList: document.getElementById('members-list'),
+                    closeShareModalButton: document.getElementById('close-share-modal-button'),
                 },
 
                 init() {
@@ -548,6 +557,7 @@
                 updateCurrentProjectDisplay() {
                     const activeProject = StateManager.projects.find(p => p.id === StateManager.activeProjectId);
                     this.elements.currentProjectName.textContent = activeProject ? activeProject.name : 'Nenhum';
+                    this.elements.shareProjectButton.classList.toggle('hidden', !activeProject);
                 },
 
                 renderProjectsList() {
@@ -564,18 +574,23 @@
                             item.classList.add('active');
                         }
                         
+                        const isOwner = project.ownerId === StateManager.userId;
+                        const isShared = !isOwner;
+                        
                         const nameSpan = document.createElement('span');
-                        nameSpan.textContent = project.name;
+                        nameSpan.innerHTML = `${project.name} ${isShared ? '<svg class="w-4 h-4 inline-block text-blue-500 ml-1" title="Compartilhado com você" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>' : ''}`;
                         nameSpan.onclick = () => App.handleProjectSelect(project.id);
                         item.appendChild(nameSpan);
 
-                        const deleteBtn = document.createElement('button');
-                        deleteBtn.innerHTML = '<svg class="w-5 h-5 text-red-500 hover:text-red-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg>';
-                        deleteBtn.onclick = (e) => {
-                            e.stopPropagation();
-                            App.handleDeleteProject(project.id, project.name);
-                        };
-                        item.appendChild(deleteBtn);
+                        if(isOwner) {
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.innerHTML = '<svg class="w-5 h-5 text-red-500 hover:text-red-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg>';
+                            deleteBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                App.handleDeleteProject(project.id, project.name);
+                            };
+                            item.appendChild(deleteBtn);
+                        }
 
                         this.elements.projectsList.appendChild(item);
                     });
@@ -590,7 +605,8 @@
 
                     const recentProjects = StateManager.projects.slice(0, 4);
                     recentProjects.forEach(p => {
-                        const projectCard = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m-6-2l6 3m0 0l6-3m-6 3v10" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate">${p.name}</h3></div>`;
+                        const isShared = p.ownerId !== StateManager.userId;
+                        const projectCard = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m-6-2l6 3m0 0l6-3m-6 3v10" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${isShared ? '<svg class="w-5 h-5 inline-block text-blue-500 ml-2 flex-shrink-0" title="Compartilhado com você" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>' : ''}</h3></div>`;
                         grid.innerHTML += projectCard;
                     });
                     
@@ -726,13 +742,14 @@
             };
 
             const DataManager = {
-                getProjectsCollectionRef() { if (!StateManager.userId) return null; const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; return collection(StateManager.db, `users/${StateManager.userId}/projects`); },
+                getUsersCollectionRef() { return collection(StateManager.db, 'users'); },
+                getProjectsCollectionRef() { return collection(StateManager.db, 'projects'); },
                 getPointsCollectionRef() { if (!StateManager.activeProjectId) return null; return collection(this.getProjectsCollectionRef(), `${StateManager.activeProjectId}/points`); },
                 
                 listenForProjects(onProjectsLoaded) {
                     if(StateManager.projectsUnsubscribe) StateManager.projectsUnsubscribe();
-                    const collectionRef = this.getProjectsCollectionRef(); if (!collectionRef) return;
-                    const q = query(collectionRef, orderBy("createdAt", "desc"));
+                    if (!StateManager.userId) return;
+                    const q = query(this.getProjectsCollectionRef(), where("members", "array-contains", StateManager.userId), orderBy("createdAt", "desc"));
                     StateManager.projectsUnsubscribe = onSnapshot(q, (snapshot) => { 
                         StateManager.projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         onProjectsLoaded(snapshot.empty);
@@ -759,7 +776,15 @@
                 async createProject(name) {
                     if (!name) return;
                     try {
-                        const newProjectRef = await addDoc(this.getProjectsCollectionRef(), { name, createdAt: serverTimestamp() });
+                        const newProject = {
+                            name,
+                            createdAt: serverTimestamp(),
+                            ownerId: StateManager.userId,
+                            ownerEmail: StateManager.auth.currentUser.email,
+                            members: [StateManager.userId],
+                            memberInfo: { [StateManager.userId]: StateManager.auth.currentUser.email }
+                        };
+                        const newProjectRef = await addDoc(this.getProjectsCollectionRef(), newProject);
                         App.handleProjectSelect(newProjectRef.id);
                         UIManager.elements.newProjectNameInput.value = '';
                     } catch (e) {
@@ -770,9 +795,7 @@
 
                 async deleteProject(projectId) {
                     try {
-                        // Limpa a fila offline para este projeto antes de deletar
                         OfflineManager.clearQueue();
-
                         const pointsRef = collection(this.getProjectsCollectionRef(), `${projectId}/points`);
                         const pointsSnapshot = await getDocs(pointsRef);
                         const batch = writeBatch(StateManager.db);
@@ -823,16 +846,14 @@
                             UIManager.showMessage("Falha ao salvar o ponto na nuvem.", 'error'); 
                         }
                     } else {
-                        // Modo Offline
-                        newPoint.id = crypto.randomUUID(); // ID Temporário
+                        newPoint.id = crypto.randomUUID(); 
                         newPoint.status = 'pendingSync';
-                        delete newPoint.createdAt; // será definido pelo servidor ao sincronizar
+                        delete newPoint.createdAt; 
                         OfflineManager.addToQueue(newPoint);
-                        UIManager.updatePreviewTable(); // Atualiza a UI imediatamente com o ponto local
+                        UIManager.updatePreviewTable();
                         UIManager.showMessage(`Ponto "${pointName}" salvo localmente!`, 'info');
                     }
                     
-                    // Reset UI
                     UIManager.elements.pointNameInput.value = '';
                     Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); 
                     if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); 
@@ -1030,6 +1051,9 @@
                     el.confirmCreateProjectButton.addEventListener('click', () => this.handleCreateProjectFromModal());
                     el.cancelCreateProjectButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.createProjectModal));
                     el.backToDashboardButton.addEventListener('click', () => UIManager.showDashboardScreen());
+                    el.shareProjectButton.addEventListener('click', () => this.handleOpenShareModal());
+                    el.closeShareModalButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.shareModal));
+                    el.inviteButton.addEventListener('click', () => this.handleInvite());
                 },
 
                 handleOnlineStatusChange(isOnline) {
@@ -1054,7 +1078,9 @@
                     const email = UIManager.elements.registerEmail.value;
                     const password = UIManager.elements.registerPassword.value;
                     try {
-                        await createUserWithEmailAndPassword(StateManager.auth, email, password);
+                        const userCredential = await createUserWithEmailAndPassword(StateManager.auth, email, password);
+                        const user = userCredential.user;
+                        await setDoc(doc(StateManager.db, "users", user.uid), { email: user.email });
                     } catch (error) {
                         UIManager.showMessage(error.message, 'error', true);
                     }
@@ -1116,11 +1142,17 @@
                     UIManager.updateCurrentProjectDisplay();
                     UIManager.renderProjectsList();
                     DataManager.listenForPoints();
-                    OfflineManager.syncPendingPoints(); // Tenta sincronizar ao trocar de projeto
+                    OfflineManager.syncPendingPoints();
                     UIManager.showAppScreen();
                 },
 
                 async handleDeleteProject(projectId, projectName) {
+                    const project = StateManager.projects.find(p => p.id === projectId);
+                    if (project.ownerId !== StateManager.userId) {
+                        UIManager.showMessage("Apenas o dono do projeto pode excluí-lo.", "error");
+                        return;
+                    }
+
                     const confirmed = await UIManager.showDeleteConfirmation(
                         UIManager.elements.deleteProjectModal, 
                         UIManager.elements.deleteProjectConfirmText,
@@ -1133,6 +1165,81 @@
                             UIManager.showDashboardScreen();
                         }
                     }
+                },
+
+                async handleOpenShareModal() {
+                    const project = StateManager.projects.find(p => p.id === StateManager.activeProjectId);
+                    if (!project) return;
+
+                    UIManager.elements.shareProjectName.textContent = project.name;
+                    UIManager.elements.membersList.innerHTML = '<p class="p-4 text-center">Carregando membros...</p>';
+                    UIManager.showModal(UIManager.elements.shareModal);
+
+                    const membersListEl = UIManager.elements.membersList;
+                    membersListEl.innerHTML = '';
+                    
+                    const isOwner = project.ownerId === StateManager.userId;
+
+                    for (const memberId in project.memberInfo) {
+                        const email = project.memberInfo[memberId];
+                        const memberEl = document.createElement('div');
+                        memberEl.className = 'flex justify-between items-center p-2';
+                        memberEl.innerHTML = `<div><span class="font-semibold">${email}</span><span class="text-xs text-gray-500 ml-2">${memberId === project.ownerId ? '(Dono)' : ''}</span></div>`;
+
+                        if (isOwner && memberId !== StateManager.userId) {
+                            const removeBtn = document.createElement('button');
+                            removeBtn.innerHTML = '<svg class="w-4 h-4 text-red-500 hover:text-red-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>';
+                            removeBtn.onclick = () => this.handleRemoveMember(memberId);
+                            memberEl.appendChild(removeBtn);
+                        }
+                        membersListEl.appendChild(memberEl);
+                    }
+                },
+
+                async handleInvite() {
+                    const email = UIManager.elements.shareEmailInput.value.trim().toLowerCase();
+                    if (!email) return UIManager.showMessage("Digite um e-mail para convidar.", "error");
+
+                    const q = query(DataManager.getUsersCollectionRef(), where("email", "==", email));
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (querySnapshot.empty) {
+                        return UIManager.showMessage("Usuário não encontrado. Verifique o e-mail.", "error");
+                    }
+                    
+                    const userDoc = querySnapshot.docs[0];
+                    const newMemberId = userDoc.id;
+                    const newMemberEmail = userDoc.data().email;
+                    
+                    const projectRef = doc(DataManager.getProjectsCollectionRef(), StateManager.activeProjectId);
+                    
+                    try {
+                        await updateDoc(projectRef, {
+                            members: arrayUnion(newMemberId),
+                            [`memberInfo.${newMemberId}`]: newMemberEmail
+                        });
+                        UIManager.showMessage(`${newMemberEmail} foi adicionado ao projeto!`, 'success');
+                        UIManager.elements.shareEmailInput.value = '';
+                        this.handleOpenShareModal(); // Refresh member list
+                    } catch(e) {
+                        console.error("Erro ao adicionar membro:", e);
+                        UIManager.showMessage("Falha ao adicionar membro.", 'error');
+                    }
+                },
+                
+                async handleRemoveMember(memberId) {
+                     const projectRef = doc(DataManager.getProjectsCollectionRef(), StateManager.activeProjectId);
+                     try {
+                        await updateDoc(projectRef, {
+                            members: arrayRemove(memberId),
+                            [`memberInfo.${memberId}`]: deleteDoc // Firestore way to remove a map field
+                        });
+                        UIManager.showMessage(`Membro removido do projeto.`, 'success');
+                        this.handleOpenShareModal(); // Refresh member list
+                     } catch(e) {
+                        console.error("Erro ao remover membro:", e);
+                        UIManager.showMessage("Falha ao remover membro.", 'error');
+                     }
                 },
                 
                 handleDeletePoint(id) { DataManager.deletePoint(id); },
