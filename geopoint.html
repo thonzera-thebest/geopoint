@@ -623,7 +623,7 @@
                     ownedProjects.forEach(p => {
                         const isSharedByMe = p.members && p.members.length > 1;
                         const sharedIcon = isSharedByMe ? `<svg class="w-5 h-5 inline-block text-purple-500 ml-2 flex-shrink-0" title="Compartilhado por você" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>` : '';
-                        const projectCardHTML = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503-6.734l-3 1.875a.75.75 0 01-1.006 0l-3-1.875m10.5 0a48.498 48.498 0 01-10.5 0" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${sharedIcon}</h3></div>`;
+                        const projectCardHTML = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${sharedIcon}</h3></div>`;
                         ownedGrid.insertAdjacentHTML('beforeend', projectCardHTML);
                     });
                     
@@ -634,7 +634,7 @@
                         sharedSection.classList.remove('hidden');
                         sharedProjects.forEach(p => {
                             const sharedIcon = `<svg class="w-5 h-5 inline-block text-blue-500 ml-2 flex-shrink-0" title="Compartilhado com você" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>`;
-                            const projectCardHTML = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503-6.734l-3 1.875a.75.75 0 01-1.006 0l-3-1.875m10.5 0a48.498 48.498 0 01-10.5 0" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${sharedIcon}</h3></div>`;
+                            const projectCardHTML = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${sharedIcon}</h3></div>`;
                             sharedGrid.insertAdjacentHTML('beforeend', projectCardHTML);
                         });
                     }
@@ -1302,4 +1302,3 @@
     </script>
 </body>
 </html>
-
