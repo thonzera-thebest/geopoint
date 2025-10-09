@@ -238,6 +238,7 @@
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Latitude (Final)</th>
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Longitude (Final)</th>
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Criado por</th>
                             <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Precisão Orig.</th>
                             <th class="py-2 px-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
                         </tr>
@@ -523,7 +524,7 @@
 
                     const isEditable = !point.status || point.status !== 'pendingSync';
                     
-                    row.innerHTML = `<td data-label="#" class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td><td data-label="Cor" class="py-2 px-4 whitespace-nowrap text-sm"><div class="h-4 w-4 rounded-full mx-auto" style="background-color: ${point.color || '#3b82f6'};"></div></td><td data-label="Nome" class="py-2 px-4 whitespace-nowrap text-sm font-medium ${isEditable ? 'cursor-text' : 'cursor-not-allowed text-gray-500'}" contenteditable="${isEditable}" data-id="${point.id}" onblur="App.handleEditPointName(this, '${point.id}')">${point.name}</td><td data-label="Latitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td><td data-label="Longitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td><td data-label="Status" class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${DataManager.getPointStatus(point)}</td><td data-label="Precisão Orig." class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td><td data-label="Ação" class="py-2 px-4 whitespace-nowrap text-sm text-center"><button onclick="App.handleDeletePoint('${point.id}')" ${!isEditable ? 'disabled' : ''} class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900 ${!isEditable ? 'opacity-50 cursor-not-allowed' : ''}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg></button></td>`;
+                    row.innerHTML = `<td data-label="#" class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td><td data-label="Cor" class="py-2 px-4 whitespace-nowrap text-sm"><div class="h-4 w-4 rounded-full mx-auto" style="background-color: ${point.color || '#3b82f6'};"></div></td><td data-label="Nome" class="py-2 px-4 whitespace-nowrap text-sm font-medium ${isEditable ? 'cursor-text' : 'cursor-not-allowed text-gray-500'}" contenteditable="${isEditable}" data-id="${point.id}" onblur="App.handleEditPointName(this, '${point.id}')">${point.name}</td><td data-label="Latitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td><td data-label="Longitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td><td data-label="Status" class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${DataManager.getPointStatus(point)}</td><td data-label="Criado por" class="py-2 px-4 whitespace-nowrap text-sm text-center">${point.createdBy || 'N/A'}</td><td data-label="Precisão Orig." class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td><td data-label="Ação" class="py-2 px-4 whitespace-nowrap text-sm text-center"><button onclick="App.handleDeletePoint('${point.id}')" ${!isEditable ? 'disabled' : ''} class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900 ${!isEditable ? 'opacity-50 cursor-not-allowed' : ''}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg></button></td>`;
                     this.elements.pointsTableBody.appendChild(row);
                 },
                 
@@ -878,6 +879,7 @@
                     const newPoint = { 
                         name: pointName, latitude: StateManager.lastKnownPosition.latitude, longitude: StateManager.lastKnownPosition.longitude, accuracy: StateManager.lastKnownAccuracy, address: addr || 'Endereço não incluído', createdAt: serverTimestamp(), captureTime: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
                         originalAccuracy: StateManager.isManualCapture ? 0 : StateManager.lastKnownAccuracy, originalLat: StateManager.lastKnownPosition.latitude, originalLon: StateManager.lastKnownPosition.longitude, color: StateManager.selectedColor, 
+                        createdBy: StateManager.currentUser.username,
                     };
                     
                     if (StateManager.isOnline) {
@@ -950,8 +952,8 @@
                 exportToCSV() {
                     const combinedPoints = [...StateManager.localCoordinates, ...OfflineManager.getQueue()];
                     if (combinedPoints.length === 0) return;
-                    let csv = "Nome;Cor;Lat_Final;Lon_Final;Status;Endereco;Timestamp;Lat_Original;Lon_Original;Precisao_Orig_m\n";
-                    combinedPoints.forEach(p => { csv += [p.name, p.color, p.latitude.toFixed(6).replace('.', ','), p.longitude.toFixed(6).replace('.', ','), this.getPointStatus(p), `"${p.address || ''}"`, p.captureTime || 'N/A', p.originalLat.toFixed(6).replace('.', ','), p.originalLon.toFixed(6).replace('.', ','), this.getOriginalAccuracyText(p, true)].join(';') + '\n'; });
+                    let csv = "Nome;Latitude Final;Longitude Final;Status;Criado por;Endereço;Timestamp;Latitude Original;Longitude Original;Precisão Original (m)\n";
+                    combinedPoints.forEach(p => { csv += [p.name, p.latitude.toFixed(6).replace('.', ','), p.longitude.toFixed(6).replace('.', ','), this.getPointStatus(p), p.createdBy || '', `"${p.address || ''}"`, p.captureTime || 'N/A', p.originalLat.toFixed(6).replace('.', ','), p.originalLon.toFixed(6).replace('.', ','), this.getOriginalAccuracyText(p, true)].join(';') + '\n'; });
                     const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })); link.download = "COORD.csv"; link.click();
                 },
                 getPointStatus(point) { 
@@ -1395,4 +1397,3 @@
     </script>
 </body>
 </html>
-
