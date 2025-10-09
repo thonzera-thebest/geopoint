@@ -956,13 +956,13 @@
                     combinedPoints.forEach(p => { csv += [p.name, p.latitude.toFixed(6).replace('.', ','), p.longitude.toFixed(6).replace('.', ','), this.getPointStatus(p), p.createdBy || '', `"${p.address || ''}"`, p.captureTime || 'N/A', p.originalLat.toFixed(6).replace('.', ','), p.originalLon.toFixed(6).replace('.', ','), this.getOriginalAccuracyText(p, true)].join(';') + '\n'; });
                     const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })); link.download = "COORD.csv"; link.click();
                 },
-                getPointStatus(point) { 
-                    if(point.status === 'pendingSync') return 'Pendente';
-                    if (point.accuracy === 0 && point.originalAccuracy !== 0) return 'Corrigido'; 
-                    if (point.originalAccuracy === 0) return 'Manual'; 
-                    if (point.originalAccuracy <= 5) return 'GPS (Alta)'; 
-                    if (point.originalAccuracy <= 15) return 'GPS (Média)'; 
-                    return 'GPS (Baixa)'; 
+                getPointStatus(point) {
+                    if (point.status === 'pendingSync') return 'Pendente';
+                    if (point.accuracy === 0 && point.originalAccuracy !== 0) return 'Corrigido';
+                    if (point.originalAccuracy === 0) return `Manual (${point.createdBy || 'N/A'})`;
+                    if (point.originalAccuracy <= 5) return 'GPS (Alta)';
+                    if (point.originalAccuracy <= 15) return 'GPS (Média)';
+                    return 'GPS (Baixa)';
                 },
                 getOriginalAccuracyText(point, forCsv = false) { if (point.originalAccuracy === 0) return 'Manual'; if (point.originalAccuracy) return forCsv ? point.originalAccuracy.toFixed(1).replace('.', ',') : `\u00B1 ${point.originalAccuracy.toFixed(1)}m`; return 'N/A'; }
             };
