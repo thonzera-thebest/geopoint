@@ -126,6 +126,8 @@
         <form id="register-form" class="hidden">
              <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Criar Conta</h2>
             <div class="space-y-4">
+                <input type="text" id="register-username" placeholder="Nome de usuário (letras minúsculas e números)" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <p id="username-feedback" class="text-xs text-left h-4 px-2"></p>
                 <input type="email" id="register-email" placeholder="E-mail" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 <input type="password" id="register-password" placeholder="Senha (mínimo 6 caracteres)" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             </div>
@@ -246,7 +248,7 @@
         </div>
 
         <div id="user-info" class="text-xs text-gray-500 dark:text-gray-400 mt-4 hidden">
-            Usuário: <span id="user-email" class="font-mono"></span>
+            Usuário: <span id="user-display-name" class="font-mono"></span>
         </div>
     </div>
 
@@ -257,7 +259,8 @@
     <div id="confirmation-modal" class="modal"><div class="modal-content"><p>Gostaria de incluir a localização aproximada desse ponto?</p><div class="modal-buttons"><button id="confirm-yes" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Sim</button><button id="confirm-no" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-600">Não</button></div></div></div>
     <div id="clear-data-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Atenção!</p><p>Tem certeza que deseja apagar TODOS os pontos deste projeto? Esta ação é irreversível.</p><div class="modal-buttons"><button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, apagar pontos</button><button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
     <div id="settings-modal" class="modal"><div class="modal-content text-left overflow-y-auto max-h-[90vh]"><h3 class="text-xl font-bold mb-4 text-center">Configurações</h3><div class="mb-4"><label for="api-key-input" class="block text-sm font-medium text-gray-900 mb-1">Chave de API do Google Maps</label><input type="password" id="api-key-input" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole sua chave aqui"><p class="text-xs text-gray-600 mt-1">Sua chave é salva apenas no seu navegador.</p></div><div class="mb-4"><p class="block text-sm font-medium text-gray-900 mb-1">Configuração Firebase</p><textarea id="firebase-config-input" rows="8" class="w-full p-2 rounded-lg border border-gray-300 font-mono text-xs" placeholder="Cole o objeto de configuração do Firebase aqui"></textarea><p class="text-xs text-gray-600 mt-1">Necessário para usar a aplicação fora do ambiente de desenvolvimento.</p></div><div class="modal-buttons"><button id="save-settings-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">Salvar e Recarregar</button><button id="close-settings-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
-    <div id="share-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Compartilhar Projeto "<span id="share-project-name"></span>"</h3><div class="mb-4"><h4 class="font-semibold mb-2">Convidar Novo Membro</h4><div class="flex gap-2"><input type="email" id="share-email-input" class="flex-1 p-2 rounded-lg border border-gray-300" placeholder="E-mail do usuário"><button id="invite-button" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-600">Convidar</button></div></div><div><h4 class="font-semibold mb-2">Membros do Projeto</h4><div id="members-list" class="max-h-40 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div></div><div class="modal-buttons"><button id="close-share-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
+    <div id="share-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Compartilhar Projeto "<span id="share-project-name"></span>"</h3><div class="mb-4"><h4 class="font-semibold mb-2">Convidar Novo Membro</h4><div class="flex gap-2"><input type="text" id="share-username-input" class="flex-1 p-2 rounded-lg border border-gray-300" placeholder="Nome de usuário"><button id="invite-button" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-600">Convidar</button></div></div><div><h4 class="font-semibold mb-2">Membros do Projeto</h4><div id="members-list" class="max-h-40 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div></div><div class="modal-buttons"><button id="close-share-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
+    <div id="set-username-modal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-4">Escolha um nome de usuário</h3><p class="text-sm text-gray-600 mb-4">Este será seu nome único na plataforma para ser encontrado e convidado para projetos.</p><div class="space-y-2"><input type="text" id="set-username-input" class="w-full p-3 rounded-xl border" placeholder="Nome de usuário (letras minúsculas e números)"><p id="set-username-feedback" class="text-xs text-left h-4 px-2"></p></div><div class="modal-buttons"><button id="confirm-set-username-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl">Salvar</button></div></div></div>
     
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     
@@ -269,6 +272,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const StateManager = {
                 app: null, db: null, auth: null, userId: null,
+                currentUser: null,
                 isOnline: navigator.onLine,
                 isMapInitialized: false,
                 projects: [],
@@ -298,6 +302,8 @@
                     registerForm: document.getElementById('register-form'),
                     loginEmail: document.getElementById('login-email'),
                     loginPassword: document.getElementById('login-password'),
+                    registerUsername: document.getElementById('register-username'),
+                    usernameFeedback: document.getElementById('username-feedback'),
                     registerEmail: document.getElementById('register-email'),
                     registerPassword: document.getElementById('register-password'),
                     authError: document.getElementById('auth-error'),
@@ -339,7 +345,7 @@
                     apiKeyInput: document.getElementById('api-key-input'),
                     firebaseConfigInput: document.getElementById('firebase-config-input'),
                     userInfo: document.getElementById('user-info'),
-                    userEmail: document.getElementById('user-email'),
+                    userDisplayName: document.getElementById('user-display-name'),
                     projectBar: document.getElementById('project-bar'),
                     backToDashboardButton: document.getElementById('back-to-dashboard-button'),
                     currentProjectName: document.getElementById('current-project-name'),
@@ -358,10 +364,14 @@
                     shareProjectButton: document.getElementById('share-project-button'),
                     shareModal: document.getElementById('share-modal'),
                     shareProjectName: document.getElementById('share-project-name'),
-                    shareEmailInput: document.getElementById('share-email-input'),
+                    shareUsernameInput: document.getElementById('share-username-input'),
                     inviteButton: document.getElementById('invite-button'),
                     membersList: document.getElementById('members-list'),
                     closeShareModalButton: document.getElementById('close-share-modal-button'),
+                    setUsernameModal: document.getElementById('set-username-modal'),
+                    setUsernameInput: document.getElementById('set-username-input'),
+                    setUsernameFeedback: document.getElementById('set-username-feedback'),
+                    confirmSetUsernameButton: document.getElementById('confirm-set-username-button'),
                 },
 
                 init() {
@@ -531,7 +541,7 @@
                 },
                 
                 displayUser(user) {
-                    this.elements.userEmail.textContent = user.isAnonymous ? "Visitante (Dev)" : user.email;
+                    this.elements.userDisplayName.textContent = user.username || user.email;
                     this.elements.userInfo.classList.remove('hidden');
                 },
 
@@ -808,15 +818,14 @@
                 },
                 
                 async createProject(name) {
-                    if (!name) return;
+                    if (!name || !StateManager.currentUser?.username) return;
                     try {
                         const newProject = {
                             name,
                             createdAt: serverTimestamp(),
                             ownerId: StateManager.userId,
-                            ownerEmail: StateManager.auth.currentUser.email,
                             members: [StateManager.userId],
-                            memberInfo: { [StateManager.userId]: StateManager.auth.currentUser.email }
+                            memberInfo: { [StateManager.userId]: StateManager.currentUser.username }
                         };
                         const newProjectRef = await addDoc(this.getProjectsCollectionRef(), newProject);
                         App.handleProjectSelect(newProjectRef.id);
@@ -1019,30 +1028,24 @@
                         
                         onAuthStateChanged(StateManager.auth, async (user) => {
                             if (user) { 
-                                // Ensure user document exists in 'users' collection
+                                StateManager.userId = user.uid;
                                 const userRef = doc(StateManager.db, "users", user.uid);
                                 const userSnap = await getDoc(userRef);
-                                if (!userSnap.exists()) {
-                                    try {
+
+                                if (userSnap.exists() && userSnap.data().username) {
+                                    StateManager.currentUser = { uid: user.uid, ...userSnap.data() };
+                                    this.startApp();
+                                } else {
+                                    // If doc exists but no username, or doc doesn't exist at all
+                                    if (!userSnap.exists()) {
                                         await setDoc(userRef, { email: user.email });
-                                    } catch (e) {
-                                        console.error("Error creating user document on login:", e);
                                     }
+                                    UIManager.showModal(UIManager.elements.setUsernameModal);
                                 }
 
-                                StateManager.userId = user.uid;
-                                UIManager.displayUser(user);
-                                DataManager.listenForProjects((isProjectListEmpty) => {
-                                    UIManager.renderProjectsList();
-                                    UIManager.renderDashboard();
-                                    if (StateManager.activeProjectId && StateManager.projects.find(p => p.id === StateManager.activeProjectId)) {
-                                       this.handleProjectSelect(StateManager.activeProjectId, true);
-                                    } else {
-                                       UIManager.showDashboardScreen();
-                                    }
-                                });
                             } else { 
                                 StateManager.userId = null; 
+                                StateManager.currentUser = null;
                                 if (StateManager.projectsUnsubscribe) StateManager.projectsUnsubscribe();
                                 if (StateManager.pointsUnsubscribe) StateManager.pointsUnsubscribe();
                                 StateManager.projects = [];
@@ -1068,9 +1071,27 @@
                         UIManager.showAuthScreen();
                     }
                 },
+
+                startApp() {
+                    if (!StateManager.currentUser) return;
+                    UIManager.displayUser(StateManager.currentUser);
+                    DataManager.listenForProjects((isProjectListEmpty) => {
+                        UIManager.renderProjectsList();
+                        UIManager.renderDashboard();
+                        if (StateManager.activeProjectId && StateManager.projects.find(p => p.id === StateManager.activeProjectId)) {
+                           this.handleProjectSelect(StateManager.activeProjectId, true);
+                        } else {
+                           UIManager.showDashboardScreen();
+                        }
+                    });
+                },
                 
                 addEventListeners() {
                     const el = UIManager.elements;
+                    const debounceCheck = this.debounce(this.checkUsernameAvailability, 500);
+                    el.registerUsername.addEventListener('input', (e) => debounceCheck(e.target.value, el.usernameFeedback));
+                    el.setUsernameInput.addEventListener('input', (e) => debounceCheck(e.target.value, el.setUsernameFeedback));
+
                     window.addEventListener('online', () => this.handleOnlineStatusChange(true));
                     window.addEventListener('offline', () => this.handleOnlineStatusChange(false));
                     el.loginForm.addEventListener('submit', (e) => { e.preventDefault(); this.handleLogin(); });
@@ -1099,6 +1120,7 @@
                     el.shareProjectButton.addEventListener('click', () => this.handleOpenShareModal());
                     el.closeShareModalButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.shareModal));
                     el.inviteButton.addEventListener('click', () => this.handleInvite());
+                    el.confirmSetUsernameButton.addEventListener('click', () => this.handleSetUsername());
                 },
 
                 handleOnlineStatusChange(isOnline) {
@@ -1120,12 +1142,25 @@
                 },
                 
                 async handleRegister() {
+                    const username = UIManager.elements.registerUsername.value.trim().toLowerCase();
                     const email = UIManager.elements.registerEmail.value;
                     const password = UIManager.elements.registerPassword.value;
+
+                    if (!/^[a-z0-9_]{3,15}$/.test(username)) {
+                        UIManager.showMessage("Nome de usuário inválido. Use 3-15 letras minúsculas, números ou _.", 'error', true);
+                        return;
+                    }
+
+                    const isAvailable = await this.checkUsernameAvailability(username, UIManager.elements.usernameFeedback);
+                    if (!isAvailable) {
+                         UIManager.showMessage("Este nome de usuário já está em uso.", 'error', true);
+                        return;
+                    }
+
                     try {
                         const userCredential = await createUserWithEmailAndPassword(StateManager.auth, email, password);
                         const user = userCredential.user;
-                        await setDoc(doc(StateManager.db, "users", user.uid), { email: user.email });
+                        await setDoc(doc(StateManager.db, "users", user.uid), { email: user.email, username: username });
                     } catch (error) {
                         UIManager.showMessage(error.message, 'error', true);
                     }
@@ -1226,10 +1261,10 @@
                     const isOwner = project.ownerId === StateManager.userId;
 
                     for (const memberId in project.memberInfo) {
-                        const email = project.memberInfo[memberId];
+                        const username = project.memberInfo[memberId];
                         const memberEl = document.createElement('div');
                         memberEl.className = 'flex justify-between items-center p-2';
-                        memberEl.innerHTML = `<div><span class="font-semibold">${email}</span><span class="text-xs text-gray-500 ml-2">${memberId === project.ownerId ? '(Dono)' : ''}</span></div>`;
+                        memberEl.innerHTML = `<div><span class="font-semibold">${username}</span><span class="text-xs text-gray-500 ml-2">${memberId === project.ownerId ? '(Dono)' : ''}</span></div>`;
 
                         if (isOwner && memberId !== StateManager.userId) {
                             const removeBtn = document.createElement('button');
@@ -1242,29 +1277,29 @@
                 },
 
                 async handleInvite() {
-                    const email = UIManager.elements.shareEmailInput.value.trim().toLowerCase();
-                    if (!email) return UIManager.showMessage("Digite um e-mail para convidar.", "error");
+                    const username = UIManager.elements.shareUsernameInput.value.trim().toLowerCase();
+                    if (!username) return UIManager.showMessage("Digite um nome de usuário para convidar.", "error");
 
-                    const q = query(DataManager.getUsersCollectionRef(), where("email", "==", email));
+                    const q = query(DataManager.getUsersCollectionRef(), where("username", "==", username));
                     const querySnapshot = await getDocs(q);
                     
                     if (querySnapshot.empty) {
-                        return UIManager.showMessage("Usuário não encontrado. Verifique o e-mail.", "error");
+                        return UIManager.showMessage("Usuário não encontrado.", "error");
                     }
                     
                     const userDoc = querySnapshot.docs[0];
                     const newMemberId = userDoc.id;
-                    const newMemberEmail = userDoc.data().email;
+                    const newMemberUsername = userDoc.data().username;
                     
                     const projectRef = doc(DataManager.getProjectsCollectionRef(), StateManager.activeProjectId);
                     
                     try {
                         await updateDoc(projectRef, {
                             members: arrayUnion(newMemberId),
-                            [`memberInfo.${newMemberId}`]: newMemberEmail
+                            [`memberInfo.${newMemberId}`]: newMemberUsername
                         });
-                        UIManager.showMessage(`${newMemberEmail} foi adicionado ao projeto!`, 'success');
-                        UIManager.elements.shareEmailInput.value = '';
+                        UIManager.showMessage(`${newMemberUsername} foi adicionado ao projeto!`, 'success');
+                        UIManager.elements.shareUsernameInput.value = '';
                         this.handleOpenShareModal(); // Refresh member list
                     } catch(e) {
                         console.error("Erro ao adicionar membro:", e);
@@ -1287,6 +1322,64 @@
                         UIManager.showMessage("Falha ao remover membro.", 'error');
                      }
                 },
+
+                async handleSetUsername() {
+                    const username = UIManager.elements.setUsernameInput.value.trim().toLowerCase();
+                    if (!/^[a-z0-9_]{3,15}$/.test(username)) {
+                        UIManager.elements.setUsernameFeedback.textContent = "Inválido. Use 3-15 letras minúsculas, números ou _.";
+                        UIManager.elements.setUsernameFeedback.className = "text-xs text-left h-4 px-2 text-red-500";
+                        return;
+                    }
+                    const isAvailable = await this.checkUsernameAvailability(username, UIManager.elements.setUsernameFeedback);
+                    if(!isAvailable) return;
+                    
+                    try {
+                        const userRef = doc(StateManager.db, "users", StateManager.userId);
+                        await updateDoc(userRef, { username: username });
+
+                        const userSnap = await getDoc(userRef);
+                        StateManager.currentUser = { uid: StateManager.userId, ...userSnap.data() };
+
+                        UIManager.hideModal(UIManager.elements.setUsernameModal);
+                        this.startApp();
+                    } catch (e) {
+                        console.error("Error setting username:", e);
+                        UIManager.elements.setUsernameFeedback.textContent = "Erro ao salvar. Tente novamente.";
+                        UIManager.elements.setUsernameFeedback.className = "text-xs text-left h-4 px-2 text-red-500";
+                    }
+                },
+
+                debounce(func, delay) {
+                    let timeout;
+                    return (...args) => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => func.apply(this, args), delay);
+                    };
+                },
+
+                async checkUsernameAvailability(username, feedbackEl) {
+                    if (!/^[a-z0-9_]{3,15}$/.test(username)) {
+                        feedbackEl.textContent = "Inválido. Use 3-15 letras minúsculas, números ou _.";
+                        feedbackEl.className = "text-xs text-left h-4 px-2 text-red-500";
+                        return false;
+                    }
+                    
+                    feedbackEl.textContent = "Verificando...";
+                    feedbackEl.className = "text-xs text-left h-4 px-2 text-gray-500";
+                    
+                    const q = query(DataManager.getUsersCollectionRef(), where("username", "==", username));
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (querySnapshot.empty) {
+                        feedbackEl.textContent = "Disponível!";
+                        feedbackEl.className = "text-xs text-left h-4 px-2 text-green-500";
+                        return true;
+                    } else {
+                        feedbackEl.textContent = "Este nome de usuário já está em uso.";
+                        feedbackEl.className = "text-xs text-left h-4 px-2 text-red-500";
+                        return false;
+                    }
+                },
                 
                 handleDeletePoint(id) { DataManager.deletePoint(id); },
                 handleEditPointName(element, id) {
@@ -1302,3 +1395,4 @@
     </script>
 </body>
 </html>
+
