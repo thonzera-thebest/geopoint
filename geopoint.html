@@ -8,35 +8,30 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
             transition: background-color 0.3s;
         }
-        .dark body {
-            background-color: #1f2937;
-        }
+        .dark body { background-color: #1f2937; }
+
         #map {
             height: 400px;
             width: 100%;
             border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
             margin-bottom: 1.5rem;
         }
-        h1.text-black {
-            color: #000000;
-        }
-        .dark h1.text-black {
-            color: #FFFFFF !important; 
-        }
+
+        h1.text-black { color: #000000; }
+        .dark h1.text-black { color: #FFFFFF !important; }
 
         body:not(.dark) .text-gray-900,
         body:not(.dark) .text-gray-800,
         body:not(.dark) .text-gray-700,
         body:not(.dark) .text-gray-600,
-        body:not(.dark) .text-gray-500 {
-            color: #1f2937;
-        }
+        body:not(.dark) .text-gray-500 { color: #1f2937; }
 
         .dark .bg-white { background-color: #374151; }
         .dark .text-gray-900, .dark .text-gray-800, .dark .text-gray-700 { color: #f3f4f6; }
@@ -47,25 +42,59 @@
         .dark .divide-gray-200 > * { border-color: #6b7280; }
         .dark .hover\:bg-gray-50:hover { background-color: #4b5563; }
 
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
-        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border-radius: 1rem; box-shadow: 0 8px 16px rgba(0,0,0,0.2); width: 90%; max-width: 500px; text-align: center; }
+        /* --- Modais --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 1rem;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
         .dark .modal-content { background-color: #374151; color: #f3f4f6; }
         .modal-buttons { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
+
+        /* --- Feedback de edição --- */
         .edited-flash { background-color: #d1fae5 !important; transition: background-color 0.5s ease-out; }
         .dark .edited-flash { background-color: #10b981 !important; }
+
+        /* --- Linhas da tabela --- */
         .corrected-row { background-color: #eff6ff; }
         .dark .corrected-row { background-color: #1e3a8a; }
         .corrected-row:hover { background-color: #dbeafe !important; }
         .dark .corrected-row:hover { background-color: #1e40af !important; }
-
         .pending-sync-row { background-color: #fef9c3; }
         .dark .pending-sync-row { background-color: #78350f; }
 
-        .color-dot { width: 2rem; height: 2rem; border-radius: 9999px; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
+        /* --- Color picker --- */
+        .color-dot {
+            width: 2rem; height: 2rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
         .color-dot:hover { transform: scale(1.1); }
-        .color-dot.selected { border-color: #2563eb; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb; }
+        .color-dot.selected {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
+        }
         .dark .color-dot.selected { box-shadow: 0 0 0 2px #374151, 0 0 0 4px #60a5fa; }
 
+        /* --- Projetos --- */
         .project-item {
             cursor: pointer;
             transition: background-color 0.2s;
@@ -73,14 +102,9 @@
             justify-content: space-between;
             align-items: center;
         }
-        .project-item.active {
-            background-color: #dbeafe; /* blue-100 */
-            font-weight: 600;
-        }
-        .dark .project-item.active {
-            background-color: #1e40af; /* blue-800 */
-        }
-        
+        .project-item.active { background-color: #dbeafe; font-weight: 600; }
+        .dark .project-item.active { background-color: #1e40af; }
+
         .project-card {
             border-radius: 0.75rem;
             padding: 1.5rem;
@@ -92,12 +116,17 @@
             transform: translateY(-5px);
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
         }
-        
+
+        /* --- Validação de formulário --- */
+        .input-error { border-color: #ef4444 !important; }
+        .field-error { color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem; text-align: left; }
+
+        /* --- Responsivo: tabela em cards no mobile --- */
         @media screen and (max-width: 768px) {
             #points-preview table, #points-preview thead, #points-preview tbody, #points-preview tr, #points-preview td { display: block; }
             #points-preview table { box-shadow: none; }
             #points-preview thead { display: none; }
-            #points-preview tr { margin-bottom: 1.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); border: 1px solid #e5e7eb; }
+            #points-preview tr { margin-bottom: 1.5rem; border-radius: 0.75rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06); border: 1px solid #e5e7eb; }
             .dark #points-preview tr { border-color: #374151; }
             #points-preview td { padding-left: 50%; position: relative; text-align: right; border: none; padding-top: 0.75rem; padding-bottom: 0.75rem; padding-right: 1rem; display: flex; align-items: center; justify-content: flex-end; }
             #points-preview td:not(:last-child) { border-bottom: 1px solid #f3f4f6; }
@@ -111,94 +140,141 @@
 </head>
 <body class="flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
 
+    <!-- Tela de autenticação -->
     <div id="auth-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center transition-colors duration-300 hidden">
-        <h1 class="text-3xl font-bold mb-6 text-black dark:text-white flex items-center justify-center"><span>ToTheP</span><svg class="h-8 w-8 text-blue-600 mx-[-4px]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg><span>int</span></h1>
-        
-        <form id="login-form">
+        <h1 class="text-3xl font-bold mb-6 text-black dark:text-white flex items-center justify-center">
+            <span>ToTheP</span>
+            <svg class="h-8 w-8 text-blue-600 mx-[-4px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>
+            <span>int</span>
+        </h1>
+
+        <form id="login-form" novalidate>
             <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Entrar</h2>
-            <div class="space-y-4">
-                <input type="email" id="login-email" placeholder="E-mail" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                <input type="password" id="login-password" placeholder="Senha" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            <div class="space-y-3">
+                <div>
+                    <input type="email" id="login-email" placeholder="E-mail" autocomplete="email"
+                        class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p id="login-email-error" class="field-error hidden"></p>
+                </div>
+                <div>
+                    <input type="password" id="login-password" placeholder="Senha" autocomplete="current-password"
+                        class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p id="login-password-error" class="field-error hidden"></p>
+                </div>
             </div>
             <button type="submit" id="login-button" class="mt-6 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition-colors duration-200">Entrar</button>
         </form>
 
-        <form id="register-form" class="hidden">
-             <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Criar Conta</h2>
-            <div class="space-y-4">
-                <input type="text" id="register-username" placeholder="Nome de usuário (letras minúsculas e números)" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                <p id="username-feedback" class="text-xs text-left h-4 px-2"></p>
-                <input type="email" id="register-email" placeholder="E-mail" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                <input type="password" id="register-password" placeholder="Senha (mínimo 6 caracteres)" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <form id="register-form" class="hidden" novalidate>
+            <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Criar Conta</h2>
+            <div class="space-y-3">
+                <div>
+                    <input type="text" id="register-username" placeholder="Nome de usuário (letras minúsculas e números)" autocomplete="username"
+                        class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p id="username-feedback" class="text-xs text-left h-4 px-2"></p>
+                </div>
+                <div>
+                    <input type="email" id="register-email" placeholder="E-mail" autocomplete="email"
+                        class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p id="register-email-error" class="field-error hidden"></p>
+                </div>
+                <div>
+                    <input type="password" id="register-password" placeholder="Senha (mínimo 6 caracteres)" autocomplete="new-password"
+                        class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p id="register-password-error" class="field-error hidden"></p>
+                </div>
             </div>
             <button type="submit" id="register-button" class="mt-6 w-full bg-green-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-green-600 transition-colors duration-200">Registrar</button>
         </form>
 
-        <p id="auth-error" class="text-red-500 text-sm mt-4 h-4"></p>
-        
+        <p id="auth-error" class="text-red-500 text-sm mt-4 h-4" role="alert" aria-live="polite"></p>
+
         <p class="mt-6 text-sm">
             <a href="#" id="toggle-to-register" class="font-medium text-blue-600 hover:text-blue-500">Ainda não tem uma conta? Registre-se</a>
             <a href="#" id="toggle-to-login" class="font-medium text-blue-600 hover:text-blue-500 hidden">Já tem uma conta? Entre</a>
         </p>
     </div>
-    
+
+    <!-- Dashboard -->
     <div id="dashboard-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-4xl transition-colors duration-300 hidden">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold mb-4 text-black dark:text-white flex items-center justify-center"><span>ToTheP</span><svg class="h-10 w-10 text-blue-600 mx-[-6px]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg><span>int</span></h1>
+            <h1 class="text-4xl font-bold mb-4 text-black dark:text-white flex items-center justify-center">
+                <span>ToTheP</span>
+                <svg class="h-10 w-10 text-blue-600 mx-[-6px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>
+                <span>int</span>
+            </h1>
             <p class="text-gray-900 dark:text-gray-400 text-sm max-w-xl mx-auto">Aplicação desenvolvida por Ailthon Cavagnari sob orientação do Professor Rafael Kalinoski no âmbito da disciplina de Planejamento Urbano do curso de Arquitetura e Urbanismo do Centro Universitário de Tecnologia de Curitiba (UNIFATEC).</p>
         </div>
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-3xl font-bold text-black dark:text-white">Meus Projetos</h2>
-            <div class="flex gap-2">
-                 <button id="dashboard-logout-button" title="Sair" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
-            </div>
+            <button id="dashboard-logout-button" aria-label="Sair da conta" title="Sair"
+                class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-400">
+                <svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </button>
         </div>
-        <div id="owned-projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Cards de projetos do usuário serão inseridos aqui -->
-        </div>
-
+        <div id="owned-projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         <div id="shared-projects-section" class="mt-12 hidden">
             <h2 class="text-3xl font-bold text-black dark:text-white mb-6">Projetos Compartilhados Comigo</h2>
-            <div id="shared-projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Cards de projetos compartilhados serão inseridos aqui -->
-            </div>
+            <div id="shared-projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
     </div>
 
+    <!-- Tela principal do app -->
     <div id="main-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl text-center relative transition-colors duration-300 hidden">
-        <div id="offline-indicator" class="hidden p-3 mb-4 rounded-xl bg-yellow-400 text-yellow-900 text-center font-bold dark:bg-yellow-700 dark:text-yellow-200">
+        <div id="offline-indicator" class="hidden p-3 mb-4 rounded-xl bg-yellow-400 text-yellow-900 text-center font-bold dark:bg-yellow-700 dark:text-yellow-200" role="status">
             Você está offline. Os pontos serão salvos localmente.
         </div>
+
+        <!-- Botões de ação no canto superior direito -->
         <div class="absolute top-4 right-4 flex gap-2 z-10">
-             <button id="share-project-button" title="Compartilhar Projeto" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none hidden"><svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg></button>
-             <button id="manage-projects-button" title="Gerenciar Projetos" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-black dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg></button>
-            <button id="logout-button" title="Sair" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button>
-            <button id="settings-button" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none"><svg class="h-6 w-6 text-black dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
-            <button id="theme-toggle" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none">
-                <svg id="sun-icon" class="h-6 w-6 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 4 L12 2 M12 20 L12 22 M4 12 L2 12 M20 12 L22 12 M6.34 6.34 L4.93 4.93 M17.66 6.34 L19.07 4.93 M6.34 17.66 L4.93 19.07 M17.66 17.66 L19.07 19.07" /></svg>
-                <svg id="moon-icon" class="h-6 w-6 text-indigo-200" fill="currentColor" viewBox="0 0 24 24" style="display: none;"><path d="M21 12.79a9 9 0 1 1-9.92-9.92 7 7 0 0 0 9.92 9.92z"/></svg>
+            <button id="share-project-button" aria-label="Compartilhar projeto" title="Compartilhar Projeto"
+                class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 hidden">
+                <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg>
+            </button>
+            <button id="manage-projects-button" aria-label="Gerenciar projetos" title="Gerenciar Projetos"
+                class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                <svg class="h-6 w-6 text-black dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+            </button>
+            <button id="logout-button" aria-label="Sair da conta" title="Sair"
+                class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-400">
+                <svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </button>
+            <button id="settings-button" aria-label="Abrir configurações" title="Configurações"
+                class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                <svg class="h-6 w-6 text-black dark:text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+            <button id="theme-toggle" aria-label="Alternar tema claro/escuro" title="Alternar tema"
+                class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                <svg id="sun-icon" class="h-6 w-6 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4L12 2 M12 20L12 22 M4 12L2 12 M20 12L22 12 M6.34 6.34L4.93 4.93 M17.66 6.34L19.07 4.93 M6.34 17.66L4.93 19.07 M17.66 17.66L19.07 19.07"/>
+                </svg>
+                <svg id="moon-icon" class="h-6 w-6 text-indigo-200" fill="currentColor" viewBox="0 0 24 24" style="display:none;" aria-hidden="true"><path d="M21 12.79a9 9 0 1 1-9.92-9.92 7 7 0 0 0 9.92 9.92z"/></svg>
             </button>
         </div>
-        
+
         <div class="pt-16 sm:pt-0">
             <div id="project-bar" class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center">
-                <button id="back-to-dashboard-button" title="Voltar ao Início" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 mr-2">
-                    <svg class="h-6 w-6 text-gray-800 dark:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                <button id="back-to-dashboard-button" aria-label="Voltar ao início" title="Voltar ao Início"
+                    class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 mr-2 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    <svg class="h-6 w-6 text-gray-800 dark:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 </button>
                 <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 truncate pr-2 flex-1 text-center">Projeto: <span id="current-project-name">Nenhum</span></h2>
             </div>
         </div>
-        
-        <div id="map"></div>
+
+        <div id="map" role="application" aria-label="Mapa interativo de pontos"></div>
 
         <div class="mb-4 flex gap-2">
-            <input type="text" id="search-input" placeholder="Pesquisar endereço ou coordenadas..." class="flex-1 p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <label for="search-input" class="sr-only">Pesquisar endereço ou coordenadas</label>
+            <input type="text" id="search-input" placeholder="Pesquisar endereço ou coordenadas..."
+                class="flex-1 p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <button id="search-button" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Pesquisar</button>
         </div>
 
-        <div id="status-message" class="p-3 rounded-xl mb-4 text-sm font-medium hidden"></div>
+        <div id="status-message" class="p-3 rounded-xl mb-4 text-sm font-medium hidden" role="status" aria-live="polite"></div>
 
-        <div id="coordinates-display" class="bg-gray-100 p-4 rounded-xl mb-6 hidden">
+        <div id="coordinates-display" class="bg-gray-100 p-4 rounded-xl mb-6 hidden" aria-live="polite">
             <p class="text-gray-600 text-sm">Coordenadas Atuais:</p>
             <p id="latitude-text" class="text-xl font-bold text-gray-900">Latitude: --</p>
             <p id="longitude-text" class="text-xl font-bold text-gray-900">Longitude: --</p>
@@ -206,16 +282,16 @@
         </div>
 
         <div id="capture-options" class="hidden bg-gray-50 dark:bg-gray-800 p-4 rounded-xl mb-4">
-             <div class="mb-4">
+            <div class="mb-4">
                 <label for="point-name-input" class="block text-sm font-medium text-gray-900 mb-2">Nome do Ponto</label>
-                <input type="text" id="point-name-input" placeholder="Digite o nome da sua marcação aqui" class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <input type="text" id="point-name-input" placeholder="Digite o nome da sua marcação aqui"
+                    class="w-full p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
-             <div id="color-picker-container">
+            <div id="color-picker-container">
                 <label class="block text-sm font-medium text-gray-900 mb-2">Cor do Marcador</label>
-                <div id="color-palette" class="flex justify-center gap-3"></div>
+                <div id="color-palette" class="flex justify-center gap-3" role="radiogroup" aria-label="Selecionar cor do marcador"></div>
             </div>
         </div>
-
 
         <div class="flex flex-col gap-4">
             <button id="start-button" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Iniciar GPS</button>
@@ -225,22 +301,22 @@
             <button id="download-button" class="w-full bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" disabled>Exportar CSV</button>
             <button id="clear-local-data-button" class="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-yellow-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50" disabled>Limpar Todos os Pontos</button>
         </div>
-        
+
         <div id="points-preview" class="mt-8 hidden">
             <h3 class="text-xl font-bold mb-4 text-gray-900">Pontos Capturados: (<span id="points-count">0</span>)</h3>
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white rounded-xl shadow-lg">
                     <thead class="bg-gray-200">
                         <tr>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">#</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cor</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nome do Ponto</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Latitude (Final)</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Longitude (Final)</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Criado por</th>
-                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Precisão Orig.</th>
-                            <th class="py-2 px-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Ação</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" scope="col">#</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" scope="col">Cor</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" scope="col">Nome do Ponto</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" scope="col">Latitude (Final)</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" scope="col">Longitude (Final)</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" scope="col">Status</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" scope="col">Criado por</th>
+                            <th class="py-2 px-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" scope="col">Precisão Orig.</th>
+                            <th class="py-2 px-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" scope="col">Ação</th>
                         </tr>
                     </thead>
                     <tbody id="points-table-body" class="divide-y divide-gray-200 text-gray-900"></tbody>
@@ -253,24 +329,142 @@
         </div>
     </div>
 
-    <!-- Modais -->
-    <div id="projects-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Gerenciar Projetos</h3><div><h4 class="font-semibold mb-2">Meus Projetos</h4><div id="projects-list" class="max-h-60 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div></div><div class="modal-buttons"><button id="close-projects-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
-    <div id="create-project-modal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-4 text-center">Criar Novo Projeto</h3><div class="mb-4"><label for="new-project-name-input" class="block text-sm font-medium text-gray-700 mb-1">Nome do Projeto</label><input type="text" id="new-project-name-input" class="w-full p-2 rounded-lg border border-gray-300" placeholder="Ex: Levantamento Rua Principal"></div><div class="modal-buttons"><button id="confirm-create-project-button" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Criar e Abrir</button><button id="cancel-create-project-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
-    <div id="delete-project-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Excluir Projeto?</p><p id="delete-project-confirm-text"></p><div class="modal-buttons"><button id="delete-project-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, excluir</button><button id="delete-project-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
-    <div id="confirmation-modal" class="modal"><div class="modal-content"><p>Gostaria de incluir a localização aproximada desse ponto?</p><div class="modal-buttons"><button id="confirm-yes" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600">Sim</button><button id="confirm-no" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-600">Não</button></div></div></div>
-    <div id="clear-data-modal" class="modal"><div class="modal-content"><p class="font-bold text-lg mb-2">Atenção!</p><p>Tem certeza que deseja apagar TODOS os pontos deste projeto? Esta ação é irreversível.</p><div class="modal-buttons"><button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700">Sim, apagar pontos</button><button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Cancelar</button></div></div></div>
-    <div id="settings-modal" class="modal"><div class="modal-content text-left overflow-y-auto max-h-[90vh]"><h3 class="text-xl font-bold mb-4 text-center">Configurações</h3><div class="mb-4"><label for="api-key-input" class="block text-sm font-medium text-gray-900 mb-1">Chave de API do Google Maps</label><input type="password" id="api-key-input" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole sua chave aqui"><p class="text-xs text-gray-600 mt-1">Sua chave é salva apenas no seu navegador.</p></div><div class="mb-4"><p class="block text-sm font-medium text-gray-900 mb-1">Configuração Firebase</p><textarea id="firebase-config-input" rows="8" class="w-full p-2 rounded-lg border border-gray-300 font-mono text-xs" placeholder="Cole o objeto de configuração do Firebase aqui"></textarea><p class="text-xs text-gray-600 mt-1">Necessário para usar a aplicação fora do ambiente de desenvolvimento.</p></div><div class="modal-buttons"><button id="save-settings-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">Salvar e Recarregar</button><button id="close-settings-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
-    <div id="share-modal" class="modal"><div class="modal-content text-left"><h3 class="text-xl font-bold mb-4 text-center">Compartilhar Projeto "<span id="share-project-name"></span>"</h3><div class="mb-4"><h4 class="font-semibold mb-2">Convidar Novo Membro</h4><div class="flex gap-2"><input type="text" id="share-username-input" class="flex-1 p-2 rounded-lg border border-gray-300" placeholder="Nome de usuário"><button id="invite-button" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-600">Convidar</button></div></div><div><h4 class="font-semibold mb-2">Membros do Projeto</h4><div id="members-list" class="max-h-40 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div></div><div class="modal-buttons"><button id="close-share-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600">Fechar</button></div></div></div>
-    <div id="set-username-modal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-4">Escolha um nome de usuário</h3><p class="text-sm text-gray-600 mb-4">Este será seu nome único na plataforma para ser encontrado e convidado para projetos.</p><div class="space-y-2"><input type="text" id="set-username-input" class="w-full p-3 rounded-xl border" placeholder="Nome de usuário (letras minúsculas e números)"><p id="set-username-feedback" class="text-xs text-left h-4 px-2"></p></div><div class="modal-buttons"><button id="confirm-set-username-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl">Salvar</button></div></div></div>
-    
+    <!-- ==================== MODAIS ==================== -->
+
+    <div id="projects-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="projects-modal-title">
+        <div class="modal-content text-left">
+            <h3 id="projects-modal-title" class="text-xl font-bold mb-4 text-center">Gerenciar Projetos</h3>
+            <div>
+                <h4 class="font-semibold mb-2">Meus Projetos</h4>
+                <div id="projects-list" class="max-h-60 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div>
+            </div>
+            <div class="modal-buttons">
+                <button id="close-projects-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="create-project-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="create-project-modal-title">
+        <div class="modal-content">
+            <h3 id="create-project-modal-title" class="text-xl font-bold mb-4 text-center">Criar Novo Projeto</h3>
+            <div class="mb-4">
+                <label for="new-project-name-input" class="block text-sm font-medium text-gray-700 mb-1">Nome do Projeto</label>
+                <input type="text" id="new-project-name-input" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Levantamento Rua Principal">
+            </div>
+            <div class="modal-buttons">
+                <button id="confirm-create-project-button" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400">Criar e Abrir</button>
+                <button id="cancel-create-project-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="delete-project-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-project-modal-title">
+        <div class="modal-content">
+            <p id="delete-project-modal-title" class="font-bold text-lg mb-2">Excluir Projeto?</p>
+            <p id="delete-project-confirm-text"></p>
+            <div class="modal-buttons">
+                <button id="delete-project-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">Sim, excluir</button>
+                <button id="delete-project-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmation-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmation-modal-text">
+        <div class="modal-content">
+            <p id="confirmation-modal-text"></p>
+            <div class="modal-buttons">
+                <button id="confirm-yes" class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400">Sim</button>
+                <button id="confirm-no" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400">Não</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="clear-data-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="clear-data-modal-title">
+        <div class="modal-content">
+            <p id="clear-data-modal-title" class="font-bold text-lg mb-2">Atenção!</p>
+            <p>Tem certeza que deseja apagar TODOS os pontos deste projeto? Esta ação é irreversível.</p>
+            <div class="modal-buttons">
+                <button id="clear-data-confirm" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">Sim, apagar pontos</button>
+                <button id="clear-data-cancel" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+        <div class="modal-content text-left overflow-y-auto max-h-[90vh]">
+            <h3 id="settings-modal-title" class="text-xl font-bold mb-4 text-center">Configurações</h3>
+
+            <div class="mb-4">
+                <label for="api-key-input" class="block text-sm font-medium text-gray-900 mb-1">Chave de API do Google Maps</label>
+                <input type="password" id="api-key-input" class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole sua chave aqui">
+                <!-- MELHORIA: aviso de segurança sobre a API key -->
+                <div class="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 dark:bg-yellow-900 dark:border-yellow-700 dark:text-yellow-200">
+                    <strong>⚠️ Segurança:</strong> Sua chave é armazenada apenas no seu navegador, mas fica visível no tráfego de rede.
+                    Para protegê-la, <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" class="underline font-semibold">restrinja-a por domínio no Google Cloud Console</a>.
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <p class="block text-sm font-medium text-gray-900 mb-1">Configuração Firebase</p>
+                <textarea id="firebase-config-input" rows="8" class="w-full p-2 rounded-lg border border-gray-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cole o objeto de configuração do Firebase aqui" aria-describedby="firebase-config-hint"></textarea>
+                <p id="firebase-config-hint" class="text-xs text-gray-600 mt-1">Necessário para usar a aplicação fora do ambiente de desenvolvimento.</p>
+            </div>
+
+            <div class="modal-buttons">
+                <button id="save-settings-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Salvar e Recarregar</button>
+                <button id="close-settings-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="share-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
+        <div class="modal-content text-left">
+            <h3 id="share-modal-title" class="text-xl font-bold mb-4 text-center">Compartilhar Projeto "<span id="share-project-name"></span>"</h3>
+            <div class="mb-4">
+                <h4 class="font-semibold mb-2">Convidar Novo Membro</h4>
+                <div class="flex gap-2">
+                    <label for="share-username-input" class="sr-only">Nome de usuário para convidar</label>
+                    <input type="text" id="share-username-input" class="flex-1 p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome de usuário">
+                    <button id="invite-button" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">Convidar</button>
+                </div>
+            </div>
+            <div>
+                <h4 class="font-semibold mb-2">Membros do Projeto</h4>
+                <div id="members-list" class="max-h-40 overflow-y-auto divide-y dark:divide-gray-600 border rounded-lg dark:border-gray-600"></div>
+            </div>
+            <div class="modal-buttons">
+                <button id="close-share-modal-button" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="set-username-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="set-username-modal-title">
+        <div class="modal-content">
+            <h3 id="set-username-modal-title" class="text-xl font-bold mb-4">Escolha um nome de usuário</h3>
+            <p class="text-sm text-gray-600 mb-4">Este será seu nome único na plataforma para ser encontrado e convidado para projetos.</p>
+            <div class="space-y-2">
+                <label for="set-username-input" class="sr-only">Nome de usuário</label>
+                <input type="text" id="set-username-input" class="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome de usuário (letras minúsculas e números)" autocomplete="username">
+                <p id="set-username-feedback" class="text-xs text-left h-4 px-2" aria-live="polite"></p>
+            </div>
+            <div class="modal-buttons">
+                <button id="confirm-set-username-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400">Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, getDocs, writeBatch, query, orderBy, serverTimestamp, where, setDoc, getDoc, arrayUnion, arrayRemove, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        
+
         document.addEventListener('DOMContentLoaded', () => {
+
+            // ================================================================
+            // STATE MANAGER
+            // ================================================================
             const StateManager = {
                 app: null, db: null, auth: null, userId: null,
                 currentUser: null,
@@ -289,7 +483,13 @@
                 pointsUnsubscribe: null,
             };
 
+            // ================================================================
+            // UI MANAGER
+            // ================================================================
             const UIManager = {
+                _statusDismissTimer: null,
+                _lastOpener: null,
+
                 elements: {
                     mainContainer: document.getElementById('main-container'),
                     offlineIndicator: document.getElementById('offline-indicator'),
@@ -334,6 +534,7 @@
                     clearLocalDataButton: document.getElementById('clear-local-data-button'),
                     colorPalette: document.getElementById('color-palette'),
                     confirmationModal: document.getElementById('confirmation-modal'),
+                    confirmationModalText: document.getElementById('confirmation-modal-text'),
                     confirmYesButton: document.getElementById('confirm-yes'),
                     confirmNoButton: document.getElementById('confirm-no'),
                     clearDataModal: document.getElementById('clear-data-modal'),
@@ -379,6 +580,16 @@
                     this.applyTheme(SettingsManager.getTheme());
                     this.initColorPicker();
                     this.updateOnlineStatus();
+                    this._setupModalBackdrops();
+                },
+
+                // MELHORIA: fechar modal ao clicar no backdrop
+                _setupModalBackdrops() {
+                    document.querySelectorAll('.modal').forEach(modal => {
+                        modal.addEventListener('click', (e) => {
+                            if (e.target === modal) this.hideModal(modal);
+                        });
+                    });
                 },
 
                 updateOnlineStatus() {
@@ -388,19 +599,39 @@
                 initColorPicker() {
                     const palette = this.elements.colorPalette;
                     palette.innerHTML = '';
-                    StateManager.availableColors.forEach(color => {
+                    StateManager.availableColors.forEach((color, i) => {
                         const dot = document.createElement('div');
                         dot.className = 'color-dot';
                         dot.style.backgroundColor = color;
                         dot.dataset.color = color;
+                        dot.setAttribute('role', 'radio');
+                        dot.setAttribute('aria-label', `Cor ${i + 1}`);
+                        dot.setAttribute('tabindex', '0');
                         dot.addEventListener('click', () => this.handleColorSelect(color));
+                        dot.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                this.handleColorSelect(color);
+                            }
+                        });
                         palette.appendChild(dot);
                     });
                     this.updateSelectedColorUI();
                 },
 
-                handleColorSelect(color) { StateManager.selectedColor = color; this.updateSelectedColorUI(); },
-                updateSelectedColorUI() { this.elements.colorPalette.querySelectorAll('.color-dot').forEach(dot => dot.classList.toggle('selected', dot.dataset.color === StateManager.selectedColor)); },
+                handleColorSelect(color) {
+                    StateManager.selectedColor = color;
+                    this.updateSelectedColorUI();
+                },
+
+                updateSelectedColorUI() {
+                    this.elements.colorPalette.querySelectorAll('.color-dot').forEach(dot => {
+                        const isSelected = dot.dataset.color === StateManager.selectedColor;
+                        dot.classList.toggle('selected', isSelected);
+                        dot.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+                    });
+                },
+
                 setButtonText(id, text) { this.elements[id].textContent = text; },
 
                 setUIState(collectingStatus) {
@@ -421,27 +652,54 @@
                     this.elements.stopButton.classList.toggle('hidden', !inCollectionMode);
                 },
 
+                // MELHORIA: auto-dismiss para mensagens de sucesso
                 showMessage(message, type = 'info', isAuthError = false) {
                     const el = isAuthError ? this.elements.authError : this.elements.statusMessage;
                     el.textContent = message;
                     el.className = isAuthError ? 'text-red-500 text-sm mt-4 h-4' : 'p-3 rounded-xl mb-4 text-sm font-medium';
-                    if(!isAuthError) {
+
+                    if (!isAuthError) {
                         const typeClasses = {
                             error: ['bg-red-100', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-300'],
                             success: ['bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-300'],
                             info: ['bg-yellow-100', 'text-yellow-800', 'dark:bg-yellow-900', 'dark:text-yellow-300']
                         };
                         el.classList.add(...(typeClasses[type] || typeClasses.info));
+
+                        clearTimeout(this._statusDismissTimer);
+                        if (type === 'success') {
+                            this._statusDismissTimer = setTimeout(() => {
+                                el.textContent = '';
+                                el.className = 'p-3 rounded-xl mb-4 text-sm font-medium hidden';
+                            }, 3000);
+                        }
                     }
                 },
-                
-                showModal(modal) { modal.style.display = 'block'; },
-                hideModal(modal) { modal.style.display = 'none'; },
-                
+
+                // MELHORIA: gestão de foco nos modais
+                showModal(modal, openerElement = null) {
+                    modal.style.display = 'block';
+                    if (openerElement) this._lastOpener = openerElement;
+                    // Foca no primeiro elemento interativo do modal
+                    requestAnimationFrame(() => {
+                        const focusable = modal.querySelector('button, input, textarea, [tabindex]:not([tabindex="-1"])');
+                        if (focusable) focusable.focus();
+                    });
+                },
+
+                hideModal(modal) {
+                    modal.style.display = 'none';
+                    // Retorna o foco ao elemento que abriu o modal
+                    if (this._lastOpener) {
+                        this._lastOpener.focus();
+                        this._lastOpener = null;
+                    }
+                },
+
                 showConfirmation(question) {
                     return new Promise(resolve => {
                         const modal = this.elements.confirmationModal;
-                        modal.querySelector('p').textContent = question;
+                        this.elements.confirmationModalText.textContent = question;
                         this.showModal(modal);
                         this.elements.confirmYesButton.onclick = () => { this.hideModal(modal); resolve(true); };
                         this.elements.confirmNoButton.onclick = () => { this.hideModal(modal); resolve(false); };
@@ -449,49 +707,48 @@
                 },
 
                 showDeleteConfirmation(modal, textElement, confirmText) {
-                     return new Promise(resolve => {
-                         textElement.textContent = confirmText;
-                         this.showModal(modal);
-                         this.elements.deleteProjectConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
-                         this.elements.deleteProjectCancel.onclick = () => { this.hideModal(modal); resolve(false); };
-                     });
+                    return new Promise(resolve => {
+                        textElement.textContent = confirmText;
+                        this.showModal(modal);
+                        this.elements.deleteProjectConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
+                        this.elements.deleteProjectCancel.onclick = () => { this.hideModal(modal); resolve(false); };
+                    });
                 },
-                
+
                 showClearDataConfirmation() {
-                     return new Promise(resolve => {
-                         const modal = this.elements.clearDataModal;
-                         this.showModal(modal);
-                         this.elements.clearDataConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
-                         this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
-                     });
+                    return new Promise(resolve => {
+                        const modal = this.elements.clearDataModal;
+                        this.showModal(modal);
+                        this.elements.clearDataConfirm.onclick = () => { this.hideModal(modal); resolve(true); };
+                        this.elements.clearDataCancel.onclick = () => { this.hideModal(modal); resolve(false); };
+                    });
                 },
-                
+
                 updateCoordinatesDisplay(lat, lon, acc) {
                     this.elements.latitudeText.textContent = `Latitude: ${lat.toFixed(6)}`;
                     this.elements.longitudeText.textContent = `Longitude: ${lon.toFixed(6)}`;
                     this.elements.accuracyText.className = `text-sm font-medium ${this.getAccuracyColor(acc)}`;
                     this.elements.accuracyText.textContent = `Precisão: \u00B1 ${acc.toFixed(1)}m`;
                 },
-                
+
                 getAccuracyColor(accuracy) {
                     if (accuracy === 0) return 'text-blue-500 dark:text-blue-400';
                     if (accuracy <= 5) return 'text-green-500 dark:text-green-400';
                     if (accuracy <= 15) return 'text-yellow-500 dark:text-yellow-400';
                     return 'text-red-500 dark:text-red-400';
                 },
-                
+
+                // MELHORIA: tabela com atualização inteligente (evita re-render total desnecessário)
                 updatePreviewTable() {
-                    this.elements.pointsTableBody.innerHTML = '';
                     const combinedPoints = [...StateManager.localCoordinates, ...OfflineManager.getQueue()];
                     this.elements.pointsCount.textContent = combinedPoints.length;
-                    
+
                     if (StateManager.isMapInitialized) {
                         StateManager.markers.forEach(marker => StateManager.map.removeLayer(marker));
                         StateManager.markers = [];
 
                         combinedPoints.forEach((point, index) => {
                             MapManager.createPointMarker(point);
-                            this.createTableRow(point, index);
                         });
 
                         if (StateManager.isSwitchingProject && combinedPoints.length > 0) {
@@ -509,12 +766,21 @@
                         }
                     }
 
+                    // Rebuild da tabela apenas quando necessário
+                    const currentIds = combinedPoints.map(p => p.id + (p.nameEdited ? '-e' : '') + (p.name || '')).join(',');
+                    if (this._lastRenderedIds === currentIds) return;
+                    this._lastRenderedIds = currentIds;
+
+                    this.elements.pointsTableBody.innerHTML = '';
+                    combinedPoints.forEach((point, index) => this.createTableRow(point, index));
+
                     const hasData = combinedPoints.length > 0;
                     this.elements.downloadButton.disabled = !hasData;
                     this.elements.clearLocalDataButton.disabled = !hasData;
                     this.elements.pointsPreview.classList.toggle('hidden', !hasData);
                 },
-                
+
+                // MELHORIA: sem handlers inline — usa addEventListener
                 createTableRow(point, index) {
                     const row = document.createElement('tr');
                     let rowClass = 'hover:bg-gray-50 dark:hover:bg-gray-600';
@@ -523,24 +789,56 @@
                     row.className = rowClass + ' transition-colors duration-150';
 
                     const isEditable = !point.status || point.status !== 'pendingSync';
-                    
-                    row.innerHTML = `<td data-label="#" class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td><td data-label="Cor" class="py-2 px-4 whitespace-nowrap text-sm"><div class="h-4 w-4 rounded-full mx-auto" style="background-color: ${point.color || '#3b82f6'};"></div></td><td data-label="Nome" class="py-2 px-4 whitespace-nowrap text-sm font-medium ${isEditable ? 'cursor-text' : 'cursor-not-allowed text-gray-500'}" contenteditable="${isEditable}" data-id="${point.id}" onblur="App.handleEditPointName(this, '${point.id}')">${point.name}</td><td data-label="Latitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td><td data-label="Longitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td><td data-label="Status" class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${DataManager.getPointStatus(point)}</td><td data-label="Criado por" class="py-2 px-4 whitespace-nowrap text-sm text-center">${point.createdBy || 'N/A'}</td><td data-label="Precisão Orig." class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td><td data-label="Ação" class="py-2 px-4 whitespace-nowrap text-sm text-center"><button onclick="App.handleDeletePoint('${point.id}')" ${!isEditable ? 'disabled' : ''} class="text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900 ${!isEditable ? 'opacity-50 cursor-not-allowed' : ''}"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg></button></td>`;
+
+                    row.innerHTML = `
+                        <td data-label="#" class="py-2 px-4 whitespace-nowrap text-sm">${index + 1}</td>
+                        <td data-label="Cor" class="py-2 px-4 whitespace-nowrap text-sm">
+                            <div class="h-4 w-4 rounded-full mx-auto" style="background-color:${point.color || '#3b82f6'};"></div>
+                        </td>
+                        <td data-label="Nome" class="py-2 px-4 whitespace-nowrap text-sm font-medium name-cell ${isEditable ? 'cursor-text' : 'cursor-not-allowed text-gray-500'}"
+                            contenteditable="${isEditable}" data-id="${point.id}">${point.name}</td>
+                        <td data-label="Latitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.latitude.toFixed(6).replace('.', ',')}</td>
+                        <td data-label="Longitude" class="py-2 px-4 whitespace-nowrap text-sm">${point.longitude.toFixed(6).replace('.', ',')}</td>
+                        <td data-label="Status" class="py-2 px-4 whitespace-nowrap text-sm text-center font-medium">${DataManager.getPointStatus(point)}</td>
+                        <td data-label="Criado por" class="py-2 px-4 whitespace-nowrap text-sm text-center">${point.createdBy || 'N/A'}</td>
+                        <td data-label="Precisão Orig." class="py-2 px-4 whitespace-nowrap text-sm text-center font-semibold">${DataManager.getOriginalAccuracyText(point)}</td>
+                        <td data-label="Ação" class="py-2 px-4 whitespace-nowrap text-sm text-center">
+                            <button aria-label="Excluir ponto ${point.name}" ${!isEditable ? 'disabled' : ''}
+                                class="delete-btn text-red-600 hover:text-red-800 transition-colors duration-150 p-1 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 dark:hover:bg-red-900 ${!isEditable ? 'opacity-50 cursor-not-allowed' : ''}">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd"/></svg>
+                            </button>
+                        </td>`;
+
+                    // MELHORIA: event listeners via JS, sem onclick inline
+                    const deleteBtn = row.querySelector('.delete-btn');
+                    if (deleteBtn && isEditable) {
+                        deleteBtn.addEventListener('click', () => App.handleDeletePoint(point.id));
+                    }
+
+                    const nameCell = row.querySelector('.name-cell');
+                    if (nameCell && isEditable) {
+                        nameCell.addEventListener('blur', () => App.handleEditPointName(nameCell, point.id));
+                        nameCell.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); nameCell.blur(); }
+                        });
+                    }
+
                     this.elements.pointsTableBody.appendChild(row);
                 },
-                
+
                 applyTheme(theme) {
                     const isDark = theme === 'dark';
                     document.body.classList.toggle('dark', isDark);
                     this.elements.sunIcon.style.display = isDark ? 'none' : 'block';
                     this.elements.moonIcon.style.display = isDark ? 'block' : 'none';
                 },
-                
+
                 toggleDarkMode() {
                     const newTheme = document.body.classList.contains('dark') ? 'light' : 'dark';
                     this.applyTheme(newTheme);
                     SettingsManager.saveTheme(newTheme);
                 },
-                
+
                 displayUser(user) {
                     this.elements.userDisplayName.textContent = user.username || user.email;
                     this.elements.userInfo.classList.remove('hidden');
@@ -557,14 +855,12 @@
                     this.elements.mainContainer.classList.add('hidden');
                     this.elements.dashboardContainer.classList.remove('hidden');
                 },
-                
+
                 showAppScreen() {
                     this.elements.authContainer.classList.add('hidden');
                     this.elements.dashboardContainer.classList.add('hidden');
                     this.elements.mainContainer.classList.remove('hidden');
-                    if (!StateManager.isMapInitialized) {
-                        MapManager.init();
-                    }
+                    if (!StateManager.isMapInitialized) MapManager.init();
                 },
 
                 toggleAuthForms(showRegister = false) {
@@ -590,28 +886,27 @@
                         const item = document.createElement('div');
                         item.dataset.id = project.id;
                         item.className = 'project-item p-4 hover:bg-gray-100 dark:hover:bg-gray-600';
-                        if (project.id === StateManager.activeProjectId) {
-                            item.classList.add('active');
-                        }
-                        
+                        if (project.id === StateManager.activeProjectId) item.classList.add('active');
+
                         const isOwner = project.ownerId === StateManager.userId;
-                        const isShared = !isOwner;
-                        
+                        const sharedIcon = !isOwner
+                            ? `<svg class="w-4 h-4 inline-block text-blue-500 ml-1" title="Compartilhado com você" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>` : '';
+
                         const nameSpan = document.createElement('span');
-                        nameSpan.innerHTML = `${project.name} ${isShared ? '<svg class="w-4 h-4 inline-block text-blue-500 ml-1" title="Compartilhado com você" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>' : ''}`;
-                        nameSpan.onclick = () => App.handleProjectSelect(project.id);
+                        nameSpan.innerHTML = `${project.name} ${sharedIcon}`;
+                        nameSpan.addEventListener('click', () => App.handleProjectSelect(project.id));
                         item.appendChild(nameSpan);
 
-                        if(isOwner) {
+                        if (isOwner) {
                             const deleteBtn = document.createElement('button');
-                            deleteBtn.innerHTML = '<svg class="w-5 h-5 text-red-500 hover:text-red-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd" /></svg>';
-                            deleteBtn.onclick = (e) => {
+                            deleteBtn.setAttribute('aria-label', `Excluir projeto ${project.name}`);
+                            deleteBtn.innerHTML = `<svg class="w-5 h-5 text-red-500 hover:text-red-700" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6v10h6V6H7z" clip-rule="evenodd"/></svg>`;
+                            deleteBtn.addEventListener('click', (e) => {
                                 e.stopPropagation();
                                 App.handleDeleteProject(project.id, project.name);
-                            };
+                            });
                             item.appendChild(deleteBtn);
                         }
-
                         this.elements.projectsList.appendChild(item);
                     });
                 },
@@ -628,102 +923,266 @@
                     const ownedProjects = StateManager.projects.filter(p => p.ownerId === StateManager.userId);
                     const sharedProjects = StateManager.projects.filter(p => p.ownerId !== StateManager.userId);
 
-                    const createCardHTML = `<div id="create-new-project-card" class="project-card bg-green-500 text-white flex flex-col items-center justify-center"><svg class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg><h3 class="font-bold text-lg">Criar Novo Projeto</h3></div>`;
-                    ownedGrid.insertAdjacentHTML('beforeend', createCardHTML);
+                    // Card: Criar novo projeto
+                    const createCard = document.createElement('div');
+                    createCard.id = 'create-new-project-card';
+                    createCard.className = 'project-card bg-green-500 text-white flex flex-col items-center justify-center';
+                    createCard.setAttribute('role', 'button');
+                    createCard.setAttribute('tabindex', '0');
+                    createCard.setAttribute('aria-label', 'Criar novo projeto');
+                    createCard.innerHTML = `<svg class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg><h3 class="font-bold text-lg">Criar Novo Projeto</h3>`;
+                    createCard.addEventListener('click', () => UIManager.showModal(UIManager.elements.createProjectModal, createCard));
+                    createCard.addEventListener('keydown', (e) => { if (e.key === 'Enter') createCard.click(); });
+                    ownedGrid.appendChild(createCard);
 
+                    // Cards de projetos do usuário
                     ownedProjects.forEach(p => {
                         const isSharedByMe = p.members && p.members.length > 1;
-                        const sharedIcon = isSharedByMe ? `<svg class="w-5 h-5 inline-block text-purple-500 ml-2 flex-shrink-0" title="Compartilhado por você" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>` : '';
-                        const projectCardHTML = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${sharedIcon}</h3></div>`;
-                        ownedGrid.insertAdjacentHTML('beforeend', projectCardHTML);
-                    });
-                    
-                    const manageCardHTML = `<div id="manage-all-projects-card" class="project-card bg-indigo-500 text-white flex flex-col items-center justify-center"><svg class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg><h3 class="font-bold text-lg">Gerenciar Projetos</h3></div>`;
-                    ownedGrid.insertAdjacentHTML('beforeend', manageCardHTML);
+                        const sharedIcon = isSharedByMe
+                            ? `<svg class="w-5 h-5 inline-block text-purple-500 ml-2 flex-shrink-0" title="Compartilhado por você" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>` : '';
 
+                        const card = document.createElement('div');
+                        card.dataset.id = p.id;
+                        card.className = 'project-card-item project-card bg-white dark:bg-gray-700';
+                        card.setAttribute('role', 'button');
+                        card.setAttribute('tabindex', '0');
+                        card.setAttribute('aria-label', `Abrir projeto ${p.name}`);
+                        card.innerHTML = `
+                            <div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4">
+                                <svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                            </div>
+                            <h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${sharedIcon}</h3>`;
+                        card.addEventListener('click', () => App.handleProjectSelect(p.id));
+                        card.addEventListener('keydown', (e) => { if (e.key === 'Enter') card.click(); });
+                        ownedGrid.appendChild(card);
+                    });
+
+                    // Card: Gerenciar projetos
+                    const manageCard = document.createElement('div');
+                    manageCard.id = 'manage-all-projects-card';
+                    manageCard.className = 'project-card bg-indigo-500 text-white flex flex-col items-center justify-center';
+                    manageCard.setAttribute('role', 'button');
+                    manageCard.setAttribute('tabindex', '0');
+                    manageCard.setAttribute('aria-label', 'Gerenciar todos os projetos');
+                    manageCard.innerHTML = `<svg class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg><h3 class="font-bold text-lg">Gerenciar Projetos</h3>`;
+                    manageCard.addEventListener('click', () => UIManager.showModal(UIManager.elements.projectsModal, manageCard));
+                    manageCard.addEventListener('keydown', (e) => { if (e.key === 'Enter') manageCard.click(); });
+                    ownedGrid.appendChild(manageCard);
+
+                    // Projetos compartilhados
                     if (sharedProjects.length > 0) {
                         sharedSection.classList.remove('hidden');
                         sharedProjects.forEach(p => {
-                            const sharedIcon = `<svg class="w-5 h-5 inline-block text-blue-500 ml-2 flex-shrink-0" title="Compartilhado com você" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>`;
-                            const projectCardHTML = `<div data-id="${p.id}" class="project-card-item project-card bg-white dark:bg-gray-700"><div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4"><svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg></div><h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name} ${sharedIcon}</h3></div>`;
-                            sharedGrid.insertAdjacentHTML('beforeend', projectCardHTML);
+                            const card = document.createElement('div');
+                            card.dataset.id = p.id;
+                            card.className = 'project-card-item project-card bg-white dark:bg-gray-700';
+                            card.setAttribute('role', 'button');
+                            card.setAttribute('tabindex', '0');
+                            card.setAttribute('aria-label', `Abrir projeto compartilhado ${p.name}`);
+                            card.innerHTML = `
+                                <div class="h-32 bg-gray-200 dark:bg-gray-600 rounded-md flex items-center justify-center mb-4">
+                                    <svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                                </div>
+                                <h3 class="font-bold text-lg text-gray-900 dark:text-white truncate flex items-center">${p.name}
+                                    <svg class="w-5 h-5 inline-block text-blue-500 ml-2 flex-shrink-0" title="Compartilhado com você" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
+                                </h3>`;
+                            card.addEventListener('click', () => App.handleProjectSelect(p.id));
+                            card.addEventListener('keydown', (e) => { if (e.key === 'Enter') card.click(); });
+                            sharedGrid.appendChild(card);
                         });
                     }
-
-                    document.getElementById('create-new-project-card').addEventListener('click', () => UIManager.showModal(UIManager.elements.createProjectModal));
-                    document.getElementById('manage-all-projects-card').addEventListener('click', () => UIManager.showModal(UIManager.elements.projectsModal));
-                    document.querySelectorAll('.project-card-item').forEach(card => {
-                        card.addEventListener('click', () => App.handleProjectSelect(card.dataset.id));
-                    });
                 }
             };
 
+            // ================================================================
+            // MAP MANAGER
+            // ================================================================
             const MapManager = {
                 init() {
-                    if(StateManager.isMapInitialized) return;
+                    if (StateManager.isMapInitialized) return;
                     StateManager.map = L.map('map').setView([-25.4284, -49.2733], 13);
                     this.addBaseLayers();
                     StateManager.map.on('click', this.onMapClick.bind(this));
                     StateManager.isMapInitialized = true;
                 },
+
                 addBaseLayers() {
-                    const baseLayers = { "Híbrido": L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'), L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane' })]).addTo(StateManager.map), "Ruas": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'), "Topográfico": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'), };
+                    const baseLayers = {
+                        "Híbrido": L.layerGroup([
+                            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),
+                            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { pane: 'markerPane' })
+                        ]).addTo(StateManager.map),
+                        "Ruas": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'),
+                        "Topográfico": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'),
+                    };
                     L.control.layers(baseLayers).addTo(StateManager.map);
                 },
-                async onMapClick(e) { this.stopCollecting(); StateManager.isManualCapture = true; UIManager.setButtonText('manualCaptureButton', 'Buscando...'); await this.updateMapForManualPoint(e.latlng.lat, e.latlng.lng); UIManager.showMessage('Ponto selecionado. Clique em "Registrar Ponto" para salvar.', 'success'); },
+
+                async onMapClick(e) {
+                    this.stopCollecting();
+                    StateManager.isManualCapture = true;
+                    UIManager.setButtonText('manualCaptureButton', 'Buscando...');
+                    await this.updateMapForManualPoint(e.latlng.lat, e.latlng.lng);
+                    UIManager.showMessage('Ponto selecionado. Clique em "Registrar Ponto" para salvar.', 'success');
+                },
+
                 async reverseGeocode(lat, lon) {
                     const apiKey = SettingsManager.getApiKey();
-                    if (!apiKey) { UIManager.showMessage('Chave de API do Google Maps não configurada.', 'error'); return 'Endereço não encontrado (API Key ausente)'; }
-                    try { const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`); const data = await response.json(); if (data.status === 'OK' && data.results.length > 0) return data.results[0].formatted_address; } catch (error) { console.error('Erro na geocodificação reversa:', error); }
+                    if (!apiKey) {
+                        UIManager.showMessage('Chave de API do Google Maps não configurada.', 'error');
+                        return 'Endereço não encontrado (API Key ausente)';
+                    }
+                    try {
+                        const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`);
+                        const data = await response.json();
+                        if (data.status === 'OK' && data.results.length > 0) return data.results[0].formatted_address;
+                    } catch (error) {
+                        console.error('Erro na geocodificação reversa:', error);
+                    }
                     return 'Endereço não encontrado';
                 },
+
                 startCollecting() {
-                    this.stopCollecting(); StateManager.isCollecting = true; UIManager.setButtonText('startButton', 'Localizando...'); UIManager.showMessage('Acessando localização...', 'info');
-                    if (!navigator.geolocation) { UIManager.showMessage("Seu navegador não suporta geolocalização.", 'error'); UIManager.setUIState(false); return; }
+                    this.stopCollecting();
+                    StateManager.isCollecting = true;
+                    UIManager.setButtonText('startButton', 'Localizando...');
+                    UIManager.showMessage('Acessando localização...', 'info');
+                    if (!navigator.geolocation) {
+                        UIManager.showMessage("Seu navegador não suporta geolocalização.", 'error');
+                        UIManager.setUIState(false);
+                        return;
+                    }
                     StateManager.watchId = navigator.geolocation.watchPosition(
-                        pos => { const { latitude, longitude, accuracy } = pos.coords; StateManager.lastKnownPosition = { latitude, longitude }; StateManager.lastKnownAccuracy = accuracy; UIManager.updateCoordinatesDisplay(latitude, longitude, accuracy); this.updateCurrentLocationMarker({ lat: latitude, lng: longitude }, accuracy); StateManager.map.setView([latitude, longitude], StateManager.map.getZoom() > 16 ? StateManager.map.getZoom() : 16); if (StateManager.manualMarker) { StateManager.map.removeLayer(StateManager.manualMarker); StateManager.manualMarker = null; } UIManager.showMessage('Localização encontrada. Pronta para capturar!', 'success'); UIManager.setUIState(true); },
-                        err => { this.stopCollecting(); let msg = "Erro desconhecido."; if (err.code === 1) msg = "Acesso à localização negado."; if (err.code === 2) msg = "Localização indisponível."; if (err.code === 3) msg = "Tempo esgotado."; UIManager.showMessage(msg, 'error'); },
+                        pos => {
+                            const { latitude, longitude, accuracy } = pos.coords;
+                            StateManager.lastKnownPosition = { latitude, longitude };
+                            StateManager.lastKnownAccuracy = accuracy;
+                            UIManager.updateCoordinatesDisplay(latitude, longitude, accuracy);
+                            this.updateCurrentLocationMarker({ lat: latitude, lng: longitude }, accuracy);
+                            StateManager.map.setView([latitude, longitude], StateManager.map.getZoom() > 16 ? StateManager.map.getZoom() : 16);
+                            if (StateManager.manualMarker) { StateManager.map.removeLayer(StateManager.manualMarker); StateManager.manualMarker = null; }
+                            UIManager.showMessage('Localização encontrada. Pronta para capturar!', 'success');
+                            UIManager.setUIState(true);
+                        },
+                        err => {
+                            this.stopCollecting();
+                            const msgs = { 1: "Acesso à localização negado.", 2: "Localização indisponível.", 3: "Tempo esgotado." };
+                            UIManager.showMessage(msgs[err.code] || "Erro desconhecido.", 'error');
+                        },
                         { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
                     );
                 },
+
                 stopCollecting() {
-                    if (StateManager.watchId) navigator.geolocation.clearWatch(StateManager.watchId); if (StateManager.currentLocationMarker) StateManager.map.removeLayer(StateManager.currentLocationMarker); if (StateManager.accuracyCircle) StateManager.map.removeLayer(StateManager.accuracyCircle); if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker);
-                    Object.assign(StateManager, { watchId: null, currentLocationMarker: null, accuracyCircle: null, manualMarker: null, lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null, isCollecting: false, isManualCapture: false });
-                    UIManager.setUIState(false); UIManager.showMessage("Coleta interrompida.", "info");
+                    if (StateManager.watchId) navigator.geolocation.clearWatch(StateManager.watchId);
+                    if (StateManager.currentLocationMarker) StateManager.map.removeLayer(StateManager.currentLocationMarker);
+                    if (StateManager.accuracyCircle) StateManager.map.removeLayer(StateManager.accuracyCircle);
+                    if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker);
+                    Object.assign(StateManager, {
+                        watchId: null, currentLocationMarker: null, accuracyCircle: null, manualMarker: null,
+                        lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null,
+                        isCollecting: false, isManualCapture: false
+                    });
+                    UIManager.setUIState(false);
+                    UIManager.showMessage("Coleta interrompida.", "info");
                 },
+
                 updateCurrentLocationMarker(latlng, accuracy) {
-                    if (StateManager.currentLocationMarker) { StateManager.currentLocationMarker.setLatLng(latlng); StateManager.accuracyCircle.setLatLng(latlng).setRadius(accuracy); }
-                    else { StateManager.currentLocationMarker = L.circleMarker(latlng, { radius: 8, color: '#03A9F4', fillColor: '#2196F3', fillOpacity: 0.8 }).addTo(StateManager.map).bindPopup("Sua Posição").openPopup(); StateManager.accuracyCircle = L.circle(latlng, { radius: accuracy, color: '#03A9F4', fillColor: '#2196F3', fillOpacity: 0.1, weight: 1 }).addTo(StateManager.map); }
+                    if (StateManager.currentLocationMarker) {
+                        StateManager.currentLocationMarker.setLatLng(latlng);
+                        StateManager.accuracyCircle.setLatLng(latlng).setRadius(accuracy);
+                    } else {
+                        StateManager.currentLocationMarker = L.circleMarker(latlng, { radius: 8, color: '#03A9F4', fillColor: '#2196F3', fillOpacity: 0.8 })
+                            .addTo(StateManager.map).bindPopup("Sua Posição").openPopup();
+                        StateManager.accuracyCircle = L.circle(latlng, { radius: accuracy, color: '#03A9F4', fillColor: '#2196F3', fillOpacity: 0.1, weight: 1 }).addTo(StateManager.map);
+                    }
                 },
-                createColoredIcon(color = '#3b82f6') { const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32"><path fill="${color}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13C19 5.13 15.87 2 12 2zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path fill="black" opacity="0.25" d="M12 2c-4 0-7 2.8-7 6.2 0 2.3 1 4.8 3.1 7.5L12 22l3.9-6.3c2.1-2.7 3.1-5.2 3.1-7.5C19 4.8 16 2 12 2zm0 1.5c3.3 0 5.5 2.3 5.5 4.7 0 2-1 4.3-2.9 6.8L12 19.3l-2.6-4.3C7.5 12.5 6.5 10.2 6.5 8.2 6.5 4.8 8.7 3.5 12 3.5z"/></svg>`; return L.divIcon({ html: svg, className: '', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32] }); },
-                createPointMarker(point) { const icon = this.createColoredIcon(point.color); const newMarker = L.marker([point.latitude, point.longitude], { draggable: true, id: point.id, icon: icon }).addTo(StateManager.map).bindPopup(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)}`).on('dragend', this.onMarkerDragEnd); StateManager.markers.push(newMarker); },
-                onMarkerDragEnd(e) { const { target: marker } = e; const { lat, lng } = marker.getLatLng(); const pointId = marker.options.id; DataManager.updatePointPosition(pointId, lat, lng); const point = [...StateManager.localCoordinates, ...OfflineManager.getQueue()].find(p => p.id === pointId); marker.setPopupContent(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)} (Corrigido)`); UIManager.updatePreviewTable(); UIManager.showMessage(`Ponto '${point.name}' corrigido.`, 'info'); },
-                async searchLocation(query) {
+
+                createColoredIcon(color = '#3b82f6') {
+                    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32"><path fill="${color}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13C19 5.13 15.87 2 12 2zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path fill="black" opacity="0.25" d="M12 2c-4 0-7 2.8-7 6.2 0 2.3 1 4.8 3.1 7.5L12 22l3.9-6.3c2.1-2.7 3.1-5.2 3.1-7.5C19 4.8 16 2 12 2zm0 1.5c3.3 0 5.5 2.3 5.5 4.7 0 2-1 4.3-2.9 6.8L12 19.3l-2.6-4.3C7.5 12.5 6.5 10.2 6.5 8.2 6.5 4.8 8.7 3.5 12 3.5z"/></svg>`;
+                    return L.divIcon({ html: svg, className: '', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32] });
+                },
+
+                createPointMarker(point) {
+                    const icon = this.createColoredIcon(point.color);
+                    const newMarker = L.marker([point.latitude, point.longitude], { draggable: true, id: point.id, icon })
+                        .addTo(StateManager.map)
+                        .bindPopup(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)}`)
+                        .on('dragend', this.onMarkerDragEnd);
+                    StateManager.markers.push(newMarker);
+                },
+
+                onMarkerDragEnd(e) {
+                    const { target: marker } = e;
+                    const { lat, lng } = marker.getLatLng();
+                    const pointId = marker.options.id;
+                    DataManager.updatePointPosition(pointId, lat, lng);
+                    const point = [...StateManager.localCoordinates, ...OfflineManager.getQueue()].find(p => p.id === pointId);
+                    if (point) marker.setPopupContent(`<b>${point.name}</b><br>Status: ${DataManager.getPointStatus(point)} (Corrigido)`);
+                    UIManager.updatePreviewTable();
+                    UIManager.showMessage(`Ponto '${point?.name}' corrigido.`, 'info');
+                },
+
+                async searchLocation(queryStr) {
                     UIManager.setButtonText('searchButton', 'Buscando...');
-                    if (/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query)) { const [lat, lon] = query.split(',').map(parseFloat); if (!isNaN(lat) && !isNaN(lon)) { await this.updateMapForManualPoint(lat, lon, `Coordenadas: ${query}`); UIManager.showMessage('Coordenadas localizadas.', 'success'); } else { UIManager.showMessage('Coordenadas inválidas.', 'error'); } }
-                    else { UIManager.showMessage('Pesquisando endereço...', 'info'); try { const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${SettingsManager.getApiKey()}`); const data = await response.json(); if (data.status === 'OK' && data.results.length > 0) { const { lat, lng } = data.results[0].geometry.location; await this.updateMapForManualPoint(lat, lng, data.results[0].formatted_address); UIManager.showMessage('Endereço localizado.', 'success'); } else { UIManager.showMessage('Endereço não encontrado.', 'error'); } } catch (error) { UIManager.showMessage('Erro na busca.', 'error'); } }
-                    UIManager.setButtonText('searchButton', 'Pesquisar'); UIManager.elements.searchInput.value = '';
+                    if (/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(queryStr)) {
+                        const [lat, lon] = queryStr.split(',').map(parseFloat);
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            await this.updateMapForManualPoint(lat, lon, `Coordenadas: ${queryStr}`);
+                            UIManager.showMessage('Coordenadas localizadas.', 'success');
+                        } else {
+                            UIManager.showMessage('Coordenadas inválidas.', 'error');
+                        }
+                    } else {
+                        UIManager.showMessage('Pesquisando endereço...', 'info');
+                        try {
+                            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(queryStr)}&key=${SettingsManager.getApiKey()}`);
+                            const data = await response.json();
+                            if (data.status === 'OK' && data.results.length > 0) {
+                                const { lat, lng } = data.results[0].geometry.location;
+                                await this.updateMapForManualPoint(lat, lng, data.results[0].formatted_address);
+                                UIManager.showMessage('Endereço localizado.', 'success');
+                            } else {
+                                UIManager.showMessage('Endereço não encontrado.', 'error');
+                            }
+                        } catch (error) {
+                            console.error('Erro na busca de endereço:', error);
+                            UIManager.showMessage('Erro na busca.', 'error');
+                        }
+                    }
+                    UIManager.setButtonText('searchButton', 'Pesquisar');
+                    UIManager.elements.searchInput.value = '';
                 },
+
                 async updateMapForManualPoint(lat, lon, address = null) {
-                    StateManager.isManualCapture = true; StateManager.lastKnownPosition = { latitude: lat, longitude: lon }; StateManager.lastKnownAccuracy = 0; StateManager.lastKnownAddress = address || await this.reverseGeocode(lat, lon); StateManager.map.setView([lat, lon], 16);
-                    if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); const icon = this.createColoredIcon(StateManager.selectedColor); StateManager.manualMarker = L.marker([lat, lon], { icon }).addTo(StateManager.map).bindPopup(`<b>${StateManager.lastKnownAddress}</b>`).openPopup(); UIManager.updateCoordinatesDisplay(lat, lon, 0); UIManager.setUIState(true);
+                    StateManager.isManualCapture = true;
+                    StateManager.lastKnownPosition = { latitude: lat, longitude: lon };
+                    StateManager.lastKnownAccuracy = 0;
+                    StateManager.lastKnownAddress = address || await this.reverseGeocode(lat, lon);
+                    StateManager.map.setView([lat, lon], 16);
+                    if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker);
+                    const icon = this.createColoredIcon(StateManager.selectedColor);
+                    StateManager.manualMarker = L.marker([lat, lon], { icon })
+                        .addTo(StateManager.map)
+                        .bindPopup(`<b>${StateManager.lastKnownAddress}</b>`)
+                        .openPopup();
+                    UIManager.updateCoordinatesDisplay(lat, lon, 0);
+                    UIManager.setUIState(true);
                 },
+
                 zoomToLastPoint(latLng, pointName, projectName) {
                     StateManager.map.setView(latLng, 18);
-                    const tooltipContent = `<b>${pointName}</b><br><span class="text-xs">Último ponto em '${projectName}'</span>`;
                     const tooltip = L.tooltip({ permanent: true, direction: 'top', offset: L.point(0, -32) })
                         .setLatLng(latLng)
-                        .setContent(tooltipContent)
+                        .setContent(`<b>${pointName}</b><br><span class="text-xs">Último ponto em '${projectName}'</span>`)
                         .addTo(StateManager.map);
-
-                    setTimeout(() => {
-                        if (StateManager.map && tooltip) {
-                            StateManager.map.closeTooltip(tooltip);
-                        }
-                    }, 4000);
+                    setTimeout(() => { if (StateManager.map && tooltip) StateManager.map.closeTooltip(tooltip); }, 4000);
                 },
             };
 
+            // ================================================================
+            // OFFLINE MANAGER
+            // ================================================================
             const OfflineManager = {
                 getQueueKey() {
                     if (!StateManager.activeProjectId) return null;
@@ -732,7 +1191,7 @@
                 getQueue() {
                     const key = this.getQueueKey();
                     if (!key) return [];
-                    return JSON.parse(localStorage.getItem(key)) || [];
+                    try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; }
                 },
                 saveQueue(queue) {
                     const key = this.getQueueKey();
@@ -751,22 +1210,19 @@
                     if (!StateManager.isOnline) return;
                     const queue = this.getQueue();
                     if (queue.length === 0) return;
-
                     UIManager.showMessage(`Sincronizando ${queue.length} ponto(s) local(is)...`, 'info');
                     const collectionRef = DataManager.getPointsCollectionRef();
                     if (!collectionRef) return;
-
                     try {
                         const batch = writeBatch(StateManager.db);
                         queue.forEach(point => {
-                            const docRef = doc(collectionRef); // Gera um novo ID para o ponto
-                            const { id, status, ...pointData } = point; // Remove o ID temporário e o status
+                            const docRef = doc(collectionRef);
+                            const { id, status, ...pointData } = point;
                             batch.set(docRef, pointData);
                         });
                         await batch.commit();
                         this.clearQueue();
                         UIManager.showMessage(`${queue.length} ponto(s) salvo(s) na nuvem com sucesso!`, 'success');
-                        // O onSnapshot do Firebase irá atualizar a tabela automaticamente.
                     } catch (error) {
                         console.error("Erro ao sincronizar pontos:", error);
                         UIManager.showMessage("Falha ao sincronizar pontos com a nuvem.", "error");
@@ -774,65 +1230,78 @@
                 }
             };
 
+            // ================================================================
+            // DATA MANAGER
+            // ================================================================
             const DataManager = {
                 getUsersCollectionRef() { return collection(StateManager.db, 'users'); },
                 getProjectsCollectionRef() { return collection(StateManager.db, 'projects'); },
-                getPointsCollectionRef() { if (!StateManager.activeProjectId) return null; return collection(this.getProjectsCollectionRef(), `${StateManager.activeProjectId}/points`); },
-                
+                getPointsCollectionRef() {
+                    if (!StateManager.activeProjectId) return null;
+                    return collection(this.getProjectsCollectionRef(), `${StateManager.activeProjectId}/points`);
+                },
+
+                // MELHORIA: garantia de unsubscribe antes de criar novo listener
                 listenForProjects(onProjectsLoaded) {
-                    if(StateManager.projectsUnsubscribe) StateManager.projectsUnsubscribe();
+                    if (StateManager.projectsUnsubscribe) {
+                        StateManager.projectsUnsubscribe();
+                        StateManager.projectsUnsubscribe = null;
+                    }
                     if (!StateManager.userId) return;
                     const q = query(this.getProjectsCollectionRef(), where("members", "array-contains", StateManager.userId));
-                    StateManager.projectsUnsubscribe = onSnapshot(q, (snapshot) => { 
-                        let projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        projects.sort((a, b) => {
-                            const timeA = a.createdAt?.toMillis() || 0;
-                            const timeB = b.createdAt?.toMillis() || 0;
-                            return timeB - timeA;
-                        });
+                    StateManager.projectsUnsubscribe = onSnapshot(q, (snapshot) => {
+                        let projects = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                        projects.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
                         StateManager.projects = projects;
                         onProjectsLoaded(snapshot.empty);
-                    }, (error) => { console.error("Firebase Error:", error); UIManager.showMessage("Erro ao carregar projetos.", 'error'); });
+                    }, (error) => {
+                        console.error("Firebase Error (projects):", error);
+                        UIManager.showMessage("Erro ao carregar projetos.", 'error');
+                    });
                 },
 
                 listenForPoints() {
-                    if(StateManager.pointsUnsubscribe) StateManager.pointsUnsubscribe();
-                    const collectionRef = this.getPointsCollectionRef(); if (!collectionRef) { StateManager.localCoordinates = []; UIManager.updatePreviewTable(); return; }
-                    const q = query(collectionRef);
-                    StateManager.pointsUnsubscribe = onSnapshot(q, (snapshot) => { 
-                        let points = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
-                        points.sort((a,b) => {
-                            const timeA = a.createdAt?.toMillis() || 0;
-                            const timeB = b.createdAt?.toMillis() || 0;
-                            return timeA - timeB;
-                        });
+                    if (StateManager.pointsUnsubscribe) {
+                        StateManager.pointsUnsubscribe();
+                        StateManager.pointsUnsubscribe = null;
+                    }
+                    const collectionRef = this.getPointsCollectionRef();
+                    if (!collectionRef) { StateManager.localCoordinates = []; UIManager.updatePreviewTable(); return; }
+
+                    StateManager.pointsUnsubscribe = onSnapshot(query(collectionRef), (snapshot) => {
+                        let points = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                        points.sort((a, b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
                         StateManager.localCoordinates = points;
-                        UIManager.updatePreviewTable(); 
+                        UIManager.updatePreviewTable();
                         if (!snapshot.metadata.fromCache && StateManager.isOnline) {
-                           if (snapshot.empty && OfflineManager.getQueue().length === 0) { 
-                               UIManager.showMessage("Nenhum ponto neste projeto. Comece a coletar!", 'info'); 
-                           } else if(!StateManager.isSwitchingProject) { 
-                               UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success'); 
-                           }
+                            if (snapshot.empty && OfflineManager.getQueue().length === 0) {
+                                UIManager.showMessage("Nenhum ponto neste projeto. Comece a coletar!", 'info');
+                            } else if (!StateManager.isSwitchingProject) {
+                                UIManager.showMessage(`${StateManager.localCoordinates.length} pontos carregados da nuvem.`, 'success');
+                            }
                         }
-                    }, (error) => { console.error("Firebase Error:", error); let msg = "Erro ao carregar dados da nuvem."; if (error.code === 'failed-precondition') { msg = "Erro: O banco de dados requer um índice. Verifique o console do navegador (F12) para um link de criação."; } UIManager.showMessage(msg, 'error'); });
+                    }, (error) => {
+                        console.error("Firebase Error (points):", error);
+                        let msg = "Erro ao carregar dados da nuvem.";
+                        if (error.code === 'failed-precondition') msg = "Erro: O banco de dados requer um índice. Verifique o console (F12).";
+                        UIManager.showMessage(msg, 'error');
+                    });
                 },
-                
+
                 async createProject(name) {
                     if (!name || !StateManager.currentUser?.username) return;
                     try {
-                        const newProject = {
+                        const newProjectRef = await addDoc(this.getProjectsCollectionRef(), {
                             name,
                             createdAt: serverTimestamp(),
                             ownerId: StateManager.userId,
                             members: [StateManager.userId],
                             memberInfo: { [StateManager.userId]: StateManager.currentUser.username }
-                        };
-                        const newProjectRef = await addDoc(this.getProjectsCollectionRef(), newProject);
+                        });
                         App.handleProjectSelect(newProjectRef.id);
                         UIManager.elements.newProjectNameInput.value = '';
                     } catch (e) {
-                        console.error("Erro ao criar projeto: ", e);
+                        console.error("Erro ao criar projeto:", e);
                         UIManager.showMessage("Falha ao criar o projeto.", 'error');
                     }
                 },
@@ -843,12 +1312,11 @@
                         const pointsRef = collection(this.getProjectsCollectionRef(), `${projectId}/points`);
                         const pointsSnapshot = await getDocs(pointsRef);
                         const batch = writeBatch(StateManager.db);
-                        pointsSnapshot.forEach(doc => batch.delete(doc.ref));
+                        pointsSnapshot.forEach(d => batch.delete(d.ref));
                         await batch.commit();
-
                         await deleteDoc(doc(this.getProjectsCollectionRef(), projectId));
                         UIManager.showMessage("Projeto excluído com sucesso.", "success");
-                    } catch(e) {
+                    } catch (e) {
                         console.error("Erro ao excluir projeto:", e);
                         UIManager.showMessage("Falha ao excluir o projeto.", "error");
                     }
@@ -856,106 +1324,147 @@
 
                 async addPoint() {
                     if (!StateManager.activeProjectId) { UIManager.showMessage("Nenhum projeto selecionado.", 'error'); return; }
-                    if (!StateManager.lastKnownPosition) return; 
-                    let addr = StateManager.lastKnownAddress; 
-                    
-                    if (StateManager.isOnline && !StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) { 
-                        addr = await MapManager.reverseGeocode(StateManager.lastKnownPosition.latitude, StateManager.lastKnownPosition.longitude); 
+                    if (!StateManager.lastKnownPosition) return;
+                    let addr = StateManager.lastKnownAddress;
+                    if (StateManager.isOnline && !StateManager.isManualCapture && await UIManager.showConfirmation("Incluir endereço aproximado?")) {
+                        addr = await MapManager.reverseGeocode(StateManager.lastKnownPosition.latitude, StateManager.lastKnownPosition.longitude);
                     }
-                    
-                    const lastPoint = [...StateManager.localCoordinates, ...OfflineManager.getQueue()].pop();
+
+                    const allPoints = [...StateManager.localCoordinates, ...OfflineManager.getQueue()];
+                    const lastPoint = allPoints[allPoints.length - 1];
                     let pointName = UIManager.elements.pointNameInput.value.trim();
                     if (!pointName) {
                         if (lastPoint && lastPoint.name.match(/^(.*\D\s*)(\d+)$/)) {
                             const match = lastPoint.name.match(/^(.*\D\s*)(\d+)$/);
-                            const prefix = match[1].trim();
-                            const number = parseInt(match[2]) + 1;
-                            pointName = `${prefix} ${number}`;
+                            pointName = `${match[1].trim()} ${parseInt(match[2]) + 1}`;
                         } else {
-                            pointName = `Ponto ${[...StateManager.localCoordinates, ...OfflineManager.getQueue()].length + 1}`;
+                            pointName = `Ponto ${allPoints.length + 1}`;
                         }
                     }
 
-                    const newPoint = { 
-                        name: pointName, latitude: StateManager.lastKnownPosition.latitude, longitude: StateManager.lastKnownPosition.longitude, accuracy: StateManager.lastKnownAccuracy, address: addr || 'Endereço não incluído', createdAt: serverTimestamp(), captureTime: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
-                        originalAccuracy: StateManager.isManualCapture ? 0 : StateManager.lastKnownAccuracy, originalLat: StateManager.lastKnownPosition.latitude, originalLon: StateManager.lastKnownPosition.longitude, color: StateManager.selectedColor, 
+                    const newPoint = {
+                        name: pointName,
+                        latitude: StateManager.lastKnownPosition.latitude,
+                        longitude: StateManager.lastKnownPosition.longitude,
+                        accuracy: StateManager.lastKnownAccuracy,
+                        address: addr || 'Endereço não incluído',
+                        createdAt: serverTimestamp(),
+                        captureTime: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                        originalAccuracy: StateManager.isManualCapture ? 0 : StateManager.lastKnownAccuracy,
+                        originalLat: StateManager.lastKnownPosition.latitude,
+                        originalLon: StateManager.lastKnownPosition.longitude,
+                        color: StateManager.selectedColor,
                         createdBy: StateManager.currentUser.username,
                     };
-                    
+
                     if (StateManager.isOnline) {
-                         try { 
-                            await addDoc(this.getPointsCollectionRef(), newPoint); 
-                            UIManager.showMessage(`Ponto "${pointName}" salvo na nuvem!`, 'success'); 
-                        } catch (e) { 
-                            console.error("Erro ao adicionar ponto: ", e); 
-                            UIManager.showMessage("Falha ao salvar o ponto na nuvem.", 'error'); 
+                        try {
+                            await addDoc(this.getPointsCollectionRef(), newPoint);
+                            UIManager.showMessage(`Ponto "${pointName}" salvo na nuvem!`, 'success');
+                        } catch (e) {
+                            console.error("Erro ao adicionar ponto:", e);
+                            UIManager.showMessage("Falha ao salvar o ponto na nuvem.", 'error');
                         }
                     } else {
-                        newPoint.id = crypto.randomUUID(); 
+                        newPoint.id = crypto.randomUUID();
                         newPoint.status = 'pendingSync';
-                        delete newPoint.createdAt; 
+                        delete newPoint.createdAt;
                         OfflineManager.addToQueue(newPoint);
                         UIManager.updatePreviewTable();
                         UIManager.showMessage(`Ponto "${pointName}" salvo localmente!`, 'info');
                     }
-                    
+
                     UIManager.elements.pointNameInput.value = '';
-                    Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null }); 
-                    if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker); 
-                    StateManager.manualMarker = null; 
-                    UIManager.setUIState(StateManager.isCollecting); 
+                    Object.assign(StateManager, { lastKnownPosition: null, lastKnownAccuracy: null, lastKnownAddress: null });
+                    if (StateManager.manualMarker) StateManager.map.removeLayer(StateManager.manualMarker);
+                    StateManager.manualMarker = null;
+                    UIManager.setUIState(StateManager.isCollecting);
                 },
-                async deletePoint(docId) { 
+
+                async deletePoint(docId) {
                     const pointInQueue = OfflineManager.getQueue().find(p => p.id === docId);
-                    if(pointInQueue) {
-                        const newQueue = OfflineManager.getQueue().filter(p => p.id !== docId);
-                        OfflineManager.saveQueue(newQueue);
+                    if (pointInQueue) {
+                        OfflineManager.saveQueue(OfflineManager.getQueue().filter(p => p.id !== docId));
                         UIManager.updatePreviewTable();
                         UIManager.showMessage('Ponto local deletado.', 'success');
                     } else {
-                         try { 
-                            await deleteDoc(doc(this.getPointsCollectionRef(), docId)); 
-                            UIManager.showMessage('Ponto deletado da nuvem.', 'success'); 
-                        } catch (e) { 
-                            console.error("Erro ao deletar ponto: ", e); 
-                            UIManager.showMessage("Falha ao deletar o ponto.", 'error'); 
-                        } 
+                        try {
+                            await deleteDoc(doc(this.getPointsCollectionRef(), docId));
+                            UIManager.showMessage('Ponto deletado da nuvem.', 'success');
+                        } catch (e) {
+                            console.error("Erro ao deletar ponto:", e);
+                            UIManager.showMessage("Falha ao deletar o ponto.", 'error');
+                        }
                     }
                 },
-                async updatePointName(docId, newName) { try { await updateDoc(doc(this.getPointsCollectionRef(), docId), { name: newName, nameEdited: true }); } catch (e) { console.error("Erro ao atualizar nome: ", e); UIManager.showMessage("Falha ao atualizar o nome.", 'error'); } },
-                async updatePointPosition(docId, lat, lon) { try { await updateDoc(doc(this.getPointsCollectionRef(), docId), { latitude: lat, longitude: lon, accuracy: 0, address: 'Posição corrigida' }); } catch (e) { console.error("Erro ao atualizar posição: ", e); UIManager.showMessage("Falha ao atualizar a posição.", 'error'); } },
+
+                async updatePointName(docId, newName) {
+                    try {
+                        await updateDoc(doc(this.getPointsCollectionRef(), docId), { name: newName, nameEdited: true });
+                    } catch (e) {
+                        console.error("Erro ao atualizar nome:", e);
+                        UIManager.showMessage("Falha ao atualizar o nome.", 'error');
+                    }
+                },
+
+                async updatePointPosition(docId, lat, lon) {
+                    try {
+                        await updateDoc(doc(this.getPointsCollectionRef(), docId), { latitude: lat, longitude: lon, accuracy: 0, address: 'Posição corrigida' });
+                    } catch (e) {
+                        console.error("Erro ao atualizar posição:", e);
+                        UIManager.showMessage("Falha ao atualizar a posição.", 'error');
+                    }
+                },
+
                 async clearAllData() {
-                    const collectionRef = this.getPointsCollectionRef(); 
+                    const collectionRef = this.getPointsCollectionRef();
                     if (!collectionRef || (StateManager.localCoordinates.length === 0 && OfflineManager.getQueue().length === 0)) return;
-                    
-                    if (await UIManager.showClearDataConfirmation()) { 
-                        MapManager.stopCollecting(); 
+                    if (await UIManager.showClearDataConfirmation()) {
+                        MapManager.stopCollecting();
                         OfflineManager.clearQueue();
                         if (StateManager.isOnline) {
-                            UIManager.showMessage("Limpando dados da nuvem...", "info"); 
-                            try { 
-                                const querySnapshot = await getDocs(collectionRef); 
-                                const batch = writeBatch(StateManager.db); 
-                                querySnapshot.forEach((doc) => batch.delete(doc.ref)); 
-                                await batch.commit(); 
-                                UIManager.showMessage("Todos os dados foram limpos da nuvem.", 'success'); 
-                            } catch (e) { 
-                                console.error("Erro ao limpar dados: ", e); 
-                                UIManager.showMessage("Falha ao limpar dados da nuvem.", 'error'); 
-                            } 
+                            UIManager.showMessage("Limpando dados da nuvem...", "info");
+                            try {
+                                const querySnapshot = await getDocs(collectionRef);
+                                const batch = writeBatch(StateManager.db);
+                                querySnapshot.forEach(d => batch.delete(d.ref));
+                                await batch.commit();
+                                UIManager.showMessage("Todos os dados foram limpos da nuvem.", 'success');
+                            } catch (e) {
+                                console.error("Erro ao limpar dados:", e);
+                                UIManager.showMessage("Falha ao limpar dados da nuvem.", 'error');
+                            }
                         } else {
                             UIManager.showMessage("Pontos locais limpos. Os pontos na nuvem serão mantidos.", 'info');
                             UIManager.updatePreviewTable();
                         }
                     }
                 },
+
                 exportToCSV() {
                     const combinedPoints = [...StateManager.localCoordinates, ...OfflineManager.getQueue()];
                     if (combinedPoints.length === 0) return;
                     let csv = "Nome;Latitude Final;Longitude Final;Status;Criado por;Endereço;Timestamp;Latitude Original;Longitude Original;Precisão Original (m)\n";
-                    combinedPoints.forEach(p => { csv += [p.name, p.latitude.toFixed(6).replace('.', ','), p.longitude.toFixed(6).replace('.', ','), this.getPointStatus(p), p.createdBy || '', `"${p.address || ''}"`, p.captureTime || 'N/A', p.originalLat.toFixed(6).replace('.', ','), p.originalLon.toFixed(6).replace('.', ','), this.getOriginalAccuracyText(p, true)].join(';') + '\n'; });
-                    const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })); link.download = "COORD.csv"; link.click();
+                    combinedPoints.forEach(p => {
+                        csv += [
+                            p.name,
+                            p.latitude.toFixed(6).replace('.', ','),
+                            p.longitude.toFixed(6).replace('.', ','),
+                            this.getPointStatus(p),
+                            p.createdBy || '',
+                            `"${p.address || ''}"`,
+                            p.captureTime || 'N/A',
+                            p.originalLat.toFixed(6).replace('.', ','),
+                            p.originalLon.toFixed(6).replace('.', ','),
+                            this.getOriginalAccuracyText(p, true)
+                        ].join(';') + '\n';
+                    });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' }));
+                    link.download = "COORD.csv";
+                    link.click();
                 },
+
                 getPointStatus(point) {
                     if (point.status === 'pendingSync') return 'Pendente';
                     if (point.accuracy === 0 && point.originalAccuracy !== 0) return 'Corrigido';
@@ -964,25 +1473,39 @@
                     if (point.originalAccuracy <= 15) return 'GPS (Média)';
                     return 'GPS (Baixa)';
                 },
-                getOriginalAccuracyText(point, forCsv = false) { if (point.originalAccuracy === 0) return 'Manual'; if (point.originalAccuracy) return forCsv ? point.originalAccuracy.toFixed(1).replace('.', ',') : `\u00B1 ${point.originalAccuracy.toFixed(1)}m`; return 'N/A'; }
+
+                getOriginalAccuracyText(point, forCsv = false) {
+                    if (point.originalAccuracy === 0) return 'Manual';
+                    if (point.originalAccuracy) return forCsv ? point.originalAccuracy.toFixed(1).replace('.', ',') : `\u00B1 ${point.originalAccuracy.toFixed(1)}m`;
+                    return 'N/A';
+                }
             };
-            
+
+            // ================================================================
+            // SETTINGS MANAGER
+            // ================================================================
             const SettingsManager = {
                 API_KEY_STORAGE_KEY: 'to_the_point_api_key',
                 THEME_STORAGE_KEY: 'to_the_point_theme',
                 FIREBASE_CONFIG_STORAGE_KEY: 'to_the_point_firebase_config_text',
-                init() { 
+                init() {
                     UIManager.elements.apiKeyInput.value = this.getApiKey() || '';
                     UIManager.elements.firebaseConfigInput.value = this.getFirebaseConfig() || '';
                 },
                 saveApiKey(key) { localStorage.setItem(this.API_KEY_STORAGE_KEY, key); },
                 getApiKey() { return localStorage.getItem(this.API_KEY_STORAGE_KEY); },
                 saveTheme(theme) { localStorage.setItem(this.THEME_STORAGE_KEY, theme); },
-                getTheme() { return localStorage.getItem(this.THEME_STORAGE_KEY) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); },
+                getTheme() {
+                    return localStorage.getItem(this.THEME_STORAGE_KEY) ||
+                        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                },
                 saveFirebaseConfig(configString) { localStorage.setItem(this.FIREBASE_CONFIG_STORAGE_KEY, configString); },
                 getFirebaseConfig() { return localStorage.getItem(this.FIREBASE_CONFIG_STORAGE_KEY); },
             };
 
+            // ================================================================
+            // APP — controlador principal
+            // ================================================================
             const App = {
                 init() {
                     UIManager.init();
@@ -993,10 +1516,7 @@
 
                 bootstrapFirebase() {
                     let configString = SettingsManager.getFirebaseConfig();
-                    if (!configString && typeof __firebase_config !== 'undefined') {
-                        configString = __firebase_config;
-                    }
-
+                    if (!configString && typeof __firebase_config !== 'undefined') configString = __firebase_config;
                     if (configString) {
                         this.initializeFirebase(configString);
                     } else {
@@ -1006,13 +1526,23 @@
                     }
                 },
 
+                // MELHORIA: parser seguro — sem new Function() / eval()
                 parseFirebaseConfig(str) {
                     try {
                         const objectStr = str.substring(str.indexOf('{'), str.lastIndexOf('}') + 1);
                         if (!objectStr) return null;
-                        return (new Function(`return ${objectStr}`))();
+
+                        // Remove comentários, converte chaves sem aspas e aspas simples para JSON válido
+                        const jsonStr = objectStr
+                            .replace(/\/\/.*$/gm, '')                                          // remove comentários de linha
+                            .replace(/\/\*[\s\S]*?\*\//g, '')                                  // remove comentários de bloco
+                            .replace(/,\s*([}\]])/g, '$1')                                     // remove vírgula trailing
+                            .replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":')     // coloca aspas nas chaves
+                            .replace(/:\s*'([^']*)'/g, ': "$1"');                              // aspas simples → duplas
+
+                        return JSON.parse(jsonStr);
                     } catch (e) {
-                        console.error("Error parsing Firebase config:", e);
+                        console.error("Erro ao parsear configuração Firebase:", e);
                         return null;
                     }
                 },
@@ -1021,35 +1551,34 @@
                     try {
                         const firebaseConfig = this.parseFirebaseConfig(configString);
                         if (!firebaseConfig || !firebaseConfig.apiKey) {
-                             throw new Error("A configuração analisada não parece ser um objeto Firebase válido.");
+                            throw new Error("Configuração Firebase inválida — apiKey não encontrada.");
                         }
-
                         StateManager.app = initializeApp(firebaseConfig);
                         StateManager.db = getFirestore(StateManager.app);
                         StateManager.auth = getAuth(StateManager.app);
-                        
+
                         onAuthStateChanged(StateManager.auth, async (user) => {
-                            if (user) { 
+                            if (user) {
                                 StateManager.userId = user.uid;
-                                const userRef = doc(StateManager.db, "users", user.uid);
-                                const userSnap = await getDoc(userRef);
-
-                                if (userSnap.exists() && userSnap.data().username) {
-                                    StateManager.currentUser = { uid: user.uid, ...userSnap.data() };
-                                    this.startApp();
-                                } else {
-                                    // If doc exists but no username, or doc doesn't exist at all
-                                    if (!userSnap.exists()) {
-                                        await setDoc(userRef, { email: user.email });
+                                try {
+                                    const userRef = doc(StateManager.db, "users", user.uid);
+                                    const userSnap = await getDoc(userRef);
+                                    if (userSnap.exists() && userSnap.data().username) {
+                                        StateManager.currentUser = { uid: user.uid, ...userSnap.data() };
+                                        this.startApp();
+                                    } else {
+                                        if (!userSnap.exists()) await setDoc(userRef, { email: user.email });
+                                        UIManager.showModal(UIManager.elements.setUsernameModal);
                                     }
-                                    UIManager.showModal(UIManager.elements.setUsernameModal);
+                                } catch (e) {
+                                    console.error("Erro ao buscar dados do usuário:", e);
+                                    UIManager.showMessage("Erro ao carregar perfil do usuário.", "error", true);
                                 }
-
-                            } else { 
-                                StateManager.userId = null; 
+                            } else {
+                                StateManager.userId = null;
                                 StateManager.currentUser = null;
-                                if (StateManager.projectsUnsubscribe) StateManager.projectsUnsubscribe();
-                                if (StateManager.pointsUnsubscribe) StateManager.pointsUnsubscribe();
+                                if (StateManager.projectsUnsubscribe) { StateManager.projectsUnsubscribe(); StateManager.projectsUnsubscribe = null; }
+                                if (StateManager.pointsUnsubscribe) { StateManager.pointsUnsubscribe(); StateManager.pointsUnsubscribe = null; }
                                 StateManager.projects = [];
                                 StateManager.localCoordinates = [];
                                 UIManager.updatePreviewTable();
@@ -1058,18 +1587,17 @@
                         });
 
                         if (typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                           try {
-                               await signInWithCustomToken(StateManager.auth, __initial_auth_token);
-                           } catch (e) {
-                               console.error("Custom token login failed", e);
-                               UIManager.showMessage("Falha no login automático do ambiente de desenvolvimento.", "error", true);
-                               UIManager.showAuthScreen();
-                           }
+                            try {
+                                await signInWithCustomToken(StateManager.auth, __initial_auth_token);
+                            } catch (e) {
+                                console.error("Custom token login failed:", e);
+                                UIManager.showMessage("Falha no login automático.", "error", true);
+                                UIManager.showAuthScreen();
+                            }
                         }
-
                     } catch (e) {
                         console.error("Erro na inicialização do Firebase:", e);
-                        UIManager.showMessage("Configuração do Firebase inválida. Verifique os dados e tente novamente.", "error", true);
+                        UIManager.showMessage("Configuração do Firebase inválida. Verifique os dados.", "error", true);
                         UIManager.showAuthScreen();
                     }
                 },
@@ -1077,31 +1605,34 @@
                 startApp() {
                     if (!StateManager.currentUser) return;
                     UIManager.displayUser(StateManager.currentUser);
-                    DataManager.listenForProjects((isProjectListEmpty) => {
+                    DataManager.listenForProjects(() => {
                         UIManager.renderProjectsList();
                         UIManager.renderDashboard();
                         if (StateManager.activeProjectId && StateManager.projects.find(p => p.id === StateManager.activeProjectId)) {
-                           this.handleProjectSelect(StateManager.activeProjectId, true);
+                            this.handleProjectSelect(StateManager.activeProjectId, true);
                         } else {
-                           UIManager.showDashboardScreen();
+                            UIManager.showDashboardScreen();
                         }
                     });
                 },
-                
+
                 addEventListeners() {
                     const el = UIManager.elements;
-                    const debounceCheck = this.debounce(this.checkUsernameAvailability, 500);
+                    const debounceCheck = this.debounce(this.checkUsernameAvailability.bind(this), 500);
+
                     el.registerUsername.addEventListener('input', (e) => debounceCheck(e.target.value, el.usernameFeedback));
                     el.setUsernameInput.addEventListener('input', (e) => debounceCheck(e.target.value, el.setUsernameFeedback));
 
                     window.addEventListener('online', () => this.handleOnlineStatusChange(true));
                     window.addEventListener('offline', () => this.handleOnlineStatusChange(false));
+
                     el.loginForm.addEventListener('submit', (e) => { e.preventDefault(); this.handleLogin(); });
                     el.registerForm.addEventListener('submit', (e) => { e.preventDefault(); this.handleRegister(); });
                     el.logoutButton.addEventListener('click', () => this.handleLogout());
                     el.dashboardLogoutButton.addEventListener('click', () => this.handleLogout());
                     el.toggleToRegister.addEventListener('click', (e) => { e.preventDefault(); UIManager.toggleAuthForms(true); });
                     el.toggleToLogin.addEventListener('click', (e) => { e.preventDefault(); UIManager.toggleAuthForms(false); });
+
                     el.startButton.addEventListener('click', () => MapManager.startCollecting());
                     el.stopButton.addEventListener('click', () => MapManager.stopCollecting());
                     el.captureButton.addEventListener('click', () => DataManager.addPoint());
@@ -1110,98 +1641,126 @@
                     el.themeToggle.addEventListener('click', () => UIManager.toggleDarkMode());
                     el.searchButton.addEventListener('click', () => this.handleSearch());
                     el.searchInput.addEventListener('keypress', (e) => e.key === 'Enter' && this.handleSearch());
-                    el.manualCaptureButton.addEventListener('click', () => { MapManager.stopCollecting(); StateManager.isManualCapture = true; UIManager.showMessage('Clique no mapa para selecionar um ponto.', 'info'); UIManager.setUIState(true); });
-                    el.settingsButton.addEventListener('click', () => UIManager.showModal(el.settingsModal));
+                    el.manualCaptureButton.addEventListener('click', () => {
+                        MapManager.stopCollecting();
+                        StateManager.isManualCapture = true;
+                        UIManager.showMessage('Clique no mapa para selecionar um ponto.', 'info');
+                        UIManager.setUIState(true);
+                    });
+
+                    el.settingsButton.addEventListener('click', () => UIManager.showModal(el.settingsModal, el.settingsButton));
                     el.closeSettingsButton.addEventListener('click', () => UIManager.hideModal(el.settingsModal));
                     el.saveSettingsButton.addEventListener('click', () => this.handleSaveSettings());
-                    el.manageProjectsButton.addEventListener('click', () => UIManager.showModal(UIManager.elements.projectsModal));
-                    el.closeProjectsModalButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.projectsModal));
+
+                    el.manageProjectsButton.addEventListener('click', () => UIManager.showModal(el.projectsModal, el.manageProjectsButton));
+                    el.closeProjectsModalButton.addEventListener('click', () => UIManager.hideModal(el.projectsModal));
                     el.confirmCreateProjectButton.addEventListener('click', () => this.handleCreateProjectFromModal());
-                    el.cancelCreateProjectButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.createProjectModal));
+                    el.cancelCreateProjectButton.addEventListener('click', () => UIManager.hideModal(el.createProjectModal));
+
                     el.backToDashboardButton.addEventListener('click', () => UIManager.showDashboardScreen());
                     el.shareProjectButton.addEventListener('click', () => this.handleOpenShareModal());
-                    el.closeShareModalButton.addEventListener('click', () => UIManager.hideModal(UIManager.elements.shareModal));
+                    el.closeShareModalButton.addEventListener('click', () => UIManager.hideModal(el.shareModal));
                     el.inviteButton.addEventListener('click', () => this.handleInvite());
                     el.confirmSetUsernameButton.addEventListener('click', () => this.handleSetUsername());
+
+                    // Fechar modais com Escape
+                    document.addEventListener('keydown', (e) => {
+                        if (e.key === 'Escape') {
+                            document.querySelectorAll('.modal').forEach(m => {
+                                if (m.style.display === 'block') UIManager.hideModal(m);
+                            });
+                        }
+                    });
                 },
 
                 handleOnlineStatusChange(isOnline) {
                     StateManager.isOnline = isOnline;
                     UIManager.updateOnlineStatus();
-                    if(isOnline) {
-                        OfflineManager.syncPendingPoints();
-                    }
+                    if (isOnline) OfflineManager.syncPendingPoints();
                 },
-                
+
                 async handleLogin() {
-                    const email = UIManager.elements.loginEmail.value;
+                    const email = UIManager.elements.loginEmail.value.trim();
                     const password = UIManager.elements.loginPassword.value;
+
+                    // MELHORIA: validação visual por campo
+                    let hasError = false;
+                    if (!email) { this._setFieldError('login-email', 'login-email-error', 'Informe seu e-mail.'); hasError = true; }
+                    else this._clearFieldError('login-email', 'login-email-error');
+                    if (!password) { this._setFieldError('login-password', 'login-password-error', 'Informe sua senha.'); hasError = true; }
+                    else this._clearFieldError('login-password', 'login-password-error');
+                    if (hasError) return;
+
                     try {
                         await signInWithEmailAndPassword(StateManager.auth, email, password);
                     } catch (error) {
-                        UIManager.showMessage(error.message, 'error', true);
+                        const friendlyMessages = {
+                            'auth/user-not-found': 'Usuário não encontrado.',
+                            'auth/wrong-password': 'Senha incorreta.',
+                            'auth/invalid-email': 'E-mail inválido.',
+                            'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
+                        };
+                        UIManager.showMessage(friendlyMessages[error.code] || error.message, 'error', true);
                     }
                 },
-                
+
                 async handleRegister() {
                     const username = UIManager.elements.registerUsername.value.trim().toLowerCase();
-                    const email = UIManager.elements.registerEmail.value;
+                    const email = UIManager.elements.registerEmail.value.trim();
                     const password = UIManager.elements.registerPassword.value;
 
                     if (!/^[a-z0-9_]{3,15}$/.test(username)) {
                         UIManager.showMessage("Nome de usuário inválido. Use 3-15 letras minúsculas, números ou _.", 'error', true);
                         return;
                     }
+                    if (!email) { this._setFieldError('register-email', 'register-email-error', 'Informe um e-mail.'); return; }
+                    if (password.length < 6) { this._setFieldError('register-password', 'register-password-error', 'Mínimo 6 caracteres.'); return; }
 
                     const isAvailable = await this.checkUsernameAvailability(username, UIManager.elements.usernameFeedback);
-                    if (!isAvailable) {
-                         UIManager.showMessage("Este nome de usuário já está em uso.", 'error', true);
-                        return;
-                    }
+                    if (!isAvailable) { UIManager.showMessage("Este nome de usuário já está em uso.", 'error', true); return; }
 
                     try {
                         const userCredential = await createUserWithEmailAndPassword(StateManager.auth, email, password);
-                        const user = userCredential.user;
-                        await setDoc(doc(StateManager.db, "users", user.uid), { email: user.email, username: username });
+                        await setDoc(doc(StateManager.db, "users", userCredential.user.uid), { email, username });
                     } catch (error) {
-                        UIManager.showMessage(error.message, 'error', true);
+                        const friendlyMessages = {
+                            'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
+                            'auth/invalid-email': 'E-mail inválido.',
+                            'auth/weak-password': 'Senha muito fraca.',
+                        };
+                        UIManager.showMessage(friendlyMessages[error.code] || error.message, 'error', true);
                     }
                 },
-                
+
                 async handleLogout() {
                     try {
                         StateManager.activeProjectId = null;
                         await signOut(StateManager.auth);
-                    } catch(error) {
-                        console.error("Logout error", error);
+                    } catch (error) {
+                        console.error("Logout error:", error);
                     }
                 },
 
                 handleSaveSettings() {
                     SettingsManager.saveApiKey(UIManager.elements.apiKeyInput.value.trim());
                     const fbConfigString = UIManager.elements.firebaseConfigInput.value.trim();
-                    
-                    if (!fbConfigString) {
-                        UIManager.showMessage('O campo de configuração do Firebase não pode estar vazio.', 'error');
-                        return;
-                    }
-
+                    if (!fbConfigString) { UIManager.showMessage('O campo de configuração do Firebase não pode estar vazio.', 'error'); return; }
                     const parsedConfig = this.parseFirebaseConfig(fbConfigString);
-                     if (parsedConfig && parsedConfig.apiKey) {
+                    if (parsedConfig && parsedConfig.apiKey) {
                         SettingsManager.saveFirebaseConfig(fbConfigString);
                         UIManager.showMessage('Configurações salvas! A página será recarregada.', 'success');
                         setTimeout(() => location.reload(), 1500);
                     } else {
-                         UIManager.showMessage('Configuração Firebase parece inválida. Por favor, verifique o texto colado.', 'error');
+                        UIManager.showMessage('Configuração Firebase inválida. Verifique o texto colado.', 'error');
                     }
                 },
 
                 async handleSearch() {
-                    const query = UIManager.elements.searchInput.value.trim();
-                    if (!query) return UIManager.showMessage('Digite um endereço para pesquisar.', 'error');
+                    const queryStr = UIManager.elements.searchInput.value.trim();
+                    if (!queryStr) return UIManager.showMessage('Digite um endereço para pesquisar.', 'error');
                     if (!SettingsManager.getApiKey()) return UIManager.showMessage('Configure sua chave de API do Google.', 'error');
                     MapManager.stopCollecting();
-                    await MapManager.searchLocation(query);
+                    await MapManager.searchLocation(queryStr);
                 },
 
                 async handleCreateProjectFromModal() {
@@ -1218,9 +1777,7 @@
                     StateManager.activeProjectId = projectId;
                     StateManager.isSwitchingProject = !isInitialLoad;
                     const project = StateManager.projects.find(p => p.id === projectId);
-                    if (project && !isInitialLoad) {
-                        UIManager.showMessage(`Projeto '${project.name}' carregado.`, 'success');
-                    }
+                    if (project && !isInitialLoad) UIManager.showMessage(`Projeto '${project.name}' carregado.`, 'success');
                     UIManager.updateCurrentProjectDisplay();
                     UIManager.renderProjectsList();
                     DataManager.listenForPoints();
@@ -1230,19 +1787,18 @@
 
                 async handleDeleteProject(projectId, projectName) {
                     const project = StateManager.projects.find(p => p.id === projectId);
-                    if (project.ownerId !== StateManager.userId) {
+                    if (project?.ownerId !== StateManager.userId) {
                         UIManager.showMessage("Apenas o dono do projeto pode excluí-lo.", "error");
                         return;
                     }
-
                     const confirmed = await UIManager.showDeleteConfirmation(
-                        UIManager.elements.deleteProjectModal, 
+                        UIManager.elements.deleteProjectModal,
                         UIManager.elements.deleteProjectConfirmText,
                         `Isso excluirá permanentemente o projeto "${projectName}" e todos os seus pontos.`
                     );
-                    if(confirmed) {
+                    if (confirmed) {
                         await DataManager.deleteProject(projectId);
-                        if(StateManager.activeProjectId === projectId) {
+                        if (StateManager.activeProjectId === projectId) {
                             StateManager.activeProjectId = null;
                             UIManager.showDashboardScreen();
                         }
@@ -1252,14 +1808,12 @@
                 async handleOpenShareModal() {
                     const project = StateManager.projects.find(p => p.id === StateManager.activeProjectId);
                     if (!project) return;
-
                     UIManager.elements.shareProjectName.textContent = project.name;
                     UIManager.elements.membersList.innerHTML = '<p class="p-4 text-center">Carregando membros...</p>';
-                    UIManager.showModal(UIManager.elements.shareModal);
+                    UIManager.showModal(UIManager.elements.shareModal, UIManager.elements.shareProjectButton);
 
                     const membersListEl = UIManager.elements.membersList;
                     membersListEl.innerHTML = '';
-                    
                     const isOwner = project.ownerId === StateManager.userId;
 
                     for (const memberId in project.memberInfo) {
@@ -1267,11 +1821,11 @@
                         const memberEl = document.createElement('div');
                         memberEl.className = 'flex justify-between items-center p-2';
                         memberEl.innerHTML = `<div><span class="font-semibold">${username}</span><span class="text-xs text-gray-500 ml-2">${memberId === project.ownerId ? '(Dono)' : ''}</span></div>`;
-
                         if (isOwner && memberId !== StateManager.userId) {
                             const removeBtn = document.createElement('button');
-                            removeBtn.innerHTML = '<svg class="w-4 h-4 text-red-500 hover:text-red-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>';
-                            removeBtn.onclick = () => this.handleRemoveMember(memberId);
+                            removeBtn.setAttribute('aria-label', `Remover membro ${username}`);
+                            removeBtn.innerHTML = `<svg class="w-4 h-4 text-red-500 hover:text-red-700" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>`;
+                            removeBtn.addEventListener('click', () => this.handleRemoveMember(memberId));
                             memberEl.appendChild(removeBtn);
                         }
                         membersListEl.appendChild(memberEl);
@@ -1281,48 +1835,40 @@
                 async handleInvite() {
                     const username = UIManager.elements.shareUsernameInput.value.trim().toLowerCase();
                     if (!username) return UIManager.showMessage("Digite um nome de usuário para convidar.", "error");
-
-                    const q = query(DataManager.getUsersCollectionRef(), where("username", "==", username));
-                    const querySnapshot = await getDocs(q);
-                    
-                    if (querySnapshot.empty) {
-                        return UIManager.showMessage("Usuário não encontrado.", "error");
-                    }
-                    
-                    const userDoc = querySnapshot.docs[0];
-                    const newMemberId = userDoc.id;
-                    const newMemberUsername = userDoc.data().username;
-                    
-                    const projectRef = doc(DataManager.getProjectsCollectionRef(), StateManager.activeProjectId);
-                    
                     try {
+                        const q = query(DataManager.getUsersCollectionRef(), where("username", "==", username));
+                        const querySnapshot = await getDocs(q);
+                        if (querySnapshot.empty) return UIManager.showMessage("Usuário não encontrado.", "error");
+                        const userDoc = querySnapshot.docs[0];
+                        const newMemberId = userDoc.id;
+                        const newMemberUsername = userDoc.data().username;
+                        const projectRef = doc(DataManager.getProjectsCollectionRef(), StateManager.activeProjectId);
                         await updateDoc(projectRef, {
                             members: arrayUnion(newMemberId),
                             [`memberInfo.${newMemberId}`]: newMemberUsername
                         });
                         UIManager.showMessage(`${newMemberUsername} foi adicionado ao projeto!`, 'success');
                         UIManager.elements.shareUsernameInput.value = '';
-                        this.handleOpenShareModal(); // Refresh member list
-                    } catch(e) {
+                        this.handleOpenShareModal();
+                    } catch (e) {
                         console.error("Erro ao adicionar membro:", e);
                         UIManager.showMessage("Falha ao adicionar membro.", 'error');
                     }
                 },
-                
+
                 async handleRemoveMember(memberId) {
-                     const projectRef = doc(DataManager.getProjectsCollectionRef(), StateManager.activeProjectId);
-                     const fieldPath = `memberInfo.${memberId}`;
-                     try {
+                    const projectRef = doc(DataManager.getProjectsCollectionRef(), StateManager.activeProjectId);
+                    try {
                         await updateDoc(projectRef, {
                             members: arrayRemove(memberId),
-                            [fieldPath]: deleteField()
+                            [`memberInfo.${memberId}`]: deleteField()
                         });
-                        UIManager.showMessage(`Membro removido do projeto.`, 'success');
-                        this.handleOpenShareModal(); // Refresh member list
-                     } catch(e) {
+                        UIManager.showMessage("Membro removido do projeto.", 'success');
+                        this.handleOpenShareModal();
+                    } catch (e) {
                         console.error("Erro ao remover membro:", e);
                         UIManager.showMessage("Falha ao remover membro.", 'error');
-                     }
+                    }
                 },
 
                 async handleSetUsername() {
@@ -1333,19 +1879,16 @@
                         return;
                     }
                     const isAvailable = await this.checkUsernameAvailability(username, UIManager.elements.setUsernameFeedback);
-                    if(!isAvailable) return;
-                    
+                    if (!isAvailable) return;
                     try {
                         const userRef = doc(StateManager.db, "users", StateManager.userId);
-                        await updateDoc(userRef, { username: username });
-
+                        await updateDoc(userRef, { username });
                         const userSnap = await getDoc(userRef);
                         StateManager.currentUser = { uid: StateManager.userId, ...userSnap.data() };
-
                         UIManager.hideModal(UIManager.elements.setUsernameModal);
                         this.startApp();
                     } catch (e) {
-                        console.error("Error setting username:", e);
+                        console.error("Erro ao salvar username:", e);
                         UIManager.elements.setUsernameFeedback.textContent = "Erro ao salvar. Tente novamente.";
                         UIManager.elements.setUsernameFeedback.className = "text-xs text-left h-4 px-2 text-red-500";
                     }
@@ -1353,10 +1896,7 @@
 
                 debounce(func, delay) {
                     let timeout;
-                    return (...args) => {
-                        clearTimeout(timeout);
-                        timeout = setTimeout(() => func.apply(this, args), delay);
-                    };
+                    return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func(...args), delay); };
                 },
 
                 async checkUsernameAvailability(username, feedbackEl) {
@@ -1365,30 +1905,58 @@
                         feedbackEl.className = "text-xs text-left h-4 px-2 text-red-500";
                         return false;
                     }
-                    
                     feedbackEl.textContent = "Verificando...";
                     feedbackEl.className = "text-xs text-left h-4 px-2 text-gray-500";
-                    
-                    const q = query(DataManager.getUsersCollectionRef(), where("username", "==", username));
-                    const querySnapshot = await getDocs(q);
-                    
-                    if (querySnapshot.empty) {
-                        feedbackEl.textContent = "Disponível!";
-                        feedbackEl.className = "text-xs text-left h-4 px-2 text-green-500";
-                        return true;
-                    } else {
-                        feedbackEl.textContent = "Este nome de usuário já está em uso.";
+                    try {
+                        const q = query(DataManager.getUsersCollectionRef(), where("username", "==", username));
+                        const querySnapshot = await getDocs(q);
+                        if (querySnapshot.empty) {
+                            feedbackEl.textContent = "Disponível!";
+                            feedbackEl.className = "text-xs text-left h-4 px-2 text-green-500";
+                            return true;
+                        } else {
+                            feedbackEl.textContent = "Este nome de usuário já está em uso.";
+                            feedbackEl.className = "text-xs text-left h-4 px-2 text-red-500";
+                            return false;
+                        }
+                    } catch (e) {
+                        console.error("Erro ao verificar username:", e);
+                        feedbackEl.textContent = "Erro ao verificar. Tente novamente.";
                         feedbackEl.className = "text-xs text-left h-4 px-2 text-red-500";
                         return false;
                     }
                 },
-                
+
                 handleDeletePoint(id) { DataManager.deletePoint(id); },
+
                 handleEditPointName(element, id) {
                     const newName = element.textContent.trim();
-                    if (newName) { DataManager.updatePointName(id, newName); element.classList.add('edited-flash'); setTimeout(() => { element.classList.remove('edited-flash'); UIManager.showMessage(`Nome atualizado para '${newName}'.`, 'success'); }, 1000); }
-                    else { UIManager.showMessage('O nome não pode ser vazio.', 'error'); UIManager.updatePreviewTable(); }
-                }
+                    if (newName) {
+                        DataManager.updatePointName(id, newName);
+                        element.classList.add('edited-flash');
+                        setTimeout(() => {
+                            element.classList.remove('edited-flash');
+                            UIManager.showMessage(`Nome atualizado para '${newName}'.`, 'success');
+                        }, 1000);
+                    } else {
+                        UIManager.showMessage('O nome não pode ser vazio.', 'error');
+                        UIManager.updatePreviewTable();
+                    }
+                },
+
+                // Helper: feedback visual por campo de formulário
+                _setFieldError(inputId, errorId, message) {
+                    const input = document.getElementById(inputId);
+                    const errorEl = document.getElementById(errorId);
+                    if (input) input.classList.add('input-error');
+                    if (errorEl) { errorEl.textContent = message; errorEl.classList.remove('hidden'); }
+                },
+                _clearFieldError(inputId, errorId) {
+                    const input = document.getElementById(inputId);
+                    const errorEl = document.getElementById(errorId);
+                    if (input) input.classList.remove('input-error');
+                    if (errorEl) { errorEl.textContent = ''; errorEl.classList.add('hidden'); }
+                },
             };
 
             App.init();
